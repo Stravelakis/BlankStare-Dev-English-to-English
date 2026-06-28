@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlankStare</title>
+  <link rel="stylesheet" href="../fonts/comfortaa.css">
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ HEADER ══ -->
+  <header class="header">
+    <div class="header-logo">
+      <div id="logo-anim" class="logo-anim" aria-hidden="true"></div>
+      <span class="logo-text">BlankStare</span>
+    </div>
+    <div class="header-actions">
+      <button id="lang-toggle" class="header-pill" title="Switch language / Αλλαγή γλώσσας">EN</button>
+      <button id="history-btn" class="header-icon-btn" title="Explanation history" aria-label="History">🕐</button>
+      <button id="settings-btn" class="header-icon-btn" title="Settings" aria-label="Settings">
+        <div id="settings-anim" class="icon-anim-sm" aria-hidden="true"></div>
+      </button>
+    </div>
+  </header>
+
+  <!-- ══ CONTEXT BAR (reading level + user context) ══ -->
+  <div class="context-bar">
+    <div class="context-bar-top">
+      <select id="reading-level" class="level-select" aria-label="Reading level">
+        <option value="eli5">🌱 ELI5</option>
+        <option value="standard" selected>👤 Standard</option>
+        <option value="business">💼 Business</option>
+        <option value="design">🎨 Design/Creative</option>
+        <option value="legal">⚖️ Legal/Formal</option>
+      </select>
+      <button id="context-toggle" class="context-toggle-btn" aria-expanded="false" title="Add context">+ Context</button>
+    </div>
+    <div id="context-input-area" class="context-input-area hidden">
+      <input id="user-context" type="text" class="context-input"
+             placeholder="I'm reading this because… (e.g. reviewing a dev's PR as a designer)">
+    </div>
+  </div>
+
+  <!-- ══ HISTORY PANEL (in-session, slide in/out) ══ -->
+  <div id="history-panel" class="history-panel hidden" aria-label="Explanation history">
+    <div class="history-header">
+      <span>Recent explanations</span>
+      <button id="history-close" class="icon-btn-sm">✕</button>
+    </div>
+    <div id="history-list" class="history-list"></div>
+    <div id="history-empty" class="history-empty">No explanations yet this session.</div>
+  </div>
+
+  <!-- ══ STATES ══ -->
+
+  <!-- Welcome -->
+  <section id="state-welcome" class="state" aria-live="polite">
+    <div class="welcome-body">
+      <div id="welcome-anim" class="icon-anim-lg" aria-hidden="true"></div>
+      <h2 class="welcome-title" data-i18n="welcomeTitle">Select any tech text</h2>
+      <p class="welcome-desc" data-i18n="welcomeDesc">Highlight developer docs, error messages, terminal output, configs, or any jargon — then click <strong>Explain</strong>.</p>
+      <div class="hint-chips">
+        <span class="hint-chip">⚡ Select → Explain</span>
+        <span class="hint-chip">⌨ Alt+Shift+E</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- No API key -->
+  <section id="state-nokey" class="state hidden">
+    <div class="nokey-body">
+      <div id="nokey-anim" class="icon-anim-lg" aria-hidden="true"></div>
+      <h2 class="nokey-title" data-i18n="nokeyTitle">API key needed</h2>
+      <p class="nokey-desc" data-i18n="nokeyDesc">BlankStare uses Groq's free AI API. You need a free key to get started — takes about 2 minutes.</p>
+      <button id="goto-settings-btn" class="btn btn-primary" data-i18n="openSettings">Open Settings →</button>
+      <a class="nokey-link" href="https://console.groq.com" target="_blank" rel="noopener">Get a free Groq key ↗</a>
+    </div>
+  </section>
+
+  <!-- Loading -->
+  <section id="state-loading" class="state hidden" aria-live="polite" aria-label="Loading">
+    <div class="loading-body">
+      <div id="loading-anim" class="icon-anim-lg" aria-hidden="true"></div>
+      <p class="loading-text" data-i18n="translating">Translating…</p>
+    </div>
+  </section>
+
+  <!-- Result -->
+  <section id="state-result" class="state hidden" aria-live="polite">
+
+    <!-- Selected text -->
+    <div class="selected-box">
+      <div class="selected-label" data-i18n="youSelected">You selected:</div>
+      <div id="selected-text" class="selected-text"></div>
+      <button id="clear-btn" class="clear-btn" title="Clear" aria-label="Clear">✕</button>
+    </div>
+
+    <!-- Explanation -->
+    <div class="explanation-box">
+      <div id="explanation-text" class="explanation-text"></div>
+      <div id="explanation-cursor" class="typing-cursor" aria-hidden="true"></div>
+
+      <!-- Inline action buttons -->
+      <div id="explanation-actions" class="explanation-actions hidden">
+        <button id="copy-btn"  class="action-pill" title="Copy explanation" aria-label="Copy">📋</button>
+        <button id="voice-btn" class="action-pill" title="Read aloud" aria-label="Read aloud">🔊</button>
+        <button id="deeper-btn"  class="action-link" data-i18n="goDeeper">↓ Go deeper</button>
+        <button id="rephrase-btn" class="action-link" data-i18n="rephrase">↺ Different wording</button>
+        <button id="fullpage-btn" class="action-link" data-i18n="fullPage">📄 Full page</button>
+      </div>
+    </div>
+
+    <!-- Jargon dictionary -->
+    <div class="jargon-section">
+      <div class="jargon-toggle-row">
+        <span class="jargon-label" data-i18n="jargonToggle">📖 Jargon dictionary</span>
+        <label class="mini-toggle" for="jargon-toggle-cb">
+          <input type="checkbox" id="jargon-toggle-cb">
+          <span class="mini-knob"></span>
+        </label>
+      </div>
+      <div id="jargon-results" class="jargon-results hidden" aria-live="polite"></div>
+    </div>
+
+    <!-- Resource links -->
+    <div class="resources-section">
+      <div class="resources-label" data-i18n="readMoreOn">📚 Read more on:</div>
+      <div class="resource-btns">
+        <a id="link-mdn"     href="#" target="_blank" rel="noopener" class="resource-btn">MDN</a>
+        <a id="link-w3s"     href="#" target="_blank" rel="noopener" class="resource-btn">W3Schools</a>
+        <a id="link-devdocs" href="#" target="_blank" rel="noopener" class="resource-btn">DevDocs</a>
+      </div>
+    </div>
+
+    <!-- YouTube -->
+    <div class="collapsible-section">
+      <div class="section-row">
+        <span class="section-title" data-i18n="ytSection">📺 YouTube explanation</span>
+        <button id="yt-search-btn" class="btn btn-secondary btn-sm" data-i18n="search">Search</button>
+      </div>
+      <div id="yt-results" class="yt-results hidden" aria-live="polite"></div>
+      <div id="yt-embed"   class="yt-embed hidden"></div>
+    </div>
+
+    <!-- Web search -->
+    <div class="collapsible-section">
+      <div class="section-row">
+        <span class="section-title" data-i18n="webSearch">🔍 Web search</span>
+        <button id="web-search-btn" class="btn btn-secondary btn-sm" data-i18n="search">Search</button>
+      </div>
+      <div id="web-results" class="web-results hidden" aria-live="polite"></div>
+    </div>
+
+    <!-- Custom question -->
+    <div class="collapsible-section">
+      <div class="section-row">
+        <span class="section-title" data-i18n="customQ">💬 Ask your own question</span>
+      </div>
+      <div class="custom-q-body">
+        <input id="custom-q-input" type="text" class="custom-q-input" data-i18n-placeholder="customQPlaceholder" placeholder="Ask anything about the selected text…">
+        <button id="custom-q-btn" class="btn btn-secondary btn-sm" data-i18n="ask">Ask</button>
+      </div>
+      <div id="custom-q-result" class="custom-q-result hidden" aria-live="polite"></div>
+    </div>
+
+  </section>
+
+  <!-- Error -->
+  <section id="state-error" class="state hidden" aria-live="assertive">
+    <div class="error-body">
+      <div id="error-anim" class="icon-anim-lg" aria-hidden="true"></div>
+      <p id="error-message" class="error-message"></p>
+      <button id="error-retry-btn" class="btn btn-primary" data-i18n="tryAgain">Try again</button>
+    </div>
+  </section>
+
+  <!-- ══ PHASE 2 ══ -->
+  <aside class="phase2-tray">
+    <div class="phase2-heading">Coming in Phase 2</div>
+    <div class="phase2-items">
+      <div class="phase2-item"><span>📖</span><span>Wiki (BookStack)</span><span class="phase2-badge">Soon</span></div>
+      <div class="phase2-item"><span>🏆</span><span>Community contributions</span><span class="phase2-badge">Soon</span></div>
+    </div>
+  </aside>
+
+  <!-- ══ FOOTER ══ -->
+  <footer class="panel-footer">
+    <a href="https://skilitsa.com" target="_blank" rel="noopener" class="footer-brand">skilitsa.com</a>
+    <span class="footer-sep">·</span>
+    <a href="https://ko-fi.com/stravelakis" target="_blank" rel="noopener" class="footer-kofi">☕ Ko-fi</a>
+    <span class="footer-sep">·</span>
+    <a href="https://github.com/Stravelakis/BlankStare-Dev-English-to-English/issues/new" target="_blank" rel="noopener" class="footer-link">Report</a>
+  </footer>
+
+</div>
+
+<script src="../utils/lottie.min.js"></script>
+<script src="../utils/storage.js"></script>
+<script src="../utils/api.js"></script>
+<script src="sidepanel.js"></script>
+</body>
+</html>
