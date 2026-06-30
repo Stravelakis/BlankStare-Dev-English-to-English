@@ -43,6 +43,20 @@
         <button class="lang-btn" data-lang="en" id="lang-en">🇬🇧 English</button>
         <button class="lang-btn" data-lang="el" id="lang-el">🇬🇷 Ελληνικά</button>
       </div>
+      <p class="lang-note">This sets the language for <strong>explanations in the panel</strong>. The settings page itself stays in English. Don't forget to click <strong>Save Settings</strong> after selecting.</p>
+
+      <details class="section-accordion">
+        <summary>📊 Default reading level</summary>
+        <div class="section-accordion-body">
+          <p class="inner-desc">Sets the default for the reading level dropdown in the panel. You can always change it per-session there.</p>
+          <select id="default-reading-level" class="full-select">
+            <option value="eli5">🍼 ELI5 — Explain like I'm 5</option>
+            <option value="newbie">🪅 Newbie — Curious beginner</option>
+            <option value="standard" selected>😊 Standard — Smart non-developer</option>
+            <option value="vibecoder">🤖 Vibecoder — Builds with AI, not traditional code</option>
+          </select>
+        </div>
+      </details>
     </section>
 
     <!-- ══ AI ENGINE (Groq + Model + Reading level) ══ -->
@@ -69,24 +83,31 @@
           </div>
           <div class="test-result" id="test-result-groq" aria-live="polite"></div>
         </div>
-        <div class="setup-guide">
+      </div>
+
+      <details class="section-accordion" id="groq-info-accordion">
+        <summary>🆓 What you get for free, in 3 minutes and 5 steps</summary>
+        <div class="section-accordion-body">
           <div class="guide-always">
-            <div class="guide-block">
-              <div class="guide-block-title">📋 How to get your key</div>
-              <ol class="guide-steps">
-                <li>Go to <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com ↗</a> and create a free account</li>
-                <li>Click <strong>API Keys</strong> in the left sidebar</li>
-                <li>Click <strong>Create API Key</strong>, give it any name</li>
-                <li>Copy the key — it starts with <code>gsk_</code></li>
-                <li>Paste it above and click <strong>Test</strong></li>
-              </ol>
-            </div>
             <div class="guide-block">
               <div class="guide-block-title">🆓 Free limits &amp; pricing</div>
               <p>Free tier: <strong>14,400 requests/day</strong> · 30 requests/minute.<br>That's ~400 explanations/day — more than enough for any normal use.</p>
               <a href="https://groq.com/pricing" target="_blank" rel="noopener" class="pricing-link">Groq pricing page ↗</a>
+              <div class="easter-egg">🥚 <strong>Secret tip:</strong> If one model hits its rate limit, switch to another in <strong>Tweak the Brain</strong> below — each model has its own separate quota pool. Or just turn on <strong>Auto-fallback</strong> and let BlankStare handle it for you.</div>
             </div>
           </div>
+          <details class="guide-details">
+            <summary>📋 How to get your key — click to expand</summary>
+            <div class="guide-detail-body">
+              <ol class="guide-steps guide-steps-open">
+                <li>Go to <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com ↗</a> and create a free account</li>
+                <li>Click <strong>API Keys</strong> in the left sidebar</li>
+                <li>Click <strong>Create API Key</strong>, give it any name</li>
+                <li>Copy the key — it starts with <code>gsk_</code></li>
+                <li>Paste it in the field above and click <strong>Test</strong></li>
+              </ol>
+            </div>
+          </details>
           <details class="guide-details">
             <summary>💡 What is Groq and how does BlankStare use it?</summary>
             <div class="guide-detail-body">
@@ -99,54 +120,70 @@
             <div class="guide-detail-body"><p>This is the only key BlankStare absolutely requires. Without it, no explanations are possible.</p></div>
           </details>
         </div>
-      </div>
+      </details>
 
-      <div class="inner-divider"></div>
+      <details class="section-accordion">
+        <summary>🧠 Tweak the Brain</summary>
+        <div class="section-accordion-body">
 
-      <!-- AI Model -->
-      <div class="inner-section">
-        <h3 class="inner-title">AI Model</h3>
-        <p class="inner-desc">Both models run on Groq's infrastructure. The difference is response depth vs speed.</p>
-        <div class="radio-cards">
-          <label class="radio-card" for="model-fast">
-            <input type="radio" name="model" id="model-fast" value="llama-3.1-8b-instant">
-            <div class="radio-card-inner">
-              <div class="radio-card-header">
-                <div id="lottie-model-fast" class="model-lottie" aria-hidden="true"></div>
-                <span class="radio-card-name">Lightweight</span>
+          <!-- AI Model -->
+          <div class="inner-section">
+            <h3 class="inner-title">AI Model</h3>
+            <p class="inner-desc">All 9 models run free on Groq's infrastructure. Pick one as your default — auto-fallback below will hop to the next if it ever hits a rate limit.</p>
+            <select id="model-select" class="full-select">
+              <optgroup label="⚡ Fast tier">
+                <option value="llama-3.1-8b-instant">⚡ Llama 3.1 8B Instant — 14,400/day · 30 rpm — Default, highest quota</option>
+                <option value="meta-llama/llama-4-scout-17b-16e-instruct">🔭 Llama 4 Scout 17B — 1,000/day · 30 rpm — Great speed + context window</option>
+                <option value="qwen/qwen3-32b">⚡ Qwen 3 32B — 1,000/day · 60 rpm — Fastest RPM</option>
+                <option value="compound-mini">🔬 Compound Mini — 250/day · 30 rpm — No daily token limit</option>
+              </optgroup>
+              <optgroup label="🧠 Powerful tier">
+                <option value="llama-3.3-70b-versatile">🧠 Llama 3.3 70B Versatile — 1,000/day · 30 rpm — Best balance</option>
+                <option value="compound">🧪 Compound — 250/day · 30 rpm — No daily token limit</option>
+                <option value="openai/gpt-oss-120b">🤖 GPT-OSS 120B — 1,000/day · 30 rpm — 120B params</option>
+                <option value="qwen/qwen3.6-27b">🔮 Qwen 3.6 27B — 1,000/day · 30 rpm — Strong multilingual</option>
+                <option value="openai/gpt-oss-20b">💡 GPT-OSS 20B — 1,000/day · 30 rpm — Lighter OpenAI-compatible</option>
+              </optgroup>
+            </select>
+
+            <div class="toggle-list" style="margin-top:12px">
+              <div class="toggle-item">
+                <div class="toggle-info">
+                  <div class="toggle-name">🔁 Auto-fallback</div>
+                  <div class="toggle-desc">If your chosen model hits a rate limit, automatically try the next model in the list instead of failing.</div>
+                </div>
+                <label class="toggle-switch" for="auto-fallback"><input type="checkbox" id="auto-fallback"><span class="toggle-knob"></span></label>
               </div>
-              <code class="radio-card-id">llama-3.1-8b-instant</code>
-              <p class="radio-card-desc">Very fast. Perfect for quick lookups and simple jargon. <strong>Default.</strong></p>
             </div>
-          </label>
-          <label class="radio-card" for="model-powerful">
-            <input type="radio" name="model" id="model-powerful" value="llama-3.3-70b-versatile">
-            <div class="radio-card-inner">
-              <div class="radio-card-header">
-                <div id="lottie-model-powerful" class="model-lottie" aria-hidden="true"></div>
-                <span class="radio-card-name">Powerhouse</span>
-              </div>
-              <code class="radio-card-id">llama-3.3-70b-versatile</code>
-              <p class="radio-card-desc">Deeper, more nuanced explanations. Slightly slower but better for complex topics.</p>
+          </div>
+
+          <div class="inner-divider"></div>
+
+          <!-- Text-to-speech -->
+          <div class="inner-section">
+            <h3 class="inner-title">Text-to-speech</h3>
+            <p class="inner-desc">Choose how explanations sound when you click 🔊 Listen in the panel.</p>
+            <div class="lang-toggle">
+              <button class="tts-btn" data-tts="browser" id="tts-browser" type="button">🔈 Browser (free, unlimited)</button>
+              <button class="tts-btn" data-tts="orpheus" id="tts-orpheus" type="button">🎙️ Orpheus (expressive, 100/day)</button>
             </div>
-          </label>
+            <div id="orpheus-voice-row" class="hidden" style="margin-top:10px">
+              <select id="orpheus-voice" class="full-select">
+                <option value="tara">Tara — warm, clear</option>
+                <option value="leah">Leah — friendly, bright</option>
+                <option value="leo">Leo — confident, steady</option>
+                <option value="jess">Jess — energetic, expressive</option>
+                <option value="zac">Zac — calm, measured</option>
+                <option value="zoe" selected>Zoe — cheerful, light</option>
+                <option value="mia">Mia — smooth, professional</option>
+                <option value="julia">Julia — rich, articulate</option>
+              </select>
+              <p class="guide-note">Orpheus uses Groq's <code>canopylabs/orpheus-v1-english</code> voice model — 100 requests/day free. Falls back to your browser's built-in voice automatically if the quota is hit.</p>
+            </div>
+          </div>
+
         </div>
-      </div>
-
-      <div class="inner-divider"></div>
-
-      <!-- Default reading level -->
-      <div class="inner-section">
-        <h3 class="inner-title">Default reading level</h3>
-        <p class="inner-desc">Sets the default for the reading level dropdown in the panel. You can always change it per-session there.</p>
-        <select id="default-reading-level" class="full-select">
-          <option value="eli5">🌱 ELI5 — Explain like I'm 5</option>
-          <option value="standard" selected>👤 Standard — Intelligent non-developer</option>
-          <option value="business">💼 Business — Focus on impact and risk</option>
-          <option value="design">🎨 Design — Visual and creative analogies</option>
-          <option value="legal">⚖️ Legal — Precise and formal</option>
-        </select>
-      </div>
+      </details>
     </section>
 
     <!-- ══ YOUTUBE ══ -->
@@ -171,7 +208,11 @@
           </div>
           <div class="test-result" id="test-result-youtube" aria-live="polite"></div>
         </div>
-        <div class="setup-guide">
+      </div>
+
+      <details class="section-accordion">
+        <summary>📋 How to get your free YouTube key</summary>
+        <div class="section-accordion-body">
           <div class="guide-always">
             <div class="guide-block">
               <div class="guide-block-title">📋 How to get your key</div>
@@ -195,7 +236,7 @@
             <div class="guide-detail-body"><p>BlankStare can search for tutorial videos about the term you selected and play them inline inside the sidebar — no new tab needed.</p></div>
           </details>
         </div>
-      </div>
+      </details>
     </section>
 
     <!-- ══ WEB SEARCH ══ -->
@@ -208,22 +249,22 @@
         </div>
       </div>
 
-      <!-- DDG — always active, positioned as the default -->
-      <div class="search-default-card">
+      <!-- DDG — active by default, becomes fallback-only once SearXNG is set -->
+      <div class="search-provider-card" id="search-card-ddg">
         <div class="search-default-active">
           <span class="search-provider-name">🦆 DuckDuckGo</span>
-          <span class="badge badge-active">Active by default</span>
+          <span class="badge badge-active" id="search-badge-ddg">Active by default</span>
         </div>
-        <p class="search-provider-desc">No setup required. No API key. No tracking. When you click <strong>Search</strong> in the panel without a SearXNG URL, BlankStare opens a pre-filled DuckDuckGo search in a new tab.</p>
+        <p class="search-provider-desc">No setup required. No API key. No tracking. When you click <strong>Search</strong> in the panel without a working SearXNG URL, BlankStare opens a pre-filled DuckDuckGo search in a new tab.</p>
       </div>
 
       <!-- SearXNG — framed as an optional upgrade -->
-      <div class="search-upgrade-card">
+      <div class="search-provider-card search-upgrade-card" id="search-card-searxng">
         <div class="search-upgrade-header">
           <span class="search-upgrade-title">🔐 Optional upgrade: SearXNG</span>
-          <span class="badge badge-optional">Free self-hosted</span>
+          <span class="badge badge-optional" id="search-badge-searxng">Free self-hosted</span>
         </div>
-        <p class="search-upgrade-desc">Run your own private search engine. Results appear <em>inline inside the BlankStare panel</em> — no new tab, completely off the grid. If your SearXNG URL is set and reachable, it replaces DuckDuckGo automatically. If it fails or the field is empty, BlankStare falls back to DuckDuckGo silently.</p>
+        <p class="search-upgrade-desc">Run your own private search engine. Results appear <em>inline inside the BlankStare panel</em> — no new tab, completely off the grid.</p>
         <a href="https://docs.searxng.org/admin/installation-searxng.html#installation-basic" target="_blank" rel="noopener" class="upgrade-install-link">📖 SearXNG installation guide ↗</a>
 
         <div class="api-field" style="margin-top:14px">
@@ -237,8 +278,13 @@
               </button>
             </div>
             <div class="test-result" id="test-result-searxng" aria-live="polite"></div>
+            <p class="guide-note hidden" id="searxng-active-note">✅ <strong>Active</strong> — this URL is tried first for every search. BlankStare falls back to DuckDuckGo automatically <em>only</em> if SearXNG fails to respond.</p>
           </div>
-          <div class="setup-guide">
+        </div>
+
+        <details class="section-accordion" style="margin-top:12px">
+          <summary>📋 SearXNG setup details</summary>
+          <div class="section-accordion-body">
             <div class="guide-always">
               <div class="guide-block">
                 <div class="guide-block-title">📋 How to configure</div>
@@ -258,7 +304,7 @@
               <div class="guide-detail-body"><p>SearXNG is an open-source, self-hosted search engine that aggregates results from Google, Bing, DuckDuckGo and others — without tracking you or serving ads. Perfect if you're already running it for other reasons (like your server setup).</p></div>
             </details>
           </div>
-        </div>
+        </details>
       </div>
     </section>
 
@@ -273,7 +319,7 @@
       </div>
       <div class="toggle-list">
         <div class="toggle-item">
-          <div class="toggle-info"><div class="toggle-name">⚡ Floating button</div><div class="toggle-desc">A small button appears when you highlight text on any page</div></div>
+          <div class="toggle-info"><div class="toggle-name">⚡ Floating button</div><div class="toggle-desc">Highlight text → ⚡ button appears → click it (turns green) → then click the BlankStare icon in your toolbar to open the panel. Chrome prevents auto-opening from page clicks — this two-step is the best we can do.</div></div>
           <label class="toggle-switch" for="trigger-floating"><input type="checkbox" id="trigger-floating"><span class="toggle-knob"></span></label>
         </div>
         <div class="toggle-item">
@@ -281,7 +327,7 @@
           <label class="toggle-switch" for="trigger-rightclick"><input type="checkbox" id="trigger-rightclick"><span class="toggle-knob"></span></label>
         </div>
         <div class="toggle-item">
-          <div class="toggle-info"><div class="toggle-name">📌 Always open</div><div class="toggle-desc">Keep the sidebar open at all times (great for wide screens)</div></div>
+          <div class="toggle-info"><div class="toggle-name">📌 Keep open</div><div class="toggle-desc">Click the toolbar icon once to open the panel — it stays open as you browse. Perfect for wide screens. Use right-click to trigger explanations while the panel is open.</div></div>
           <label class="toggle-switch" for="trigger-alwayson"><input type="checkbox" id="trigger-alwayson"><span class="toggle-knob"></span></label>
         </div>
       </div>
@@ -293,20 +339,20 @@
     </section>
 
     <!-- ══ EXCLUDE LIST ══ -->
-    <section class="settings-section">
-      <div class="section-head">
+    <details class="settings-section section-accordion-top">
+      <summary class="section-accordion-top-summary">
         <div id="lottie-exclude" class="section-lottie" aria-hidden="true"></div>
         <div>
-          <h2 class="section-title">Exclude list</h2>
+          <h2 class="section-title">🚫 Exclude list</h2>
           <p class="section-desc">BlankStare stays completely silent on these domains — no floating button, no context menu entry.</p>
         </div>
-      </div>
+      </summary>
       <div class="exclude-area">
         <textarea id="exclude-list" class="exclude-textarea" rows="5"
           placeholder="One domain per line, e.g:&#10;app.notion.so&#10;mail.google.com&#10;figma.com"></textarea>
         <p class="guide-note">Enter one domain per line. <code>example.com</code> also silences <code>www.example.com</code>. Changes take effect on the next page load.</p>
       </div>
-    </section>
+    </details>
 
     <!-- ══ SAVE ══ -->
     <div class="save-area">
@@ -362,7 +408,7 @@
         <h3>Optional power-ups</h3>
         <div class="howto-extra-grid">
           <div class="howto-extra-card"><div class="howto-extra-icon">🌐</div><div class="howto-extra-title">Language</div><div class="howto-extra-desc">Toggle EN ↔ EL in the panel header. Explanations, voice readout, and UI switch simultaneously.</div></div>
-          <div class="howto-extra-card"><div class="howto-extra-icon">📊</div><div class="howto-extra-title">Reading level</div><div class="howto-extra-desc">ELI5 · Standard · Business · Design · Legal. Set a default in Settings or change it live in the panel.</div></div>
+          <div class="howto-extra-card"><div class="howto-extra-icon">📊</div><div class="howto-extra-title">Reading level</div><div class="howto-extra-desc">ELI5 · Newbie · Standard · Vibecoder. Set a default in Settings or change it live in the panel.</div></div>
           <div class="howto-extra-card"><div class="howto-extra-icon">📄</div><div class="howto-extra-title">Full page summary</div><div class="howto-extra-desc">Click "📄 Full page" under any explanation to get a 3-5 point summary of the whole current page.</div></div>
           <div class="howto-extra-card"><div class="howto-extra-icon">🕐</div><div class="howto-extra-title">History</div><div class="howto-extra-desc">Click 🕐 in the panel header to see your last 20 explanations this session.</div></div>
           <div class="howto-extra-card"><div class="howto-extra-icon">🚫</div><div class="howto-extra-title">Exclude list</div><div class="howto-extra-desc">Add domains where BlankStare should be completely silent (your own apps, email, internal tools).</div></div>
@@ -381,21 +427,24 @@
         <div id="lottie-about" class="about-lottie" aria-hidden="true"></div>
         <h2>BlankStare</h2>
         <p class="about-tagline">Dev English → English &nbsp;·&nbsp; Zero cost BYOK</p>
-        <span class="about-version">v0.3.0</span>
+        <span class="about-version">v0.5.0</span>
       </div>
       <div class="about-desc">
         <p>BlankStare is a Chrome sidebar extension that translates developer documentation, error messages, READMEs, terminal output, and technical jargon into plain English — instantly, while you browse.</p>
-        <p>Built for intelligent non-developers who work alongside developers every day: designers, project managers, founders, marketers, and anyone who regularly encounters developer content they need to understand quickly.</p>
+        <p>Built first and foremost for <strong>vibecoders</strong> — people who build real things with AI coding tools (Claude Code, Cursor, Antigravity, and friends) without coming from a traditional dev background. You already know what an API, a model, a prompt, and git are. BlankStare bridges the rest: the error messages, the config files, the terminal noise that AI agents throw at you mid-build.</p>
+        <p>Just as useful for anyone else who works alongside developers and regularly hits content they need to understand quickly: designers, project managers, founders, and marketers.</p>
       </div>
       <div class="about-section">
         <h3>✨ Phase 1 — What's built</h3>
         <ul class="about-list">
           <li>🧠 AI explanations via Groq · streaming word-by-word</li>
-          <li>📊 5 reading levels (ELI5 → Legal/Formal)</li>
+          <li>🔁 9 free Groq models with automatic rate-limit fallback</li>
+          <li>📊 4 reading levels (ELI5 → Vibecoder)</li>
           <li>🌐 Greek &amp; English — UI, explanations, and voice readout</li>
-          <li>📖 Jargon dictionary · 🕐 Session history · 📋 Copy · 🔊 Voice</li>
+          <li>🎙️ Orpheus expressive TTS (8 voices) + browser voice fallback</li>
+          <li>📖 Jargon dictionary · 🕐 Session history · 📋 Copy</li>
           <li>↓ Go deeper · ↺ Rephrase · 📄 Full page summary</li>
-          <li>💬 Custom question field · 🎬 18 Lottie animations</li>
+          <li>💬 Custom question field · 🎬 12 Lottie animations</li>
           <li>📺 YouTube inline search · 🔍 SearXNG + DuckDuckGo</li>
           <li>📚 MDN · W3Schools · DevDocs resource links</li>
           <li>🚫 Exclude list · ⌨️ Keyboard shortcuts</li>

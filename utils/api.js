@@ -1,231 +1,208 @@
-// utils/api.js
-// ─────────────────────────────────────────────────────────────────────────────
-// Every call to an external API lives here.
-// Keeping them together makes it easy to debug, update, or swap services.
-// ─────────────────────────────────────────────────────────────────────────────
+// utils/api.js — BlankStare v0.5
+// All external API calls: Groq (text + TTS), YouTube, SearXNG, resource links.
 
+// ══ MODEL REGISTRY ════════════════════════════════════════════════════════════
+// Every model Groq offers on the free tier, with display info and rate limits.
+// The fallback chain is ordered: most daily requests → fewest.
+const GROQ_MODELS = [
+  // ── Fast tier ──
+  { id: 'llama-3.1-8b-instant',                    name: '⚡ Llama 3.1 8B Instant',   tier: 'fast',     rpm: 30,  rpd: 14400, tpm: '6K',   note: 'Default — highest daily quota' },
+  { id: 'meta-llama/llama-4-scout-17b-16e-instruct',name: '🔭 Llama 4 Scout 17B',       tier: 'fast',     rpm: 30,  rpd: 1000,  tpm: '30K',  note: 'Great speed + context window' },
+  { id: 'qwen/qwen3-32b',                           name: '⚡ Qwen 3 32B',              tier: 'fast',     rpm: 60,  rpd: 1000,  tpm: '6K',   note: '60 req/min — fastest RPM' },
+  { id: 'compound-mini',                            name: '🔬 Compound Mini',            tier: 'fast',     rpm: 30,  rpd: 250,   tpm: '70K',  note: 'No daily token limit' },
+  // ── Powerful tier ──
+  { id: 'llama-3.3-70b-versatile',                  name: '🧠 Llama 3.3 70B Versatile', tier: 'powerful', rpm: 30,  rpd: 1000,  tpm: '12K',  note: 'Best balance' },
+  { id: 'compound',                                  name: '🧪 Compound',                 tier: 'powerful', rpm: 30,  rpd: 250,   tpm: '70K',  note: 'No daily token limit' },
+  { id: 'openai/gpt-oss-120b',                       name: '🤖 GPT-OSS 120B',             tier: 'powerful', rpm: 30,  rpd: 1000,  tpm: '8K',   note: 'OpenAI-compatible, 120B params' },
+  { id: 'qwen/qwen3.6-27b',                          name: '🔮 Qwen 3.6 27B',             tier: 'powerful', rpm: 30,  rpd: 1000,  tpm: '8K',   note: 'Strong multilingual' },
+  { id: 'openai/gpt-oss-20b',                        name: '💡 GPT-OSS 20B',              tier: 'powerful', rpm: 30,  rpd: 1000,  tpm: '8K',   note: 'Lighter OpenAI-compatible' },
+];
 
-// ══════════════════════════════════════════════════════════════════════════════
-// GROQ — AI explanations
-// ══════════════════════════════════════════════════════════════════════════════
+// Auto-fallback chain: ordered by reliability (most RPD first, then by quality)
+const FALLBACK_CHAIN = [
+  'llama-3.1-8b-instant',
+  'meta-llama/llama-4-scout-17b-16e-instruct',
+  'qwen/qwen3-32b',
+  'llama-3.3-70b-versatile',
+  'qwen/qwen3.6-27b',
+  'openai/gpt-oss-20b',
+  'openai/gpt-oss-120b',
+  'compound-mini',
+  'compound',
+];
 
-// System prompt is now built by sidepanel.js based on language, reading level, and user context.
+// ══ GROQ TEXT — STREAMING ═════════════════════════════════════════════════════
+// Calls Groq's chat completions API with streaming.
+// Auto-fallback: if the chosen model returns 429 (rate limited), tries the next
+// model in FALLBACK_CHAIN automatically (if autoFallback is enabled in settings).
 
-/**
- * Stream an explanation from Groq.
- *
- * Instead of waiting for the whole answer (which can take seconds), streaming
- * shows words appearing one by one — much more satisfying to watch.
- *
- * @param {string} text        — The developer text to explain
- * @param {string} apiKey      — User's Groq API key
- * @param {string} model       — Groq model ID
- * @param {Function} onChunk   — Called with each new piece of text as it arrives
- * @param {Function} onDone    — Called with the full text when complete
- * @param {Function} onError   — Called with an Error if something goes wrong
- */
-async function explainWithGroq(text, apiKey, model, systemPrompt, userPrompt, onChunk, onDone, onError) {
-  // systemPrompt and userPrompt are now passed in so callers can customise them
-  // (reading level, language, "go deeper", "rephrase", full-page summary, etc.)
-  try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: userPrompt },
-        ],
-        max_tokens: 600,
-        temperature: 0.7,
-        stream: true,   // ← words trickle in rather than arriving all at once
-      }),
-    });
+async function explainWithGroq(
+  text, apiKey, model, systemPrompt, userPrompt,
+  onChunk, onDone, onError,
+  autoFallback = false
+) {
+  // Build the list of models to try
+  const toTry = autoFallback
+    ? [model, ...FALLBACK_CHAIN.filter(m => m !== model)]
+    : [model];
 
-    if (!response.ok) {
-      // Try to read the error message from Groq's response body
-      let errMsg = `Groq API error (HTTP ${response.status})`;
-      try {
-        const errData = await response.json();
-        errMsg = errData?.error?.message || errMsg;
-      } catch (_) {}
+  for (let i = 0; i < toTry.length; i++) {
+    const tryModel = toTry[i];
+    const isRetry  = i > 0;
 
-      // Friendly messages for common errors
-      if (response.status === 401) errMsg = 'Invalid Groq API key. Please check Settings.';
-      if (response.status === 429) errMsg = 'Groq rate limit reached. Wait a moment and try again.';
-
-      throw new Error(errMsg);
+    if (isRetry) {
+      onChunk('', `⚠ ${toTry[i-1]} is rate-limited — trying ${tryModel}…\n\n`);
     }
 
-    // Read the streamed response line by line
-    const reader  = response.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText  = '';
+    const result = await _streamGroq(tryModel, apiKey, systemPrompt, userPrompt, onChunk);
+    if (result.ok) { onDone(result.text); return; }
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    const isRateLimit = result.status === 429;
+    if (isRateLimit && autoFallback && i < toTry.length - 1) continue; // try next
 
-      // Each chunk may contain multiple "data: {...}" lines
-      const raw   = decoder.decode(value, { stream: true });
-      const lines = raw.split('\n');
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const payload = line.slice(6).trim();
-        if (payload === '[DONE]') continue;
-
-        try {
-          const json  = JSON.parse(payload);
-          const delta = json.choices?.[0]?.delta?.content || '';
-          if (delta) {
-            fullText += delta;
-            onChunk(delta, fullText);
-          }
-        } catch (_) {
-          // Ignore malformed chunks — they happen occasionally
-        }
-      }
-    }
-
-    onDone(fullText);
-
-  } catch (err) {
-    onError(err);
+    // Non-recoverable error or no more fallbacks
+    let msg = result.error || `Groq error ${result.status}`;
+    if (result.status === 401) msg = 'Invalid Groq API key — check Settings.';
+    if (result.status === 429 && !autoFallback) msg = 'Rate limit hit. Enable Auto-fallback in Settings to switch models automatically, or wait a moment.';
+    if (isRateLimit && autoFallback && i === toTry.length - 1) msg = 'All models are currently rate-limited. Wait a minute and try again.';
+    onError(new Error(msg));
+    return;
   }
 }
 
-
-// ══════════════════════════════════════════════════════════════════════════════
-// YOUTUBE — search for tutorial videos
-// ══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Search YouTube for beginner-friendly videos on a term.
- *
- * Uses the YouTube Data API v3. Each call costs 100 quota units.
- * The free tier gives 10,000 units/day → 100 searches/day.
- *
- * @param {string} query    — The term to search for
- * @param {string} apiKey   — User's YouTube Data API v3 key
- * @returns {Promise<Array>} Array of video result objects
- */
-async function searchYouTube(query, apiKey) {
-  const safeQuery  = encodeURIComponent(`${query} explained simply`);
-  const url = `https://www.googleapis.com/youtube/v3/search`
-            + `?part=snippet`
-            + `&q=${safeQuery}`
-            + `&type=video`
-            + `&maxResults=4`
-            + `&videoDuration=medium`   // Skip very short clips and very long lectures
-            + `&relevanceLanguage=en`
-            + `&key=${apiKey}`;
-
-  const response = await fetch(url);
+async function _streamGroq(model, apiKey, systemPrompt, userPrompt, onChunk) {
+  let response;
+  try {
+    response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: userPrompt   },
+        ],
+        max_tokens: 700,
+        temperature: 0.7,
+        stream: true,
+      }),
+    });
+  } catch (err) {
+    return { ok: false, status: 0, error: `Network error: ${err.message}` };
+  }
 
   if (!response.ok) {
     const errData = await response.json().catch(() => ({}));
-    const msg = errData?.error?.message || `YouTube API error (${response.status})`;
-    if (response.status === 403) throw new Error('YouTube API key invalid or quota exceeded.');
-    throw new Error(msg);
+    return { ok: false, status: response.status, error: errData?.error?.message };
   }
 
-  const data = await response.json();
+  const reader  = response.body.getReader();
+  const decoder = new TextDecoder();
+  let full = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const raw   = decoder.decode(value, { stream: true });
+    for (const line of raw.split('\n')) {
+      if (!line.startsWith('data: ')) continue;
+      const payload = line.slice(6).trim();
+      if (payload === '[DONE]') continue;
+      try {
+        const delta = JSON.parse(payload).choices?.[0]?.delta?.content || '';
+        if (delta) { full += delta; onChunk(delta, full); }
+      } catch (_) {}
+    }
+  }
+
+  return { ok: true, text: full };
+}
+
+// ══ GROQ TTS — ORPHEUS ════════════════════════════════════════════════════════
+// Canopylabs Orpheus-v1-english via Groq's audio/speech endpoint.
+// Free tier: 100 requests/day, 10/min. Falls back to browser speechSynthesis.
+// Available voices: tara, leah, leo, jess, zac, zoe, mia, julia
+const ORPHEUS_VOICES = [
+  { id: 'tara',  label: 'Tara — warm, clear'      },
+  { id: 'leah',  label: 'Leah — friendly, bright'  },
+  { id: 'leo',   label: 'Leo — confident, steady'  },
+  { id: 'jess',  label: 'Jess — energetic, expressive' },
+  { id: 'zac',   label: 'Zac — calm, measured'     },
+  { id: 'zoe',   label: 'Zoe — cheerful, light'    },
+  { id: 'mia',   label: 'Mia — smooth, professional' },
+  { id: 'julia', label: 'Julia — rich, articulate' },
+];
+
+async function speakWithOrpheus(text, apiKey, voice = 'tara') {
+  // Truncate to ~1500 chars to stay comfortably under token limits
+  const input = text.slice(0, 1500);
+  const response = await fetch('https://api.groq.com/openai/v1/audio/speech', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'canopylabs/orpheus-v1-english',
+      input,
+      voice,
+      response_format: 'mp3',
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw Object.assign(new Error(err.error?.message || `TTS error ${response.status}`), { status: response.status });
+  }
+
+  const blob = await response.blob();
+  return URL.createObjectURL(blob); // caller must revoke when done
+}
+
+// ══ YOUTUBE ═══════════════════════════════════════════════════════════════════
+async function searchYouTube(query, apiKey) {
+  const q   = encodeURIComponent(`${query} explained simply`);
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&maxResults=4&videoDuration=medium&relevanceLanguage=en&key=${apiKey}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    const msg = d?.error?.message || `YouTube API error (${res.status})`;
+    if (res.status === 403) throw new Error('YouTube API key invalid or quota exceeded.');
+    throw new Error(msg);
+  }
+  const data = await res.json();
   return (data.items || []).map(item => ({
     videoId:     item.id.videoId,
     title:       item.snippet.title,
     channelName: item.snippet.channelTitle,
     thumbnail:   item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url,
-    publishedAt: item.snippet.publishedAt,
   }));
 }
 
-
-// ══════════════════════════════════════════════════════════════════════════════
-// WEB SEARCH — SearXNG (private, user-hosted) or DuckDuckGo fallback
-// ══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Search the web. Uses SearXNG if the user has set an instance URL,
- * otherwise opens a DuckDuckGo tab (no API key needed).
- *
- * @param {string} query       — Search query
- * @param {string} searxngUrl  — User's SearXNG instance URL (may be empty)
- * @returns {Promise<Array|null>} Array of results, or null if opening a tab instead
- */
+// ══ WEB SEARCH ════════════════════════════════════════════════════════════════
 async function searchWeb(query, searxngUrl) {
-  if (searxngUrl && searxngUrl.trim()) {
-    try {
-      return await searchSearXNG(query, searxngUrl.trim());
-    } catch (err) {
-      // SearXNG failed (likely CORS not enabled, wrong URL, or instance is down).
-      // Fall through silently to the DuckDuckGo fallback below.
+  if (searxngUrl?.trim()) {
+    try { return await _searchSearXNG(query, searxngUrl.trim()); }
+    catch (err) {
       console.warn('[BlankStare] SearXNG failed, falling back to DuckDuckGo:', err.message);
       return null;
     }
   }
-  // No SearXNG configured — return null so the UI shows a DuckDuckGo link
   return null;
 }
 
-/**
- * Call a SearXNG instance's JSON API.
- *
- * IMPORTANT: Your SearXNG instance must have CORS enabled for extension requests.
- * In your SearXNG settings.yml, add:
- *   server:
- *     cors_cors_allowed_origins: "*"
- *
- * @param {string} query      — The search query
- * @param {string} baseUrl    — e.g. "https://search.yourdomain.com"
- * @returns {Promise<Array>}
- */
-async function searchSearXNG(query, baseUrl) {
-  const cleanBase = baseUrl.replace(/\/$/, '');
-  const url = `${cleanBase}/search?q=${encodeURIComponent(query)}&format=json&categories=general`;
-
-  const response = await fetch(url, {
-    headers: { 'Accept': 'application/json' },
-  });
-
-  if (!response.ok) {
-    throw new Error(`SearXNG error (${response.status}). Check that your instance is running and CORS is enabled.`);
-  }
-
-  const data = await response.json();
+async function _searchSearXNG(query, baseUrl) {
+  const url = `${baseUrl.replace(/\/$/, '')}/search?q=${encodeURIComponent(query)}&format=json&categories=general`;
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!res.ok) throw new Error(`SearXNG error (${res.status})`);
+  const data = await res.json();
   return (data.results || []).slice(0, 6).map(r => ({
-    title:   r.title   || 'Untitled',
-    url:     r.url,
-    snippet: r.content || '',
-    engine:  r.engine  || 'searxng',
+    title: r.title || 'Untitled', url: r.url, snippet: r.content || '',
   }));
 }
 
-/**
- * Build a DuckDuckGo search URL to open in a new tab (no API, no CORS issues).
- * @param {string} query
- * @returns {string} URL
- */
 function duckDuckGoUrl(query) {
-  return `https://duckduckgo.com/?q=${encodeURIComponent(query + ' explained developer')}`;
+  return `https://duckduckgo.com/?q=${encodeURIComponent(query + ' developer explained')}`;
 }
 
-
-// ══════════════════════════════════════════════════════════════════════════════
-// RESOURCE LINKS — no API needed, just URL construction
-// ══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Generate links to popular dev-reference sites for a given search term.
- * These open in a new tab — no API calls, no rate limits, always free.
- *
- * @param {string} selectedText — The text the user selected
- * @returns {{ mdn: string, w3s: string, devdocs: string }}
- */
+// ══ RESOURCE LINKS ════════════════════════════════════════════════════════════
 function buildResourceLinks(selectedText) {
   const q = encodeURIComponent(selectedText.trim());
   return {

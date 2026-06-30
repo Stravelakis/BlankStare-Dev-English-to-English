@@ -1,25 +1,35 @@
-// utils/storage.js — v0.2
-// All settings keys and defaults in one place.
+// utils/storage.js — BlankStare v0.5
 
 const SETTINGS_DEFAULTS = {
-  groqApiKey:         '',
-  youtubeKey:         '',
-  searxngUrl:         '',
-  model:              'llama-3.1-8b-instant',
-  // Trigger modes — now independent toggles (v0.2 migration from single triggerMode)
-  triggerFloating:    true,
-  triggerRightClick:  true,
-  triggerAlwaysOn:    false,
-  // Language: 'en' or 'el'
-  language:           'en',
-  // Reading level: 'eli5' | 'standard' | 'business' | 'design' | 'legal'
-  readingLevel:       'standard',
-  // Optional context the user provides ("I'm reading this because...")
-  userContext:        '',
-  // Jargon dictionary toggle
-  jargonDictionary:   false,
-  excludeList:        [],    // array of domain strings where BlankStare is silenced
+  // API keys
+  groqApiKey:       '',
+  youtubeKey:       '',
+  searxngUrl:       '',
+
+  // AI model
+  model:            'llama-3.1-8b-instant',
+  autoFallback:     true,   // automatically try next model when rate-limited
+
+  // Text-to-speech
+  ttsMode:          'orpheus',  // 'browser' | 'orpheus'
+  orpheusVoice:     'zoe',      // tara | leah | leo | jess | zac | zoe | mia | julia
+
+  // Language & reading
+  language:         'en',
+  readingLevel:     'standard',
+  userContext:      '',
+
+  // Trigger modes
+  triggerFloating:  true,
+  triggerRightClick:true,
+  triggerAlwaysOn:  false,
+
+  // Features
+  jargonDictionary: false,
+  excludeList:      [],
 };
+
+const VALID_LEVELS = ['eli5', 'newbie', 'standard', 'vibecoder'];
 
 async function getSettings() {
   return await chrome.storage.sync.get(SETTINGS_DEFAULTS);

@@ -1,63 +1,94 @@
-// sidepanel.js — BlankStare v0.2
-// ─────────────────────────────────────────────────────────────────────────────
+// sidepanel.js — BlankStare v0.5
 
-// ══ TRANSLATIONS ══════════════════════════════════════════════════════════════
+// ══ TRANSLATIONS (UI strings) ═════════════════════════════════════════════════
 const I18N = {
   en: {
-    welcomeTitle:'Select any tech text',
-    welcomeDesc:'Highlight docs, error messages, terminal output, or any jargon — click <strong>Explain</strong>.',
+    welcomeTitle:'Select any dev text',
+    welcomeDesc:'Highlight an error message, README, terminal output, docs, or any jargon. BlankStare rewrites it in plain English you can read <strong>instead of</strong> the original.',
     nokeyTitle:'API key needed',
-    nokeyDesc:"BlankStare uses Groq's free AI API. You need a free key to get started — takes 2 minutes.",
+    nokeyDesc:"BlankStare uses Groq's free AI API. You need a free key — takes 2 minutes.",
     openSettings:'Open Settings →',
     translating:'Translating…',
     youSelected:'You selected:',
-    goDeeper:'↓ Go deeper',
+    goDeeper:'↓ More detail',
     rephrase:'↺ Different wording',
     fullPage:'📄 Full page',
-    jargonToggle:'📖 Jargon dictionary',
+    jargonToggle:'📖 Term glossary',
     readMoreOn:'📚 Read more on:',
     ytSection:'📺 YouTube explanation',
     webSearch:'🔍 Web search',
-    customQ:'💬 Ask your own question',
+    customQ:'💬 Ask a follow-up',
     customQPlaceholder:'Ask anything about the selected text…',
-    ask:'Ask',search:'Search',tryAgain:'Try again',
+    ask:'Ask', search:'Search', tryAgain:'Try again',
+    greekWarning:'This looks like Greek text. BlankStare translates <strong>English developer content</strong> into plain English. Select an English error message, README, or code snippet. To receive the translation <em>in Greek</em>, use the EN→EL toggle above — but keep selecting English dev text.',
   },
   el: {
-    welcomeTitle:'Επίλεξε οποιοδήποτε τεχνικό κείμενο',
-    welcomeDesc:'Επίλεξε docs, μηνύματα σφάλματος, terminal output ή ορολογία — πάτα <strong>Εξήγηση</strong>.',
+    welcomeTitle:'Επίλεξε οποιοδήποτε dev κείμενο',
+    welcomeDesc:'Επίλεξε μήνυμα σφάλματος, README, terminal output ή ορολογία. Το BlankStare το ξαναγράφει σε απλά Ελληνικά που μπορείς να διαβάσεις <strong>αντί</strong> για το πρωτότυπο.',
     nokeyTitle:'Χρειάζεσαι κλειδί API',
-    nokeyDesc:'Το BlankStare χρησιμοποιεί το Groq AI API δωρεάν. Χρειάζεσαι ένα κλειδί για να ξεκινήσεις.',
+    nokeyDesc:'Το BlankStare χρησιμοποιεί το δωρεάν Groq API. Χρειάζεσαι ένα κλειδί — 2 λεπτά διαδικασία.',
     openSettings:'Άνοιγμα Ρυθμίσεων →',
     translating:'Μεταφράζω…',
     youSelected:'Επίλεξες:',
-    goDeeper:'↓ Πιο βαθιά',
+    goDeeper:'↓ Περισσότερη λεπτομέρεια',
     rephrase:'↺ Διαφορετική διατύπωση',
     fullPage:'📄 Ολόκληρη σελίδα',
-    jargonToggle:'📖 Λεξικό ορολογίας',
+    jargonToggle:'📖 Γλωσσάρι όρων',
     readMoreOn:'📚 Διάβασε περισσότερα:',
     ytSection:'📺 Εξήγηση YouTube',
     webSearch:'🔍 Αναζήτηση στο web',
-    customQ:'💬 Κάνε τη δική σου ερώτηση',
+    customQ:'💬 Κάνε ερώτηση',
     customQPlaceholder:'Ρώτησε οτιδήποτε για το επιλεγμένο κείμενο…',
-    ask:'Ρώτα',search:'Αναζήτηση',tryAgain:'Δοκίμασε ξανά',
+    ask:'Ρώτα', search:'Αναζήτηση', tryAgain:'Δοκίμασε ξανά',
+    greekWarning:'Αυτό μοιάζει με ελληνικό κείμενο. Το BlankStare μεταφράζει <strong>αγγλικό developer περιεχόμενο</strong> σε απλά λόγια. Επίλεξε αγγλικό μήνυμα σφάλματος, κώδικα ή τεκμηρίωση.',
   },
 };
 
-// ══ SYSTEM PROMPTS ════════════════════════════════════════════════════════════
-const LEVEL_LABELS = {
-  eli5:     { en:'complete beginner (ELI5 level)', el:'απόλυτο αρχάριο (ELI5)' },
-  standard: { en:'intelligent non-developer',      el:'έξυπνο μη-προγραμματιστή' },
-  business: { en:'business professional (focus on business impact, ROI, and risk)',    el:'επαγγελματία (εστίαση σε επιπτώσεις, ROI, ρίσκο)' },
-  design:   { en:'designer or creative professional (use visual and spatial analogies)', el:'σχεδιαστή (χρησιμοποίησε οπτικές αναλογίες)' },
-  legal:    { en:'legal or compliance professional (be precise and formal)',            el:'νομικό ή compliance επαγγελματία (ακριβής και επίσημος)' },
+// ══ READING LEVELS — meaningfully different system prompts ════════════════════
+// The key insight: Standard uses everyday analogies, Vibecoder uses AI/API
+// concepts as bridges since they already know those.
+const LEVEL_DESC = {
+  eli5: {
+    en: 'a 5-year-old child — use the simplest possible words, the shortest sentences, and playful everyday analogies. Zero jargon.',
+    el: 'παιδί 5 ετών — απλούστατες λέξεις, κοντές προτάσεις, παιχνιδιάρικες αναλογίες. Μηδέν ορολογία.',
+  },
+  newbie: {
+    en: 'a curious adult who has heard of coding but never done it — use friendly analogies from everyday life, be encouraging, assume nothing technical.',
+    el: 'αρχάριο που γνωρίζει ότι υπάρχει κώδικας αλλά δεν έχει ασχοληθεί — φιλικές αναλογίες από καθημερινή ζωή.',
+  },
+  standard: {
+    en: 'an intelligent non-developer who works with developers — smart, works in product/design/marketing/management, uses tools like Notion/Figma/Slack but has never written code. Use analogies from work life (documents, folders, processes, phone calls).',
+    el: 'έξυπνο μη-προγραμματιστή που δουλεύει με developers — χρησιμοποιεί Notion/Figma/Slack αλλά δεν γράφει κώδικα. Αναλογίες από εργασιακή ζωή.',
+  },
+  vibecoder: {
+    en: 'a vibecoder who builds software using AI tools (Claude, Cursor, Copilot, ChatGPT) but does not write traditional code. They ALREADY KNOW: what an API is, what a model/token/prompt is, what git roughly does, what a server is, what "running locally" means. Use these as bridge concepts — do NOT over-explain them. They do NOT know: compiler errors, syntax rules, package manager internals, algorithm complexity, low-level architecture.',
+    el: 'vibecoder που φτιάχνει με AI (Claude, Cursor) αλλά δεν γράφει παραδοσιακό κώδικα. ΞΕΡΕΙ ήδη: API, model, token, prompt, git βασικά, server. ΔΕΝ ΞΕΡΕΙ: compiler errors, syntax, package managers σε βάθος.',
+  },
 };
 
+// ══ SYSTEM PROMPT — TRANSLATION PHILOSOPHY ════════════════════════════════════
+// The core fix: we are TRANSLATING, not explaining. The output replaces the
+// original — the reader should never need to go back and read the dev text.
 function buildSystemPrompt(lang, level, userContext) {
-  const levelLabel = LEVEL_LABELS[level]?.[lang] || LEVEL_LABELS.standard[lang];
-  const langInstr  = lang === 'el' ? 'Respond ONLY in Greek (Ελληνικά).' : 'Respond in English.';
-  const ctxLine    = userContext ? `Context: the user is reading this because: "${userContext}".` : '';
+  const who     = LEVEL_DESC[level]?.[lang] || LEVEL_DESC.standard[lang];
+  const langInstr = lang === 'el'
+    ? 'Write your translation in Greek (Ελληνικά). All output must be Greek.'
+    : 'Write in plain English.';
+  const ctx = userContext
+    ? `\nReader context: "${userContext}"`
+    : '';
 
-  return `You explain developer documentation, terminal output, error messages, and technical jargon to a ${levelLabel}. Be concise. No code unless asked. Use analogies. State common names clearly. ${ctxLine} ${langInstr}`;
+  return `You are a translator from Dev English (technical developer jargon) into plain language. Your reader is: ${who}.${ctx}
+
+TRANSLATION RULES — follow these exactly:
+1. REWRITE the content in plain language so the reader can fully understand it WITHOUT ever seeing the original. Write a TRANSLATION, not a footnote or a dictionary entry.
+2. Start with 1-2 plain sentences that capture the COMPLETE meaning. Your reader should be able to act on those 2 sentences alone.
+3. NEVER say "This means..." or "This is a..." or "In developer terms..." — just state it directly as if you wrote the original in plain language.
+4. Translate jargon within your sentences, not as separate bullet definitions.
+5. If the content requires action, state that action in plain terms: what to do, not what the error is called.
+6. Use analogies naturally inside sentences, not as separate "think of it like..." paragraphs.
+7. No code unless the reader specifically asks.
+8. ${langInstr}`;
 }
 
 // ══ DOM REFS ══════════════════════════════════════════════════════════════════
@@ -67,54 +98,58 @@ const states = {
   loading: $('state-loading'), result: $('state-result'), error: $('state-error'),
 };
 const el = {
-  settingsBtn:    $('settings-btn'),
-  gotoSettings:   $('goto-settings-btn'),
-  langToggle:     $('lang-toggle'),
-  historyBtn:     $('history-btn'),
-  historyPanel:   $('history-panel'),
-  historyClose:   $('history-close'),
-  historyList:    $('history-list'),
-  historyEmpty:   $('history-empty'),
-  contextToggle:  $('context-toggle'),
-  contextArea:    $('context-input-area'),
-  userContext:    $('user-context'),
-  readingLevel:   $('reading-level'),
-  selectedText:   $('selected-text'),
-  explanationText:$('explanation-text'),
+  settingsBtn:       $('settings-btn'),
+  gotoSettings:      $('goto-settings-btn'),
+  langToggle:        $('lang-toggle'),
+  historyBtn:        $('history-btn'),
+  historyPanel:      $('history-panel'),
+  historyClose:      $('history-close'),
+  historyList:       $('history-list'),
+  historyEmpty:      $('history-empty'),
+  contextToggle:     $('context-toggle'),
+  contextArea:       $('context-input-area'),
+  userContext:       $('user-context'),
+  readingLevel:      $('reading-level'),
+  selectedText:      $('selected-text'),
+  explanationText:   $('explanation-text'),
   explanationCursor: $('explanation-cursor'),
   explanationActions:$('explanation-actions'),
-  clearBtn:       $('clear-btn'),
-  copyBtn:        $('copy-btn'),
-  voiceBtn:       $('voice-btn'),
-  deeperBtn:      $('deeper-btn'),
-  rephraseBtn:    $('rephrase-btn'),
-  fullpageBtn:    $('fullpage-btn'),
-  jargonCb:       $('jargon-toggle-cb'),
-  jargonResults:  $('jargon-results'),
-  linkMdn:        $('link-mdn'),
-  linkW3s:        $('link-w3s'),
-  linkDevdocs:    $('link-devdocs'),
-  ytSearchBtn:    $('yt-search-btn'),
-  ytResults:      $('yt-results'),
-  ytEmbed:        $('yt-embed'),
-  webSearchBtn:   $('web-search-btn'),
-  webResults:     $('web-results'),
-  customQInput:   $('custom-q-input'),
-  customQBtn:     $('custom-q-btn'),
-  customQResult:  $('custom-q-result'),
-  errorMessage:   $('error-message'),
-  errorRetryBtn:  $('error-retry-btn'),
+  clearBtn:          $('clear-btn'),
+  copyBtn:           $('copy-btn'),
+  voiceBtn:          $('voice-btn'),
+  deeperBtn:         $('deeper-btn'),
+  rephraseBtn:       $('rephrase-btn'),
+  fullpageBtn:       $('fullpage-btn'),
+  rerunBtn:          $('rerun-btn'),
+  jargonCb:          $('jargon-toggle-cb'),
+  jargonResults:     $('jargon-results'),
+  linkMdn:           $('link-mdn'),
+  linkW3s:           $('link-w3s'),
+  linkDevdocs:       $('link-devdocs'),
+  ytSearchBtn:       $('yt-search-btn'),
+  ytResults:         $('yt-results'),
+  ytEmbed:           $('yt-embed'),
+  webSearchBtn:      $('web-search-btn'),
+  webResults:        $('web-results'),
+  customQInput:      $('custom-q-input'),
+  customQBtn:        $('custom-q-btn'),
+  customQResult:     $('custom-q-result'),
+  errorMessage:      $('error-message'),
+  errorRetryBtn:     $('error-retry-btn'),
+  warningBox:        $('lang-warning-box'),
 };
 
-// ══ APP STATE ══════════════════════════════════════════════════════════════════
-let settings        = {};
-let currentText     = '';
-let currentExplain  = '';
-let currentQuery    = '';
-let currentLang     = 'en';
-let lastTimestamp   = 0;
-let voiceActive     = false;
-const sessionHistory = []; // in-session only, max 20
+// ══ APP STATE ═════════════════════════════════════════════════════════════════
+let settings       = {};
+let currentText    = '';
+let currentExplain = '';
+let currentQuery   = '';
+let currentLang    = 'en';
+let lastTimestamp  = 0;
+let voiceActive    = false;
+let rerunPending   = false;
+let currentAudio   = null; // for Orpheus audio element
+const sessionHistory = [];
 
 // ══ STATE SWITCHER ════════════════════════════════════════════════════════════
 function showState(name) {
@@ -135,11 +170,10 @@ function applyI18n(lang) {
     if (t[key] !== undefined) node.placeholder = t[key];
   });
   el.langToggle.textContent = lang.toUpperCase();
-  el.langToggle.classList.toggle('active', true);
   document.documentElement.lang = lang;
 }
 
-// ══ LOTTIE ANIMATIONS ════════════════════════════════════════════════════════
+// ══ LOTTIE ════════════════════════════════════════════════════════════════════
 function loadLottie(containerId, iconName, loop = true) {
   const container = $(containerId);
   if (!container || typeof lottie === 'undefined') return null;
@@ -157,30 +191,26 @@ function initLottie() {
   loadLottie('nokey-anim',   'icon-apikey.json',  true);
   loadLottie('loading-anim', 'icon-loading.json', true);
   loadLottie('error-anim',   'icon-empty.json',   true);
-  // Settings icon: plays on hover only
-  const settingsAnim = loadLottie('settings-anim', 'icon-settings.json', false);
-  if (settingsAnim) {
-    el.settingsBtn.addEventListener('mouseenter', () => { settingsAnim.stop(); settingsAnim.play(); });
-  }
+  const sa = loadLottie('settings-anim', 'icon-settings.json', false);
+  if (sa) el.settingsBtn?.addEventListener('mouseenter', () => { sa.stop(); sa.play(); });
 }
 
-// ══ STARTUP ══════════════════════════════════════════════════════════════════
+// ══ STARTUP ═══════════════════════════════════════════════════════════════════
 async function init() {
   settings = await getSettings();
   currentLang = settings.language || 'en';
   applyI18n(currentLang);
 
-  // Reading level
-  if (el.readingLevel) el.readingLevel.value = settings.readingLevel || 'standard';
+  const validLevels = ['eli5', 'newbie', 'standard', 'vibecoder'];
+  const savedLevel  = validLevels.includes(settings.readingLevel) ? settings.readingLevel : 'standard';
+  if (el.readingLevel) el.readingLevel.value = savedLevel;
 
-  // User context input
   if (el.userContext && settings.userContext) {
     el.userContext.value = settings.userContext;
-    el.contextArea.classList.remove('hidden');
-    el.contextToggle.textContent = '− Context';
+    el.contextArea?.classList.remove('hidden');
+    if (el.contextToggle) el.contextToggle.textContent = '− Context';
   }
 
-  // Jargon toggle state
   if (el.jargonCb) el.jargonCb.checked = !!settings.jargonDictionary;
 
   initLottie();
@@ -199,29 +229,47 @@ async function checkForPendingText() {
   explainText(pending.text);
 }
 
-// ══ EXPLAIN ══════════════════════════════════════════════════════════════════
+// ══ GREEK DETECTION ═══════════════════════════════════════════════════════════
+function isLikelyGreek(text) {
+  const greekChars = (text.match(/[\u0370-\u03FF\u1F00-\u1FFF]/g) || []).length;
+  return greekChars / text.length > 0.2;
+}
+
+// ══ EXPLAIN — TRANSLATION MODE ════════════════════════════════════════════════
 async function explainText(text, mode = 'normal') {
   if (!text) return;
+
   settings = await getSettings();
   if (!settings.groqApiKey) { showState('nokey'); return; }
 
-  currentText = text;
-  currentQuery = text.length > 60 ? text.slice(0, 60).replace(/\s\S*$/, '').trim() : text.trim();
+  // Greek text guard: if the selected text is mostly Greek, warn the user
+  if (isLikelyGreek(text) && mode === 'normal') {
+    showState('result');
+    el.selectedText.textContent = text.length > 200 ? text.slice(0, 200) + '…' : text;
+    el.explanationText.innerHTML = `<div class="lang-warning-inline">${I18N[currentLang].greekWarning}</div>`;
+    el.explanationCursor.classList.add('hidden');
+    el.explanationActions.classList.add('hidden');
+    return;
+  }
 
-  const level   = el.readingLevel?.value || settings.readingLevel || 'standard';
-  const context = el.userContext?.value.trim() || settings.userContext || '';
-  const lang    = currentLang;
+  currentText  = text;
+  currentQuery = text.length > 60
+    ? text.slice(0, 60).replace(/\s\S*$/, '').trim()
+    : text.trim();
 
-  let systemPrompt = buildSystemPrompt(lang, level, context);
-  let userPrompt   = `Please explain this:\n\n${text}`;
+  const level      = el.readingLevel?.value || settings.readingLevel || 'standard';
+  const context    = el.userContext?.value.trim() || settings.userContext || '';
+  const sysPrompt  = buildSystemPrompt(currentLang, level, context);
 
+  let userPrompt;
   if (mode === 'deeper') {
-    userPrompt = `Go deeper on this, with more detail and nuance, still in plain language. Original text:\n\n${text}\n\nPrevious explanation:\n${currentExplain}`;
+    userPrompt = `The reader wants more detail. Expand on this translation — go deeper while staying in plain language. Do not repeat what you already said, just add depth.\n\nOriginal dev text:\n${text}\n\nYour previous translation:\n${currentExplain}`;
   } else if (mode === 'rephrase') {
-    userPrompt = `Explain the same thing using completely different wording and a fresh analogy. Do not repeat the previous explanation. Original text:\n\n${text}`;
+    userPrompt = `Translate the same dev text again, using completely different wording and a fresh approach. Do not repeat any phrases from the previous translation.\n\nDev text:\n${text}`;
   } else if (mode === 'fullpage') {
-    systemPrompt = buildSystemPrompt(lang, level, context) + ' Summarise the whole page in 3-5 clear points.';
-    userPrompt   = `What is this page about and what is it asking me to do or understand? Content:\n\n${text}`;
+    userPrompt = `Translate this entire page's content into plain language. Give a clear 3-5 point summary of what this page is about and what it's asking the reader to understand or do.\n\nPage content:\n${text}`;
+  } else {
+    userPrompt = `Translate this dev text into plain language:\n\n${text}`;
   }
 
   el.selectedText.textContent = text.length > 200 ? text.slice(0, 200) + '…' : text;
@@ -232,12 +280,14 @@ async function explainText(text, mode = 'normal') {
   el.jargonResults.classList.add('hidden');
   resetSecondary();
   updateResourceLinks(text);
-
   currentExplain = '';
 
   explainWithGroq(
-    text, settings.groqApiKey, settings.model,
-    systemPrompt, userPrompt,
+    text,
+    settings.groqApiKey,
+    settings.model,
+    sysPrompt,
+    userPrompt,
     (_delta, full) => {
       if (states.result.classList.contains('hidden')) showState('result');
       el.explanationText.textContent = full;
@@ -247,28 +297,28 @@ async function explainText(text, mode = 'normal') {
       currentExplain = full;
       el.explanationCursor.classList.add('hidden');
       el.explanationActions.classList.remove('hidden');
-      // Auto-run jargon if toggle is on
+      clearRerunPending();
       if (el.jargonCb?.checked) runJargonDictionary(full);
-      // Add to session history
-      addToHistory({ query: currentQuery, text, explanation: full, lang, timestamp: Date.now() });
+      addToHistory({ query: currentQuery, text, explanation: full, lang: currentLang, timestamp: Date.now() });
     },
     (err) => {
       el.explanationCursor.classList.add('hidden');
       el.errorMessage.textContent = err.message || 'Something went wrong.';
       showState('error');
     },
+    !!settings.autoFallback,
   );
 }
 
 // ══ RESOURCE LINKS ════════════════════════════════════════════════════════════
 function updateResourceLinks(text) {
   const links = buildResourceLinks(text);
-  el.linkMdn.href     = links.mdn;
-  el.linkW3s.href     = links.w3s;
-  el.linkDevdocs.href = links.devdocs;
+  if (el.linkMdn)     el.linkMdn.href     = links.mdn;
+  if (el.linkW3s)     el.linkW3s.href     = links.w3s;
+  if (el.linkDevdocs) el.linkDevdocs.href = links.devdocs;
 }
 
-// ══ COPY ═════════════════════════════════════════════════════════════════════
+// ══ COPY ══════════════════════════════════════════════════════════════════════
 async function copyExplanation() {
   if (!currentExplain) return;
   try {
@@ -279,92 +329,144 @@ async function copyExplanation() {
   } catch (_) {}
 }
 
-// ══ VOICE ════════════════════════════════════════════════════════════════════
-function toggleVoice() {
+// ══ VOICE — ORPHEUS + BROWSER FALLBACK ═══════════════════════════════════════
+async function toggleVoice() {
   if (voiceActive) {
-    speechSynthesis.cancel();
-    voiceActive = false;
-    el.voiceBtn.classList.remove('active');
-    el.voiceBtn.title = 'Read aloud';
-  } else {
-    const u = new SpeechSynthesisUtterance(currentExplain);
-    u.lang = currentLang === 'el' ? 'el-GR' : 'en-US';
-    u.onend = () => { voiceActive = false; el.voiceBtn.classList.remove('active'); };
-    speechSynthesis.speak(u);
-    voiceActive = true;
-    el.voiceBtn.classList.add('active');
-    el.voiceBtn.title = 'Stop reading';
+    stopVoice();
+    return;
   }
+  if (!currentExplain) return;
+
+  const mode  = settings.ttsMode || 'browser';
+  const key   = settings.groqApiKey;
+  const voice = settings.orpheusVoice || 'tara';
+
+  if (mode === 'orpheus' && key) {
+    try {
+      setVoiceActive(true, 'Orpheus');
+      const url   = await speakWithOrpheus(currentExplain, key, voice);
+      currentAudio = new Audio(url);
+      currentAudio.onended = () => {
+        URL.revokeObjectURL(url);
+        setVoiceActive(false);
+      };
+      currentAudio.play();
+      return;
+    } catch (err) {
+      console.warn('[BlankStare] Orpheus failed, falling back to browser voice:', err.message);
+      // Fall through to browser TTS
+    }
+  }
+
+  // Browser Web Speech API
+  useBrowserVoice();
 }
 
-// ══ JARGON DICTIONARY ════════════════════════════════════════════════════════
-async function runJargonDictionary(explanationText) {
-  el.jargonResults.innerHTML = `<div class="jargon-loading">Looking up jargon…</div>`;
+function useBrowserVoice() {
+  const u = new SpeechSynthesisUtterance(currentExplain);
+  const bestVoice = getBestSystemVoice(currentLang);
+  if (bestVoice) u.voice = bestVoice;
+  u.lang  = currentLang === 'el' ? 'el-GR' : 'en-US';
+  u.rate  = 0.93;
+  u.pitch = 1.05;
+  u.onend = () => setVoiceActive(false);
+
+  if (!speechSynthesis.getVoices().length) {
+    speechSynthesis.onvoiceschanged = () => { speechSynthesis.speak(u); };
+  } else {
+    speechSynthesis.speak(u);
+  }
+  setVoiceActive(true, 'Browser');
+}
+
+function getBestSystemVoice(lang) {
+  const voices   = speechSynthesis.getVoices();
+  const langCode = lang === 'el' ? 'el' : 'en';
+  const score    = v => {
+    const n = v.name.toLowerCase();
+    if (n.includes('premium') || n.includes('enhanced')) return 3;
+    if (n.includes('neural')  || n.includes('natural'))  return 2;
+    if (v.localService) return 1;
+    return 0;
+  };
+  return voices.filter(v => v.lang.startsWith(langCode)).sort((a, b) => score(b) - score(a))[0] || null;
+}
+
+function setVoiceActive(active, _source) {
+  voiceActive = active;
+  el.voiceBtn?.classList.toggle('active', active);
+  el.voiceBtn.title = active ? 'Stop reading' : 'Read aloud';
+}
+
+function stopVoice() {
+  speechSynthesis.cancel();
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  setVoiceActive(false);
+}
+
+// ══ JARGON DICTIONARY — now a glossary, not the main output ══════════════════
+// This runs AFTER the translation is shown, as a supplementary reference.
+async function runJargonDictionary(translationText) {
+  el.jargonResults.innerHTML = `<div class="jargon-loading">Building glossary…</div>`;
   el.jargonResults.classList.remove('hidden');
 
-  const prompt = `List every technical term, acronym, and jargon word in this text that a non-developer might not know. Return ONLY valid JSON (no markdown, no backticks): [{"term":"word","def":"2-10 word plain definition"}]. If none, return []. Text:\n${explanationText}`;
+  const prompt = `From this plain-English translation, identify any technical terms or acronyms that still appear (the ones the translator couldn't fully avoid). Return ONLY valid JSON (no markdown, no backticks): [{"term":"word","def":"5-10 word plain definition"}]. If none remain, return []. Translation:\n${translationText}`;
 
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${settings.groqApiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant', // always use fast model for jargon
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 400, temperature: 0.2,
       }),
     });
     const data  = await res.json();
     const raw   = data.choices?.[0]?.message?.content || '[]';
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const terms = JSON.parse(clean);
-
+    const terms = JSON.parse(raw.replace(/```json|```/g, '').trim());
     if (!terms.length) {
-      el.jargonResults.innerHTML = `<div class="jargon-loading">No jargon detected.</div>`;
+      el.jargonResults.innerHTML = `<div class="jargon-loading">✓ No remaining jargon detected.</div>`;
       return;
     }
-
     el.jargonResults.innerHTML = terms.map(t =>
       `<div class="jargon-item">
          <span class="jargon-term-text">${esc(t.term)}</span>
          <span class="jargon-def-text">${esc(t.def)}</span>
        </div>`
     ).join('');
-
-  } catch (err) {
-    el.jargonResults.innerHTML = `<div class="jargon-loading">Jargon lookup failed.</div>`;
+  } catch (_) {
+    el.jargonResults.innerHTML = `<div class="jargon-loading">Glossary unavailable.</div>`;
   }
 }
 
-// ══ FULL PAGE SUMMARY ════════════════════════════════════════════════════════
+// ══ FULL PAGE SUMMARY ═════════════════════════════════════════════════════════
 async function handleFullPage() {
-  // Ask the active tab's content script for the page text
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id) return;
     const res = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_CONTENT' });
-    const pageText = (res?.text || '').slice(0, 4000); // keep under token limit
-    if (!pageText) return;
-    explainText(pageText, 'fullpage');
+    const txt = (res?.text || '').slice(0, 4000);
+    if (!txt) return;
+    explainText(txt, 'fullpage');
   } catch (_) {
     el.errorMessage.textContent = 'Could not read page content. Try selecting specific text instead.';
     showState('error');
   }
 }
 
-// ══ YOUTUBE ══════════════════════════════════════════════════════════════════
+// ══ YOUTUBE ═══════════════════════════════════════════════════════════════════
 async function handleYouTubeSearch() {
   if (!settings.youtubeKey) {
-    el.ytResults.innerHTML = `<p style="padding:10px 12px;font-size:12px;color:var(--text-muted);">No YouTube API key. <a href="#" id="yt-settings-link" style="color:var(--accent);">Add in Settings →</a></p>`;
+    el.ytResults.innerHTML = `<p style="padding:10px 12px;font-size:12px;color:var(--text-muted);">No YouTube API key. <a href="#" id="yt-sl" style="color:var(--accent);">Add in Settings →</a></p>`;
     el.ytResults.classList.remove('hidden');
-    $('yt-settings-link')?.addEventListener('click', openSettings);
+    $('yt-sl')?.addEventListener('click', e => { e.preventDefault(); openSettings(); });
     return;
   }
   setLoading(el.ytSearchBtn, true);
   el.ytResults.innerHTML = '';
   el.ytEmbed.classList.add('hidden');
   el.ytResults.classList.add('hidden');
-
   try {
     const videos = await searchYouTube(currentQuery, settings.youtubeKey);
     if (!videos.length) {
@@ -380,7 +482,7 @@ async function handleYouTubeSearch() {
         </div>`).join('');
       el.ytResults.querySelectorAll('.yt-card').forEach(c => {
         c.addEventListener('click', () => embedVideo(c.dataset.id));
-        c.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') embedVideo(c.dataset.id); });
+        c.addEventListener('keydown', e => { if (e.key==='Enter') embedVideo(c.dataset.id); });
       });
     }
     el.ytResults.classList.remove('hidden');
@@ -390,8 +492,8 @@ async function handleYouTubeSearch() {
   } finally { setLoading(el.ytSearchBtn, false); }
 }
 
-function embedVideo(videoId) {
-  el.ytEmbed.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen title="YouTube video"></iframe>`;
+function embedVideo(id) {
+  el.ytEmbed.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen title="YouTube"></iframe>`;
   el.ytEmbed.classList.remove('hidden');
   el.ytEmbed.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
@@ -406,7 +508,7 @@ async function handleWebSearch() {
     if (!results) {
       el.webResults.innerHTML = `<div class="ddg-fallback"><a href="${duckDuckGoUrl(currentQuery)}" target="_blank" rel="noopener">🔍 Search DuckDuckGo for "${esc(currentQuery)}" ↗</a><br><span style="font-size:11px;color:var(--text-faint);">Add a SearXNG URL in Settings for inline results.</span></div>`;
     } else if (!results.length) {
-      el.webResults.innerHTML = `<p style="padding:10px 12px;font-size:12px;color:var(--text-muted);">No results found.</p>`;
+      el.webResults.innerHTML = `<p style="padding:10px 12px;font-size:12px;color:var(--text-muted);">No results.</p>`;
     } else {
       el.webResults.innerHTML = results.map(r => `
         <div class="search-card">
@@ -429,31 +531,22 @@ async function handleCustomQuestion() {
   setLoading(el.customQBtn, true);
   el.customQResult.classList.add('hidden');
   el.customQResult.textContent = '';
-
-  const systemPrompt = buildSystemPrompt(currentLang, el.readingLevel?.value || 'standard', '');
-  const userPrompt   = `Context (the text the user is reading):\n${currentText}\n\nUser question: ${q}`;
-
-  let answer = '';
-  explainWithGroq(
-    currentText, settings.groqApiKey, settings.model,
-    systemPrompt, userPrompt,
-    (_delta, full) => {
-      el.customQResult.textContent = full;
-      el.customQResult.classList.remove('hidden');
-      answer = full;
-    },
+  const sys  = buildSystemPrompt(currentLang, el.readingLevel?.value || 'standard', '');
+  const user = `Context (dev text the reader selected):\n${currentText}\n\nQuestion: ${q}`;
+  explainWithGroq(currentText, settings.groqApiKey, settings.model, sys, user,
+    (_d, full) => { el.customQResult.textContent = full; el.customQResult.classList.remove('hidden'); },
     () => { setLoading(el.customQBtn, false); },
-    (err) => { el.customQResult.textContent = '❌ ' + err.message; el.customQResult.classList.remove('hidden'); setLoading(el.customQBtn, false); },
+    err => { el.customQResult.textContent = '❌ ' + err.message; el.customQResult.classList.remove('hidden'); setLoading(el.customQBtn, false); },
+    !!settings.autoFallback,
   );
 }
 
-// ══ HISTORY ══════════════════════════════════════════════════════════════════
+// ══ HISTORY ═══════════════════════════════════════════════════════════════════
 function addToHistory(entry) {
   sessionHistory.unshift(entry);
   if (sessionHistory.length > 20) sessionHistory.pop();
   renderHistory();
 }
-
 function renderHistory() {
   if (!sessionHistory.length) {
     el.historyEmpty?.classList.remove('hidden');
@@ -464,16 +557,14 @@ function renderHistory() {
   el.historyList.innerHTML = sessionHistory.map((h, i) => `
     <div class="history-item" data-index="${i}" role="button" tabindex="0">
       <div class="history-item-query">${esc(h.query)}</div>
-      <div class="history-item-time">${formatTime(h.timestamp)}</div>
+      <div class="history-item-time">${new Date(h.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
     </div>`).join('');
   el.historyList.querySelectorAll('.history-item').forEach(item => {
     item.addEventListener('click', () => {
       const h = sessionHistory[+item.dataset.index];
       if (!h) return;
       el.historyPanel.classList.add('hidden');
-      currentText     = h.text;
-      currentExplain  = h.explanation;
-      currentQuery    = h.query;
+      currentText = h.text; currentExplain = h.explanation; currentQuery = h.query;
       el.selectedText.textContent = h.text.length > 200 ? h.text.slice(0,200)+'…' : h.text;
       el.explanationText.textContent = h.explanation;
       el.explanationCursor.classList.add('hidden');
@@ -485,46 +576,45 @@ function renderHistory() {
   });
 }
 
-function formatTime(ts) {
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+// ══ RERUN BUTTON ══════════════════════════════════════════════════════════════
+function markRerunPending() {
+  if (!currentText) return;
+  rerunPending = true;
+  el.rerunBtn?.removeAttribute('disabled');
+  el.rerunBtn?.classList.add('rerun-active');
+}
+function clearRerunPending() {
+  rerunPending = false;
+  el.rerunBtn?.setAttribute('disabled', '');
+  el.rerunBtn?.classList.remove('rerun-active');
 }
 
-// ══ HELPERS ══════════════════════════════════════════════════════════════════
+// ══ HELPERS ═══════════════════════════════════════════════════════════════════
 function resetSecondary() {
-  el.ytResults.classList.add('hidden');
-  el.ytEmbed.classList.add('hidden');
-  el.webResults.classList.add('hidden');
-  el.customQResult.classList.add('hidden');
-  el.jargonResults.classList.add('hidden');
-  el.ytResults.innerHTML = '';
-  el.ytEmbed.innerHTML = '';
-  el.webResults.innerHTML = '';
-  el.customQResult.textContent = '';
+  [el.ytResults, el.ytEmbed, el.webResults, el.customQResult, el.jargonResults]
+    .forEach(e => { e?.classList.add('hidden'); if (e) e.innerHTML = ''; });
 }
-
 function setLoading(btn, on) {
   if (!btn) return;
   btn.dataset.loading = on ? 'true' : 'false';
   btn.disabled = on;
 }
-
 function openSettings(e) { e?.preventDefault(); chrome.runtime.openOptionsPage(); }
-
 function esc(s = '') {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ══ EVENT LISTENERS ═══════════════════════════════════════════════════════════
+// ══ EVENT LISTENERS ════════════════════════════════════════════════════════════
 el.settingsBtn?.addEventListener('click', openSettings);
 el.gotoSettings?.addEventListener('click', openSettings);
-el.clearBtn?.addEventListener('click', () => { speechSynthesis.cancel(); showState('welcome'); });
+el.clearBtn?.addEventListener('click', () => { stopVoice(); clearRerunPending(); showState('welcome'); });
 el.errorRetryBtn?.addEventListener('click', () => { if (currentText) explainText(currentText); });
 
 el.langToggle?.addEventListener('click', () => {
   const next = currentLang === 'en' ? 'el' : 'en';
   applyI18n(next);
   saveSettings({ language: next }).catch(() => {});
+  markRerunPending();
 });
 
 el.contextToggle?.addEventListener('click', () => {
@@ -533,17 +623,15 @@ el.contextToggle?.addEventListener('click', () => {
   el.contextToggle.setAttribute('aria-expanded', String(!hidden));
 });
 
-el.historyBtn?.addEventListener('click', () => {
-  renderHistory();
-  el.historyPanel.classList.toggle('hidden');
-});
+el.historyBtn?.addEventListener('click', () => { renderHistory(); el.historyPanel.classList.toggle('hidden'); });
 el.historyClose?.addEventListener('click', () => el.historyPanel.classList.add('hidden'));
 
 el.copyBtn?.addEventListener('click', copyExplanation);
 el.voiceBtn?.addEventListener('click', toggleVoice);
-el.deeperBtn?.addEventListener('click', () => explainText(currentText, 'deeper'));
+el.deeperBtn?.addEventListener('click',   () => explainText(currentText, 'deeper'));
 el.rephraseBtn?.addEventListener('click', () => explainText(currentText, 'rephrase'));
 el.fullpageBtn?.addEventListener('click', handleFullPage);
+el.rerunBtn?.addEventListener('click', () => { if (!currentText) return; clearRerunPending(); explainText(currentText, 'normal'); });
 
 el.jargonCb?.addEventListener('change', () => {
   saveSettings({ jargonDictionary: el.jargonCb.checked }).catch(() => {});
@@ -558,20 +646,27 @@ el.customQInput?.addEventListener('keydown', e => { if (e.key === 'Enter') handl
 
 el.readingLevel?.addEventListener('change', () => {
   saveSettings({ readingLevel: el.readingLevel.value }).catch(() => {});
+  markRerunPending();
 });
-
 el.userContext?.addEventListener('change', () => {
   saveSettings({ userContext: el.userContext.value.trim() }).catch(() => {});
+  markRerunPending();
+});
+el.userContext?.addEventListener('input', markRerunPending);
+
+// IS_PANEL_OPEN — answers content script pings
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.type === 'IS_PANEL_OPEN') { sendResponse({ open: true }); return true; }
 });
 
-// Refresh settings when panel comes back into focus
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState !== 'visible') return;
   settings = await getSettings();
-  if (settings.groqApiKey && !states.nokey.classList.contains('hidden')) showState('welcome');
+  const validLevels2 = ['eli5', 'newbie', 'standard', 'vibecoder'];
+  if (el.readingLevel) el.readingLevel.value = validLevels2.includes(settings.readingLevel) ? settings.readingLevel : 'standard';
   currentLang = settings.language || 'en';
   applyI18n(currentLang);
-  if (el.readingLevel) el.readingLevel.value = settings.readingLevel || 'standard';
+  if (settings.groqApiKey && !states.nokey.classList.contains('hidden')) showState('welcome');
 });
 
 // ══ KICK OFF ══════════════════════════════════════════════════════════════════

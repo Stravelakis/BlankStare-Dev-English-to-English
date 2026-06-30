@@ -206,3 +206,55 @@ button{cursor:pointer;font-family:var(--font);border:none;background:none}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:10px}
+
+/* ── Repeat / re-explain button ── */
+.rerun-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 15px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  color: var(--text-faint);
+  cursor: not-allowed;
+  transition: all 0.2s;
+  line-height: 1;
+}
+.rerun-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.rerun-btn.rerun-active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+  cursor: pointer;
+  animation: rerun-pulse 1.5s ease-in-out infinite;
+}
+.rerun-btn.rerun-active:hover {
+  background: var(--accent);
+  color: #0c0e14;
+  transform: rotate(-30deg);
+}
+@keyframes rerun-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232,168,56,0); }
+  50%       { box-shadow: 0 0 0 5px rgba(232,168,56,0.25); }
+}
+
+/* ── Greek text warning (shown when user selects Greek text in EN mode) ── */
+.lang-warning-inline {
+  padding: 12px 14px;
+  background: rgba(248, 113, 113, 0.07);
+  border: 1px solid rgba(248, 113, 113, 0.22);
+  border-left: 3px solid #f87171;
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: #fca5a5;
+  line-height: 1.7;
+}
+.lang-warning-inline strong { color: #fecaca; font-weight: 700; }
+.lang-warning-inline em     { font-style: italic; color: #f87171; }

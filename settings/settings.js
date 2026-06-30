@@ -1,4 +1,4 @@
-// settings.js — BlankStare v0.3
+// settings.js — BlankStare v0.5
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -34,10 +34,6 @@ function initLottie() {
   loadLottie('lottie-search',   'icon-read.json',       { loop: true });
   loadLottie('lottie-trigger',  'icon-assign.json',     { loop: true });
   loadLottie('lottie-exclude',  'icon-hide.json',       { loop: true });
-
-  // Model cards
-  loadLottie('lottie-model-fast',    'icon-loading.json',    { loop: true });
-  loadLottie('lottie-model-powerful','icon-powerhouse.json',  { loop: true });
 
   // About hero (plays once, then loops softly)
   loadLottie('lottie-about',    'icon-coding.json',     { loop: true });
@@ -100,8 +96,13 @@ async function loadForm() {
   $('youtube-key').value = s.youtubeKey  || '';
   $('searxng-url').value = s.searxngUrl  || '';
 
-  const modelRadio = document.querySelector(`input[name="model"][value="${s.model}"]`);
-  if (modelRadio) modelRadio.checked = true;
+  const modelSelect = $('model-select');
+  if (modelSelect) modelSelect.value = s.model || 'llama-3.1-8b-instant';
+
+  $('auto-fallback').checked = s.autoFallback !== false;
+
+  setActiveTTS(s.ttsMode || 'browser');
+  $('orpheus-voice').value = s.orpheusVoice || 'zoe';
 
   $('trigger-floating').checked   = !!s.triggerFloating;
   $('trigger-rightclick').checked = !!s.triggerRightClick;
@@ -111,15 +112,21 @@ async function loadForm() {
 
   // Default reading level
   const rl = $('default-reading-level');
-  if (rl) rl.value = s.readingLevel || 'standard';
+  // Map any removed levels (business/design/legal) to 'standard'
+  const validLevels = ['eli5', 'newbie', 'standard', 'vibecoder'];
+  const savedLevel = validLevels.includes(s.readingLevel) ? s.readingLevel : 'standard';
+  if (rl) rl.value = savedLevel;
 
   // Exclude list
   $('exclude-list').value = (s.excludeList || []).join('\n');
 
-  // Auto-expand guides for empty required fields
+  // Open the "what you get for free" accordion automatically when no key is set yet
   if (!s.groqApiKey) {
-    $('groq-key')?.closest('.api-field')?.querySelector('.setup-guide')?.classList.add('guide-open');
+    $('groq-info-accordion')?.setAttribute('open', '');
   }
+
+  // Reflect which search provider is actually active right now
+  updateSearchActiveUI({ assumeSavedUrlWorks: true });
 }
 
 // ── Save ─────────────────────────────────────────────────────────────────────
@@ -127,7 +134,10 @@ async function saveForm() {
   const groqKey    = $('groq-key').value.trim();
   const youtubeKey = $('youtube-key').value.trim();
   const searxngUrl = $('searxng-url').value.trim();
-  const model      = document.querySelector('input[name="model"]:checked')?.value;
+  const model      = $('model-select')?.value || 'llama-3.1-8b-instant';
+  const autoFallback = $('auto-fallback').checked;
+  const ttsMode     = document.querySelector('.tts-btn.active')?.dataset.tts || 'browser';
+  const orpheusVoice = $('orpheus-voice')?.value || 'tara';
   const lang       = document.querySelector('.lang-btn.active')?.dataset.lang || 'en';
   const readingLevel = $('default-reading-level')?.value || 'standard';
 
@@ -154,6 +164,9 @@ async function saveForm() {
     youtubeKey,
     searxngUrl,
     model:            model || 'llama-3.1-8b-instant',
+    autoFallback,
+    ttsMode,
+    orpheusVoice,
     language:         lang,
     readingLevel,
     triggerFloating:  $('trigger-floating').checked,
@@ -183,6 +196,55 @@ function setActiveLang(lang) {
 }
 document.querySelectorAll('.lang-btn').forEach(btn =>
   btn.addEventListener('click', () => setActiveLang(btn.dataset.lang)));
+
+// ── TTS mode toggle ────────────────────────────────────────────────────────────
+function setActiveTTS(mode) {
+  document.querySelectorAll('.tts-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.tts === mode));
+  $('orpheus-voice-row')?.classList.toggle('hidden', mode !== 'orpheus');
+}
+document.querySelectorAll('.tts-btn').forEach(btn =>
+  btn.addEventListener('click', () => setActiveTTS(btn.dataset.tts)));
+
+// ── Search provider active-state indicator ────────────────────────────────────
+// DDG is active by default. Once a SearXNG URL has been successfully tested
+// (or was already saved from a previous session), the badge/border move to
+// SearXNG and DDG is relabeled "Fallback only". Typing a new untested URL does
+// NOT switch the badge yet — only a successful Test (or a saved working URL on
+// load) does, per the actual fallback behavior in utils/api.js searchWeb().
+function updateSearchActiveUI({ forceActive, assumeSavedUrlWorks = false } = {}) {
+  const url        = $('searxng-url')?.value.trim();
+  const ddgCard     = $('search-card-ddg');
+  const sxCard      = $('search-card-searxng');
+  const ddgBadge    = $('search-badge-ddg');
+  const sxBadge     = $('search-badge-searxng');
+  const activeNote  = $('searxng-active-note');
+
+  let active = forceActive;
+  if (active === undefined) {
+    active = !!url && assumeSavedUrlWorks;
+  }
+  if (!url) active = false; // empty field can never be "active"
+
+  ddgCard?.classList.toggle('is-active', !active);
+  sxCard?.classList.toggle('is-active', active);
+
+  if (ddgBadge) {
+    ddgBadge.textContent = active ? 'Fallback only' : 'Active by default';
+    ddgBadge.className = `badge ${active ? 'badge-optional' : 'badge-active'}`;
+  }
+  if (sxBadge) {
+    sxBadge.textContent = active ? 'Active' : 'Free self-hosted';
+    sxBadge.className = `badge ${active ? 'badge-active' : 'badge-optional'}`;
+  }
+  activeNote?.classList.toggle('hidden', !active);
+}
+
+// Typing/clearing the URL shouldn't claim "Active" until it's actually tested —
+// but clearing it back to empty should immediately drop back to DDG.
+$('searxng-url')?.addEventListener('input', () => {
+  if (!$('searxng-url').value.trim()) updateSearchActiveUI({ forceActive: false });
+});
 
 // ── Show / hide API key ───────────────────────────────────────────────────────
 document.querySelectorAll('.visibility-btn').forEach(btn => {
@@ -233,7 +295,8 @@ async function runTest(field) {
       if (!url) { result.textContent = '⚠ Enter a URL first'; result.className = 'test-result warn'; testAnimResult(field, false); btn.disabled = false; return; }
       const res = await fetch(`${url.replace(/\/$/, '')}/search?q=test&format=json`, { headers: { Accept: 'application/json' } });
       ok = res.ok;
-      msg = ok ? '✅ SearXNG is reachable and responding!' : `❌ Error ${res.status} — check URL and that CORS is enabled`;
+      msg = ok ? '✅ SearXNG is reachable and responding! It will now be used for searches first — DuckDuckGo only as a fallback.' : `❌ Error ${res.status} — check URL and that CORS is enabled`;
+      updateSearchActiveUI({ forceActive: ok });
     }
 
     result.textContent = msg;

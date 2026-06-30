@@ -1,4 +1,4 @@
-/* settings.css — BlankStare v0.3 */
+/* settings.css — BlankStare v0.5 */
 
 :root {
   --bg:           #0c0e14;
@@ -59,10 +59,13 @@ strong{font-weight:700}
 .section-desc{font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.55}
 
 /* ── LANGUAGE TOGGLE ── */
-.lang-toggle{display:flex;gap:8px;margin-top:10px}
+.lang-toggle{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .lang-btn{padding:8px 20px;border-radius:var(--radius);font-family:var(--font);font-size:13px;font-weight:600;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-muted);transition:all 0.15s;cursor:pointer}
 .lang-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .lang-btn:hover:not(.active){border-color:rgba(232,168,56,0.3);color:var(--text)}
+.tts-btn{padding:8px 16px;border-radius:var(--radius);font-family:var(--font);font-size:12px;font-weight:600;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-muted);transition:all 0.15s;cursor:pointer}
+.tts-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.tts-btn:hover:not(.active){border-color:rgba(232,168,56,0.3);color:var(--text)}
 
 /* ── API FIELDS ── */
 .api-field{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
@@ -94,9 +97,24 @@ strong{font-weight:700}
 .badge{display:inline-flex;align-items:center;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em}
 .badge-required{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(232,168,56,0.25)}
 .badge-optional{background:var(--surface-2);color:var(--text-faint);border:1px solid var(--border-2)}
+.badge-active{display:inline-flex;align-items:center;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;background:rgba(61,214,140,0.12);color:var(--success);border:1px solid rgba(61,214,140,0.3)}
 
-/* ── SETUP GUIDE ACCORDION ── */
-.setup-guide{margin-top:4px}
+/* ── TOP-LEVEL SECTION ACCORDIONS (Tweak the Brain, guide details, exclude list) ── */
+.section-accordion{margin-top:14px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface-2)}
+.section-accordion summary{padding:12px 16px;font-family:var(--font);font-size:13px;font-weight:700;color:var(--text);cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;transition:background 0.15s}
+.section-accordion summary::-webkit-details-marker{display:none}
+.section-accordion summary:hover{background:var(--surface)}
+.section-accordion summary::after{content:'›';margin-left:auto;font-size:16px;color:var(--text-muted);transition:transform 0.2s}
+.section-accordion[open] summary::after{transform:rotate(90deg)}
+.section-accordion-body{padding:16px;border-top:1px solid var(--border)}
+
+/* Exclude list collapses the whole settings-section itself */
+.section-accordion-top{padding:0;cursor:default}
+.section-accordion-top-summary{display:flex;align-items:flex-start;gap:14px;padding:22px 24px;cursor:pointer;list-style:none}
+.section-accordion-top-summary::-webkit-details-marker{display:none}
+.section-accordion-top-summary::after{content:'›';margin-left:auto;font-size:18px;color:var(--text-muted);transition:transform 0.2s;align-self:center}
+.section-accordion-top[open] .section-accordion-top-summary::after{transform:rotate(90deg)}
+.section-accordion-top .exclude-area{padding:0 24px 22px}
 .guide-always{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
 .guide-block{padding:10px 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius)}
 .guide-block-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin-bottom:8px}
@@ -116,20 +134,6 @@ strong{font-weight:700}
 .guide-details[open] summary::after{transform:rotate(90deg)}
 .guide-detail-body{padding:10px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);line-height:1.65;display:flex;flex-direction:column;gap:7px}
 .guide-detail-body em{color:var(--text-muted)}
-
-/* ── RADIO CARDS (model) ── */
-.radio-cards{display:flex;flex-direction:column;gap:8px}
-.radio-card{display:flex;gap:12px;padding:13px 15px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius);cursor:pointer;transition:all 0.15s;position:relative}
-.radio-card:has(input:checked){border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 0 1px rgba(232,168,56,0.1)}
-.radio-card:hover{border-color:rgba(232,168,56,0.3)}
-.radio-card input[type="radio"]{position:absolute;opacity:0;width:0;height:0}
-.radio-card-inner{flex:1}
-.radio-card-header{display:flex;align-items:center;gap:6px;margin-bottom:2px;font-size:13px;font-weight:700}
-.radio-card-name{color:var(--text)}
-.radio-card:has(input:checked) .radio-card-name{color:var(--accent)}
-.radio-card-id{display:block;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);margin-bottom:3px}
-.radio-card-desc{font-size:12px;color:var(--text-muted);line-height:1.5}
-.radio-card-desc strong{color:var(--accent);font-weight:600}
 
 /* ── TRIGGER TOGGLE LIST ── */
 .toggle-list{display:flex;flex-direction:column;gap:3px;margin-bottom:12px}
@@ -233,10 +237,6 @@ kbd{background:var(--surface);border:1px solid var(--border-2);border-radius:var
 .full-select{width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius);padding:9px 12px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;cursor:pointer;transition:border-color 0.15s}
 .full-select:focus{border-color:rgba(232,168,56,0.45);box-shadow:0 0 0 3px rgba(232,168,56,0.08)}
 
-/* ── Model card lottie icons ── */
-.model-lottie{width:28px;height:28px;flex-shrink:0}
-.radio-card-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-
 /* ── Animated test button ── */
 .test-btn{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:6px 14px;border-radius:var(--radius-sm);font-family:var(--font);font-size:12px;font-weight:700;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-muted);cursor:pointer;min-width:52px;min-height:36px;transition:all 0.15s}
 .test-btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -245,14 +245,15 @@ kbd{background:var(--surface);border:1px solid var(--border-2);border-radius:var
 .test-btn-label{}
 
 /* ── Web search section ── */
-.search-default-card{padding:14px 16px;background:var(--surface-2);border:1px solid var(--success);border-radius:var(--radius);margin-bottom:12px}
+.search-provider-card{padding:14px 16px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius);margin-bottom:12px;transition:border-color 0.2s}
+.search-provider-card.is-active{border-color:var(--success)}
 .search-default-active{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .search-provider-name{font-size:14px;font-weight:700;color:var(--text)}
-.badge-active{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;background:rgba(61,214,140,0.12);color:var(--success);border:1px solid rgba(61,214,140,0.3)}
 .search-provider-desc{font-size:12px;color:var(--text-muted);line-height:1.55}
 .search-provider-desc strong{color:var(--text)}
 
-.search-upgrade-card{padding:14px 16px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius);border-left:3px solid rgba(232,168,56,0.4)}
+.search-upgrade-card{border-left:3px solid rgba(232,168,56,0.4);margin-bottom:0}
+.search-upgrade-card.is-active{border-left-color:var(--success)}
 .search-upgrade-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
 .search-upgrade-title{font-size:13px;font-weight:700;color:var(--text)}
 .search-upgrade-desc{font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:10px}
@@ -264,29 +265,29 @@ kbd{background:var(--surface);border:1px solid var(--border-2);border-radius:var
 .about-lottie{width:64px;height:64px;margin:0 auto 12px}
 .about-hero{text-align:center;padding:28px 24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);display:flex;flex-direction:column;align-items:center}
 
-/* ── How to use extras ── */
-.howto-extras{margin-top:4px}
-.howto-extras h3{font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px}
-.howto-extra-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
-.howto-extra-card{padding:13px 15px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
-.howto-extra-icon{font-size:20px;margin-bottom:7px}
-.howto-extra-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
-.howto-extra-desc{font-size:12px;color:var(--text-muted);line-height:1.5}
+/* ── Easter egg ── */
+.easter-egg {
+  margin-top: 10px;
+  padding: 9px 12px;
+  background: linear-gradient(135deg, rgba(232,168,56,0.08), rgba(232,168,56,0.03));
+  border: 1px dashed rgba(232,168,56,0.35);
+  border-radius: var(--radius);
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.easter-egg strong { color: var(--accent); }
 
-/* ── About page ── */
-.about-body{display:flex;flex-direction:column;gap:20px}
-.about-desc{display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text-muted);line-height:1.7;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
-.about-section{padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
-.about-section h3{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px}
-.about-list{list-style:none;display:flex;flex-direction:column;gap:6px}
-.about-list li{font-size:13px;color:var(--text-muted)}
-.about-list a{color:var(--link)}
-.about-credit{text-align:center;font-size:13px;color:var(--text-muted);line-height:1.8}
-.about-credit strong{color:var(--text)}
-.about-credit a{color:var(--link)}
-.about-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.about-link-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius);font-family:var(--font);font-size:13px;font-weight:600;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-muted);text-decoration:none;transition:all 0.15s}
-.about-link-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);text-decoration:none}
-.about-kofi:hover{border-color:#ff5e5b!important;color:#ff5e5b!important;background:rgba(255,94,91,0.08)!important}
-.about-version{display:inline-block;padding:2px 10px;background:var(--accent-dim);border:1px solid rgba(232,168,56,0.2);border-radius:20px;font-size:11px;color:var(--accent);font-weight:700;margin-top:8px}
-.about-tagline{font-size:13px;color:var(--text-faint);margin-top:4px}
+/* ── Language note ── */
+.lang-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-faint);
+  line-height: 1.55;
+}
+.lang-note strong { color: var(--text-muted); }
+
+/* ── Guide steps inside open detail ── */
+.guide-steps-open {
+  padding: 4px 0;
+}
