@@ -1,5 +1,5 @@
 # BlankStare — Developer Handover Document
-_Updated end of v0.5.0 session. Use this to brief a new Claude instance._
+_Updated end of v0.6.0 session. Use this to brief a new Claude instance._
 
 ---
 
@@ -224,3 +224,101 @@ written permission. Contact: lambros@stravelakis.com
 ---
 
 _End of handover. Good luck, next Claude!_
+
+---
+
+## 14. v0.6.0 — hardening pass and Deco Noir (read this before touching CSS)
+
+### 14a. The eleven defects fixed
+
+Four streaming faults in `utils/api.js` shared one root cause: a network
+chunk was being treated as a message frame.
+
+- **SSE frames split across chunk boundaries were silently dropped.** Each
+  chunk was split on `\n` independently, so a `data:` line straddling two
+  reads failed `JSON.parse` and was swallowed by a bare `catch`. Translations
+  lost words with no error anywhere — it read as "the AI dropped a word".
+  `createSSEParser()` in `utils/pure.js` now holds the incomplete tail back.
+  **Do not "simplify" this back to a per-chunk split.**
+- **The read loop had no try/catch**, so a connection dropped mid-stream threw
+  past both `onDone` and `onError` and left the cursor blinking forever.
+  Partial text is now returned and stays on screen with an explanation.
+- **Nothing could be cancelled.** `explainWithGroq` takes an `AbortSignal`.
+  The panel runs three lanes — translation, glossary, follow-up — so a second
+  request replaces its predecessor without cancelling the one the reader is
+  watching.
+- **`max_tokens` was hardcoded at 700**, so "More detail" truncated at the
+  same budget as the first pass. Now per-mode: 1400 for deeper/fullpage.
+
+Security: SearXNG result URLs reached `href` unvalidated. `safeUrl()` gates
+every remote string that becomes a URL; `embedVideo()` validates the id it
+interpolates into a path.
+
+Also: the glossary moved into `api.js`; history persists to
+`chrome.storage.session` so it survives the panel closing; a 500ms polling
+loop became `chrome.storage.session.onChanged`; the content script tracks
+`triggerFloating`/`excludeList` live instead of needing a page reload; the
+version comes from `chrome.runtime.getManifest().version`.
+
+### 14b. Tests — there is still no build step
+
+`utils/pure.js` holds the side-effect-free logic and ends with a guarded
+`module.exports`, so it loads as a plain `<script>` in the extension and as a
+CommonJS module under `node --test`. `npm test` runs 32 cases. Anyone without
+Node still loads unpacked exactly as before.
+
+**Nothing in `utils/pure.js` may touch `chrome`, `document`, `window` or
+`fetch`.** That constraint is what keeps it testable.
+
+### 14c. Deco Noir
+
+The identity system from `deco-noir/` is vendored into `vendor/`. Read
+`deco-noir/AGENTS.md` before changing any styling — it carries MUST/NEVER
+rules and a list of ideas already tried and rejected.
+
+- **Side panel** is `data-dress="working"` — a documented departure. Deco Noir
+  puts an extension surface at `plain`; the panel is the hero surface and sits
+  open all day, so it carries ornament. Settings stays `plain`.
+- **Ground and grain are off** on both surfaces. The panel streams text; an
+  animated background behind live output is noise and would run all day.
+- **`.state` was renamed to `.panel-state`.** Deco Noir defines `.state` as a
+  switch's ON/OFF readout — inline-flex, uppercase, letter-spaced, display
+  face — and BlankStare had it on all five full-panel sections. Loading the
+  system silently restyled every state screen and pushed the display face onto
+  body copy. **Before adding any class name, check it against
+  `vendor/deco-noir.css`.** The remaining overlaps (`.btn`, `.btn-sm`, `.tab`)
+  are the intended conversions.
+- **Typography is per-language.** Poiret One carries no Greek glyphs, so
+  `fonts/display.css` pairs it with Cormorant for Greek and lets
+  `unicode-range` pick per glyph. Both must be self-hosted — a CDN link in an
+  extension fails silently to a serif.
+- **The floating button gets none of this.** It is injected into every site on
+  the web. It lives in a closed shadow root with hand-written styles, and the
+  host element pins its layout inline at `!important` because the host is an
+  ordinary div in the page's DOM that the site's own `div` rules match. A
+  `:host` rule does not help — the outer document beats `:host` by spec.
+
+### 14d. Previewing without loading the extension
+
+`lab/preview.html` renders the real panel markup and stylesheet with the
+extension APIs stubbed, with buttons for state, colourway, dress and language.
+`lab/button-preview.html` is the floating button's isolation test against a
+deliberately hostile host page. Serve the repo root over http and open them:
+
+```
+npx http-server . -p 8123 -c-1
+```
+
+### 14e. Still outstanding
+
+- **The two display fonts are not in the repo yet.** `fonts/display.css`
+  expects `poiret-one-latin-400-normal.woff2` and
+  `cormorant-greek-500/600-normal.woff2`. Until they are added, titles fall
+  back to Georgia and the identity is only half applied.
+- **No screenshot has been reviewed.** The layout was verified by probing
+  computed styles — chamfers, corner rules, fonts, no leftover radii, no
+  horizontal overflow — but nobody has looked at the rendered result. Deco
+  Noir's AGENTS.md §5 requires it.
+- **`host_permissions: ["<all_urls>"]`** still triggers "Read and change all
+  your data on all websites" at install. Fetches only reach Groq, YouTube and
+  a user-supplied SearXNG. Narrowing it deserves its own pass.

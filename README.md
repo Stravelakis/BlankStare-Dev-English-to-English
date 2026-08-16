@@ -79,13 +79,13 @@ A Chrome sidebar extension powered by Groq's free AI API. Built first for **vibe
 BlankStare/
 ├── manifest.json         ← Extension config (MV3)
 ├── background.js         ← Service worker — gesture-safe sidePanel coordinator
-├── content.js            ← Page-injected — text selection, floating button
-├── content.css           ← Floating button styles
+├── content.js            ← Page-injected — selection, floating button (shadow DOM)
 │
 ├── sidepanel/
 │   ├── sidepanel.html    ← Panel UI (all features)
 │   ├── sidepanel.js      ← Panel logic — streaming, i18n, history, voice
-│   └── sidepanel.css     ← Panel styles (amber dark theme)
+│   ├── sidepanel.css     ← Panel styles (Deco Noir, brass)
+│   └── deco-init.js      ← Identity runtime init (MV3 forbids inline scripts)
 │
 ├── settings/
 │   ├── settings.html     ← 3-tab settings (Settings · How to use · About)
@@ -93,9 +93,21 @@ BlankStare/
 │   └── settings.css      ← Settings styles
 │
 ├── utils/
+│   ├── pure.js           ← Testable logic — SSE parsing, URL filtering, prompts
 │   ├── api.js            ← All external API calls (Groq, YouTube, SearXNG)
 │   ├── storage.js        ← Chrome storage helpers + defaults
 │   └── lottie.min.js     ← Bundled Lottie player (168KB, light build)
+│
+├── vendor/
+│   ├── deco-noir.css     ← Visual identity system (vendored, not a dependency)
+│   └── deco-noir.js      ← Its optional runtime
+│
+├── tests/
+│   └── pure.test.js      ← `npm test` — no build step, Node's own test runner
+│
+├── lab/
+│   ├── preview.html      ← The panel, rendered without loading the extension
+│   └── button-preview.html ← Floating-button isolation test
 │
 ├── fonts/
 │   └── comfortaa*.woff2  ← Comfortaa font, Latin + Greek, 400/600/700
@@ -109,6 +121,45 @@ BlankStare/
 │
 └── LICENSE               ← Attribution-required license
 ```
+
+---
+
+## 🎨 Look & feel
+
+BlankStare wears **Deco Noir** — an art-deco visual identity shared across
+these projects. The signature is a chamfer on two opposing corners, top-left
+and bottom-right, dressed with a double brass rule.
+
+The system is vendored into `vendor/`, never linked from a CDN: an extension
+cannot fetch remote code at runtime, and a CDN font that fails to load
+degrades silently to a serif with no error.
+
+Two surfaces, two ornament levels — the side panel is dressed `working`, the
+settings page `plain`. The floating button injected into web pages carries the
+identity by hand inside a closed shadow root, so neither the button nor the
+host page can restyle the other.
+
+To see either surface without loading the extension:
+
+```
+npx http-server . -p 8123 -c-1
+```
+
+then open `lab/preview.html`.
+
+---
+
+## 🧪 Tests
+
+```
+npm test
+```
+
+Runs Node's built-in test runner over the pure logic — SSE frame reassembly,
+URL scheme filtering, domain exclusion, the Greek heuristic. **There is no
+build step and no dependency to install**; `package.json` exists only so
+`npm test` has somewhere to live. Loading the extension unpacked works exactly
+as before, with or without Node.
 
 ---
 
