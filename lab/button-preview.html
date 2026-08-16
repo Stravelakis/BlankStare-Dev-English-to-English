@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Floating button — isolation test</title>
+<style>
+  /* A deliberately hostile host page: broad element and wildcard rules of the
+     kind real sites ship. None of it may reach inside the shadow root. */
+  * { font-family: "Comic Sans MS", cursive !important; box-sizing: content-box; }
+  div { border: 3px dashed magenta !important; background: #ff00ff22 !important;
+        color: lime !important; border-radius: 40px !important; padding: 20px !important; }
+  span { text-transform: uppercase !important; letter-spacing: 6px !important; font-size: 30px !important; }
+  body { background: #f2f2f2; margin: 0; padding: 60px; }
+  #note { font: 13px/1.6 system-ui !important; border: none !important; background: none !important;
+          color: #333 !important; border-radius: 0 !important; padding: 0 !important; }
+</style></head>
+<body>
+<div id="note"><span style="text-transform:none;letter-spacing:0;font-size:14px">
+Host page applies magenta dashed borders, 40px radius, Comic Sans and uppercase to every div and span.
+The button below must be unaffected.</span></div>
+<script>
+  // Minimal stubs — we are testing the styling isolation, not the messaging.
+  window.chrome = { runtime: { sendMessage: () => {}, onMessage: { addListener: () => {} }, lastError: null },
+                    storage: { sync: { get: async () => ({ triggerFloating: true, excludeList: [] }),
+                                       onChanged: { addListener: () => {} } },
+                               onChanged: { addListener: () => {} } } };
+</script>
+<script src="../utils/pure.js"></script>
+<script src="../content.js"></script>
+<script>
+  // Force the button to appear without needing a real selection or open panel.
+  setTimeout(() => {
+    showButton({ left: 80, top: 220, width: 200, height: 20 }, 'TypeError: undefined', 'normal');
+  }, 100);
+</script>
+</body></html>

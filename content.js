@@ -2,9 +2,75 @@
 // Injected into every web page. isDomainExcluded lives in utils/pure.js, which
 // the manifest loads immediately before this file.
 
-let floatingBtn = null;
+let floatingHost = null;   // the element in the page
+let floatingBtn  = null;   // the button inside its shadow root
 let currentSelectedText = '';
 let listenersAttached = false;
+
+// ── The floating button's styles ──────────────────────────────────────────────
+// Deco Noir is NOT loaded into the page. It is a full identity stylesheet and
+// this script runs on every site on the web; loading it here would restyle the
+// host page, and the host page's own CSS would reach back into the button.
+//
+// So the identity is reproduced by hand for this one control — the chamfer on
+// two opposing corners, the brass bezel, the lit legend — and the whole thing
+// lives in a shadow root so neither side can touch the other. Page styles
+// cannot leak in, which is also why none of the !important flags the old
+// stylesheet needed survive here.
+const BUTTON_STYLES = `
+  .bs-btn {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px 6px 11px;
+    transform: translateX(-50%);
+
+    /* The signature: top-left and bottom-right only. Never four corners. */
+    clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px),
+                       calc(100% - 7px) 100%, 0 100%, 0 7px);
+
+    /* A clipped box cannot carry a border — the chamfer shears it off — so the
+       bezel is an inset shadow instead. */
+    background: linear-gradient(180deg, #26251F, #131210);
+    box-shadow: inset 0 0 0 1px #C9A227,
+                0 4px 16px rgba(0, 0, 0, .5),
+                0 0 14px rgba(201, 162, 39, .22);
+
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: #C9A227;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: box-shadow .12s cubic-bezier(.2,.8,.2,1);
+  }
+  .bs-btn.bs-visible { display: flex; animation: bs-in .15s ease forwards; }
+  .bs-btn.bs-hidden  { display: none; }
+
+  .bs-btn:hover {
+    box-shadow: inset 0 0 0 1px #F2DCA0,
+                0 6px 20px rgba(0, 0, 0, .55),
+                0 0 20px rgba(201, 162, 39, .38);
+  }
+  .bs-btn:focus-visible { outline: 1px solid #F2DCA0; outline-offset: 2px; }
+
+  .bs-icon  { font-size: 11px; line-height: 1; flex-shrink: 0; }
+  .bs-label { font-size: 12px; line-height: 1; }
+
+  /* The bezel stays brass and only the legend changes colour. A green-framed
+     button beside a brass one reads as two different products. */
+  .bs-btn[data-mode="greek"] { cursor: default; color: #D9A441; }
+
+  @keyframes bs-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bs-btn.bs-visible { animation: none; }
+  }
+`;
 
 // Live copies of the two settings that govern this script. Previously read once
 // at injection, so toggling either required reloading every open tab.
@@ -82,7 +148,10 @@ function detachListeners() {
 }
 
 function onDocumentMouseDown(e) {
-  if (floatingBtn && !floatingBtn.contains(e.target)) hideButton();
+  // Test the host, not the button: events inside a closed shadow root are
+  // retargeted to the host by the time the page sees them, so the inner
+  // element never appears as e.target.
+  if (floatingHost && !floatingHost.contains(e.target)) hideButton();
 }
 
 async function onSelectionChange() {
@@ -105,30 +174,81 @@ async function onSelectionChange() {
   }
 }
 
-function showButton(rect, text, mode = 'normal') {
-  if (!floatingBtn) {
-    floatingBtn = document.createElement('div');
-    floatingBtn.id = 'blankstare-floating-btn';
-    floatingBtn.setAttribute('role', 'button');
-    floatingBtn.setAttribute('tabindex', '0');
-    floatingBtn.setAttribute('aria-label', 'Explain with BlankStare');
-    floatingBtn.innerHTML = `<span class="bs-icon">⚡</span><span class="bs-label">Explain</span>`;
-    document.body.appendChild(floatingBtn);
-    floatingBtn.addEventListener('click', onButtonClick);
-    floatingBtn.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onButtonClick(e); }
-    });
+// The host element is NOT protected by the shadow root — it is an ordinary div
+// in the page's own DOM, so the page's `div { … }` rules match it. A `:host`
+// rule inside the root does not help: by spec the outer document wins over
+// :host, and plenty of sites reach for !important on top of that.
+//
+// So every property that decides where the button sits and whether it draws
+// anything of its own is pinned inline at !important priority. The host becomes
+// a bare positioned box; everything visible is drawn inside the root, where the
+// page cannot reach at all.
+const HOST_LOCK = {
+  position:      'absolute',
+  'z-index':     '2147483647',
+  display:       'block',
+  margin:        '0',
+  padding:       '0',
+  border:        'none',
+  'border-radius': '0',
+  background:    'none',
+  'box-shadow':  'none',
+  filter:        'none',
+  opacity:       '1',
+  transform:     'none',
+  width:         'auto',
+  height:        'auto',
+  'max-width':   'none',
+  'min-width':   '0',
+  float:         'none',
+  visibility:    'visible',
+  'pointer-events': 'auto',
+};
+
+function buildButton() {
+  floatingHost = document.createElement('div');
+  floatingHost.id = 'blankstare-floating-btn';
+  for (const [prop, value] of Object.entries(HOST_LOCK)) {
+    floatingHost.style.setProperty(prop, value, 'important');
   }
+
+  // Closed: nothing on the page can reach in and read or restyle the button.
+  const root = floatingHost.attachShadow({ mode: 'closed' });
+
+  const style = document.createElement('style');
+  style.textContent = BUTTON_STYLES;
+
+  floatingBtn = document.createElement('div');
+  floatingBtn.className = 'bs-btn';
+  floatingBtn.setAttribute('role', 'button');
+  floatingBtn.setAttribute('tabindex', '0');
+  floatingBtn.setAttribute('aria-label', 'Explain with BlankStare');
+  floatingBtn.innerHTML = `<span class="bs-icon">⚡</span><span class="bs-label">Explain</span>`;
+  floatingBtn.addEventListener('click', onButtonClick);
+  floatingBtn.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onButtonClick(e); }
+  });
+
+  root.append(style, floatingBtn);
+  document.body.appendChild(floatingHost);
+}
+
+function showButton(rect, text, mode = 'normal') {
+  if (!floatingBtn) buildButton();
 
   const greek = mode === 'greek';
   floatingBtn.dataset.mode = mode;
   floatingBtn.querySelector('.bs-icon').textContent  = greek ? '🇬🇷' : '⚡';
   floatingBtn.querySelector('.bs-label').textContent = greek ? 'Select English dev text' : 'Explain';
-  floatingBtn.style.cursor = greek ? 'default' : 'pointer';
 
-  floatingBtn.dataset.state = 'default';
-  floatingBtn.style.left = `${rect.left + window.scrollX + rect.width / 2}px`;
-  floatingBtn.style.top  = `${rect.top  + window.scrollY - 46}px`;
+  // Positioning belongs to the host, which lives in page coordinates. Set at
+  // !important for the same reason as HOST_LOCK — a page rule offsetting every
+  // div would otherwise drag the button away from the selection.
+  floatingHost.style.setProperty('left', `${rect.left + window.scrollX + rect.width / 2}px`, 'important');
+  floatingHost.style.setProperty('top',  `${rect.top  + window.scrollY - 46}px`, 'important');
+  floatingHost.style.setProperty('right',  'auto', 'important');
+  floatingHost.style.setProperty('bottom', 'auto', 'important');
+
   floatingBtn.classList.add('bs-visible');
   floatingBtn.classList.remove('bs-hidden');
   currentSelectedText = text;
@@ -141,8 +261,9 @@ function hideButton() {
 }
 
 function removeButton() {
-  floatingBtn?.remove();
-  floatingBtn = null;
+  floatingHost?.remove();
+  floatingHost = null;
+  floatingBtn  = null;
   currentSelectedText = '';
 }
 
