@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- data-dress="working": Deco Noir puts an extension surface at "plain", but
+     the side panel is the product's hero surface and sits open all day, so it
+     carries ornament. The settings page stays "plain". -->
+<html lang="en" data-way="brass" data-dress="working" data-bg="off">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BlankStare</title>
+  <link rel="stylesheet" href="../vendor/deco-noir.css">
   <link rel="stylesheet" href="../fonts/comfortaa.css">
+  <link rel="stylesheet" href="../fonts/display.css">
   <link rel="stylesheet" href="sidepanel.css">
 </head>
 <body>
@@ -56,7 +61,7 @@
   <!-- ══ STATES ══ -->
 
   <!-- Welcome -->
-  <section id="state-welcome" class="state" aria-live="polite">
+  <section id="state-welcome" class="panel-state" aria-live="polite">
     <div class="welcome-body">
       <div id="welcome-anim" class="icon-anim-lg" aria-hidden="true"></div>
       <h2 class="welcome-title" data-i18n="welcomeTitle">Select any tech text</h2>
@@ -69,7 +74,7 @@
   </section>
 
   <!-- No API key -->
-  <section id="state-nokey" class="state hidden">
+  <section id="state-nokey" class="panel-state hidden">
     <div class="nokey-body">
       <div id="nokey-anim" class="icon-anim-lg" aria-hidden="true"></div>
       <h2 class="nokey-title" data-i18n="nokeyTitle">API key needed</h2>
@@ -80,7 +85,7 @@
   </section>
 
   <!-- Loading -->
-  <section id="state-loading" class="state hidden" aria-live="polite" aria-label="Loading">
+  <section id="state-loading" class="panel-state hidden" aria-live="polite" aria-label="Loading">
     <div class="loading-body">
       <div id="loading-anim" class="icon-anim-lg" aria-hidden="true"></div>
       <p class="loading-text" data-i18n="translating">Translating…</p>
@@ -91,7 +96,7 @@
   <!-- No aria-live on the section itself: it wraps the whole result including
        search results and would re-announce everything on any change. The
        translation announces itself, once, when the stream finishes. -->
-  <section id="state-result" class="state hidden">
+  <section id="state-result" class="panel-state hidden">
 
     <!-- Selected text -->
     <div class="selected-box">
@@ -179,7 +184,7 @@
   </section>
 
   <!-- Error -->
-  <section id="state-error" class="state hidden" aria-live="assertive">
+  <section id="state-error" class="panel-state hidden" aria-live="assertive">
     <div class="error-body">
       <div id="error-anim" class="icon-anim-lg" aria-hidden="true"></div>
       <p id="error-message" class="error-message"></p>
@@ -207,6 +212,8 @@
 
 </div>
 
+<script src="../vendor/deco-noir.js"></script>
+<script src="deco-init.js"></script>
 <script src="../utils/lottie.min.js"></script>
 <script src="../utils/pure.js"></script>
 <script src="../utils/storage.js"></script>

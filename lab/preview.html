@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" data-way="brass" data-dress="working" data-bg="off">
+<head>
+<meta charset="UTF-8">
+<title>BlankStare — panel preview</title>
+
+<!-- Same stylesheets, same order, as sidepanel.html -->
+<link rel="stylesheet" href="../vendor/deco-noir.css">
+<link rel="stylesheet" href="../fonts/comfortaa.css">
+<link rel="stylesheet" href="../fonts/display.css">
+<link rel="stylesheet" href="../sidepanel/sidepanel.css">
+
+<style>
+  /* Harness chrome only — none of this ships. */
+  body { background: #17150f; }
+  .lab-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    padding: 8px 12px; background: #000; border-bottom: 1px solid #3A3730;
+    font: 11px/1 'Segoe UI', system-ui, sans-serif; color: #A79E88;
+  }
+  .lab-bar button {
+    padding: 4px 9px; background: #26251F; color: #EDE6D6;
+    border: 1px solid #3A3730; cursor: pointer; font-size: 11px;
+  }
+  .lab-bar button:hover { border-color: #C9A227; color: #C9A227; }
+  .lab-bar span.sep { color: #3A3730; margin: 0 2px; }
+  .lab-stage {
+    display: flex; gap: 24px; padding: 56px 24px 24px; align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .lab-frame {
+    width: 380px; flex: 0 0 380px;
+    border: 1px solid #3A3730; background: #0C0B09;
+    max-height: calc(100vh - 90px); overflow-y: auto; resize: horizontal;
+  }
+  .lab-caption {
+    font: 10px/1.4 'Segoe UI', system-ui, sans-serif; color: #6E6858;
+    text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="lab-bar">
+  <strong style="color:#C9A227">BlankStare panel</strong>
+  <span class="sep">|</span>
+  state:
+  <button data-state="welcome">welcome</button>
+  <button data-state="nokey">no key</button>
+  <button data-state="loading">loading</button>
+  <button data-state="result">result</button>
+  <button data-state="error">error</button>
+  <span class="sep">|</span>
+  way:
+  <button data-way="brass">brass</button>
+  <button data-way="nickel">nickel</button>
+  <button data-way="oxblood">oxblood</button>
+  <button data-way="jade">jade</button>
+  <span class="sep">|</span>
+  dress:
+  <button data-dress="full">full</button>
+  <button data-dress="working">working</button>
+  <button data-dress="plain">plain</button>
+  <span class="sep">|</span>
+  lang:
+  <button data-lang="en">EN</button>
+  <button data-lang="el">EL</button>
+</div>
+
+<div class="lab-stage">
+  <div>
+    <div class="lab-caption">side panel — 380px</div>
+    <div class="lab-frame" id="stage"></div>
+  </div>
+</div>
+
+<script src="../vendor/deco-noir.js"></script>
+<script>
+/* ---------------------------------------------------------------------------
+   Preview harness.
+
+   Loads the real sidepanel.html markup and the real stylesheet, with a stub
+   standing in for the extension APIs, so the identity can be checked against
+   an actual screenshot rather than asserted. Nothing here is bundled.
+   --------------------------------------------------------------------------- */
+
+const SAMPLE = {
+  selected:
+    "TypeError: Cannot read properties of undefined (reading 'map')\n" +
+    "    at ProductList (webpack-internal:///./src/ProductList.jsx:42:19)",
+  translation:
+    "The page tried to build a list out of something that hasn't arrived yet, " +
+    "so it stopped. Your product data is still loading (or failed to load) at " +
+    "the moment the list is drawn.\n\n" +
+    "The fix is to have the list wait: show a placeholder while the data is " +
+    "empty, and only draw the products once they're actually there.",
+  glossary: [
+    ['undefined',  'a value that was never set'],
+    ['TypeError',  'the wrong kind of value was used'],
+    ['webpack',    'the tool that bundles the code'],
+  ],
+  videos: [
+    ['Why is my variable undefined?', 'Plainly Code'],
+    ['React lists without the crashes', 'The Vibe Stack'],
+  ],
+  results: [
+    ['Cannot read properties of undefined — MDN', 'https://developer.mozilla.org/en-US/docs/Web/JavaScript',
+     'Reading a property from a value that is undefined throws a TypeError.'],
+    ['Rendering lists safely in React', 'https://react.dev/learn/rendering-lists',
+     'Guard the array before mapping over it, or render a fallback.'],
+  ],
+};
+
+(async function () {
+  const stage = document.getElementById('stage');
+  const html  = await (await fetch('../sidepanel/sidepanel.html')).text();
+  const doc   = new DOMParser().parseFromString(html, 'text/html');
+
+  stage.appendChild(doc.getElementById('app'));
+
+  // Deco Noir's key-rim glow, same call the panel makes.
+  DecoNoir.init({ ground: 'off', grain: false, glow: true, spark: false, reveal: false });
+
+  const $ = id => document.getElementById(id);
+  const states = ['welcome', 'nokey', 'loading', 'result', 'error'];
+
+  function showState(name) {
+    states.forEach(s => $('state-' + s)?.classList.toggle('hidden', s !== name));
+  }
+
+  // ── Fill the result state with representative content ──────────────────────
+  $('selected-text').textContent    = SAMPLE.selected;
+  $('explanation-text').textContent = SAMPLE.translation;
+  $('explanation-actions').classList.remove('hidden');
+  $('explanation-cursor').classList.add('hidden');
+
+  $('stream-status').textContent = 'llama-3.1-8b-instant is rate-limited — trying qwen/qwen3-32b…';
+  $('stream-status').classList.remove('hidden');
+
+  $('jargon-toggle-cb').checked = true;
+  $('jargon-results').classList.remove('hidden');
+  $('jargon-results').innerHTML = SAMPLE.glossary.map(([t, d]) =>
+    `<div class="jargon-item"><span class="jargon-term-text">${t}</span><span class="jargon-def-text">${d}</span></div>`
+  ).join('');
+
+  $('yt-results').classList.remove('hidden');
+  $('yt-results').innerHTML = SAMPLE.videos.map(([t, c]) => `
+    <div class="yt-card" role="button" tabindex="0">
+      <div class="yt-thumb"></div>
+      <div class="yt-card-info">
+        <div class="yt-card-title">${t}</div>
+        <div class="yt-card-channel">${c}</div>
+      </div>
+    </div>`).join('');
+
+  $('web-results').classList.remove('hidden');
+  $('web-results').innerHTML = SAMPLE.results.map(([t, u, s]) => `
+    <div class="search-card">
+      <a class="search-card-title" href="#">${t}</a>
+      <div class="search-card-url">${u}</div>
+      <div class="search-card-snippet">${s}</div>
+    </div>`).join('');
+
+  $('custom-q-result').textContent = 'It means the data is not there yet, not that it is wrong.';
+  $('custom-q-result').classList.remove('hidden');
+
+  $('error-message').textContent = 'Invalid Groq API key — check Settings.';
+
+  // History, so the panel can be checked with the drawer open.
+  $('history-empty').classList.add('hidden');
+  $('history-list').innerHTML = [
+    ['TypeError: Cannot read properties', '14:22'],
+    ['npm ERR! peer dep missing',         '14:09'],
+    ['CORS policy: No Access-Control',     '13:51'],
+  ].map(([q, t]) => `
+    <div class="history-item" role="button" tabindex="0">
+      <div class="history-item-query">${q}</div>
+      <div class="history-item-time">${t}</div>
+    </div>`).join('');
+
+  // The re-run key in its live state.
+  $('rerun-btn').removeAttribute('disabled');
+  $('rerun-btn').classList.add('rerun-active');
+
+  showState('result');
+
+  // ── Harness controls ───────────────────────────────────────────────────────
+  document.querySelectorAll('.lab-bar [data-state]').forEach(b =>
+    b.onclick = () => showState(b.dataset.state));
+
+  document.querySelectorAll('.lab-bar [data-way]').forEach(b =>
+    b.onclick = () => document.documentElement.dataset.way = b.dataset.way);
+
+  document.querySelectorAll('.lab-bar [data-dress]').forEach(b =>
+    b.onclick = () => document.documentElement.dataset.dress = b.dataset.dress);
+
+  // Greek copy, to check the display face actually swaps and nothing clips.
+  const EL = {
+    welcomeTitle: 'Επίλεξε οποιοδήποτε dev κείμενο',
+    nokeyTitle:   'Χρειάζεσαι κλειδί API',
+    youSelected:  'Επίλεξες:',
+    translating:  'Μεταφράζω…',
+    readMoreOn:   '📚 Διάβασε περισσότερα:',
+    ytSection:    '📺 Εξήγηση YouTube',
+    webSearch:    '🔍 Αναζήτηση στο web',
+    customQ:      '💬 Κάνε ερώτηση',
+    jargonToggle: '📖 Γλωσσάρι όρων',
+  };
+  const EN = {
+    welcomeTitle: 'Select any dev text',
+    nokeyTitle:   'API key needed',
+    youSelected:  'You selected:',
+    translating:  'Translating…',
+    readMoreOn:   '📚 Read more on:',
+    ytSection:    '📺 YouTube explanation',
+    webSearch:    '🔍 Web search',
+    customQ:      '💬 Ask a follow-up',
+    jargonToggle: '📖 Term glossary',
+  };
+
+  document.querySelectorAll('.lab-bar [data-lang]').forEach(b => b.onclick = () => {
+    const t = b.dataset.lang === 'el' ? EL : EN;
+    document.documentElement.lang = b.dataset.lang;
+    document.getElementById('lang-toggle').textContent = b.dataset.lang.toUpperCase();
+    document.querySelectorAll('[data-i18n]').forEach(n => {
+      if (t[n.dataset.i18n]) n.textContent = t[n.dataset.i18n];
+    });
+  });
+})();
+</script>
+</body>
+</html>

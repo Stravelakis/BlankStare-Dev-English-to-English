@@ -1,0 +1,76 @@
+/* fonts/display.css — BlankStare display faces
+   ---------------------------------------------------------------------------
+   Deco Noir's ornamental face is Poiret One, which carries no Greek glyphs.
+   BlankStare is a full EN/EL product, so a literal application would drop every
+   Greek panel title to a system serif and the identity would vanish across half
+   the UI.
+
+   Two faces, selected by the document language that applyI18n() already sets:
+
+     Latin  →  Poiret One   (the Deco Noir signature face)
+     Greek  →  Cormorant    (high-contrast Didone with full Greek coverage)
+
+   Both self-hosted. An extension cannot depend on a CDN at runtime — it would
+   silently fall back to a serif with no error, exactly the failure this file
+   exists to prevent.
+
+   Comfortaa remains the body face for both languages; see comfortaa.css.
+   =========================================================================== */
+
+@font-face {
+  font-family: 'Poiret One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Poiret One'), url('poiret-one-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193,
+                 U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('Cormorant'), url('cormorant-greek-500-normal.woff2') format('woff2');
+  unicode-range: U+0370-03FF, U+1F00-1FFF;
+}
+
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Cormorant'), url('cormorant-greek-600-normal.woff2') format('woff2');
+  unicode-range: U+0370-03FF, U+1F00-1FFF;
+}
+
+/* ---------------------------------------------------------------------------
+   The display role, per language.
+
+   Both faces are listed in the stack rather than swapped by :lang(), so that a
+   Greek term inside an English title (or the reverse) still renders in a
+   related face instead of dropping to the system fallback mid-word. The
+   unicode-range declarations above decide which one actually paints each
+   glyph.
+
+   Overriding --display-deco rather than restyling headings keeps this a token
+   change: every Deco Noir rule that reaches for the ornamental face picks these
+   up automatically.
+   --------------------------------------------------------------------------- */
+:root {
+  --display-deco: 'Poiret One', 'Cormorant', 'Bodoni MT', 'Didot', Georgia, serif;
+}
+
+/* Greek sets a slightly heavier weight and tighter tracking: Cormorant's
+   Greek is lighter on the page than Poiret One's Latin at the same size, and
+   without this the two languages read as different levels of emphasis. */
+:root:lang(el) {
+  --display-deco-weight: 600;
+  --display-deco-track: 0.01em;
+}
+:root {
+  --display-deco-weight: 400;
+  --display-deco-track: 0.06em;
+}

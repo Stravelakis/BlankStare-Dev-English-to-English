@@ -1,0 +1,868 @@
+/* =============================================================================
+   DECO NOIR — identity system
+   Art-deco geometry under a noir key light, on a Bauhaus grid.
+
+   THE SIGNATURE: a chamfer on two OPPOSING corners only — top-left and
+   bottom-right — dressed with a double brass rule. Every panel, key, field
+   and slot shares that one asymmetric silhouette.
+
+     1. tokens        colour, type, geometry, motion
+     2. colorways     brass | nickel | oxblood | jade
+     3. dress         full | working | plain
+     4. ground        procedural brushed metal, derived from the accent
+     5. frame         trim / bevel / face, corner rules, ornament
+     6. controls      keys, switches, faders, dials, checks, fields, segments
+     7. navigation    rail, tabs, breadcrumb, pager
+     8. data          tables, meters, gauges, charts, logs, tiles
+     9. feedback      tags, callouts, toasts, dialogs, tooltips, loaders
+    10. prose         long-form typography
+    11. layout        panels, grids, sections
+    12. motion        reveal, sweep, spark
+
+   Everything is driven by custom properties. Retheming is a token change,
+   never a component rewrite.
+   ============================================================================= */
+
+/* ==========================================================================
+   1. TOKENS
+   ========================================================================== */
+:root{
+  --cut:16px; --cut-sm:9px; --cut-lg:30px; --hair:1px;
+  --plate:1; --orn:1; --bevel:1;
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --snap:cubic-bezier(.34,1.56,.64,1);          /* overshoot, for anything mechanical */
+  --t-fast:120ms; --t-base:260ms; --t-slow:620ms;
+
+  /* THREE roles, and the split matters more than the faces themselves.
+     --display-deco is ornamental: art-deco, high-contrast, wide. It is for type
+     that is READ ONCE and never operated. Its hairlines thin out at UI sizes
+     and its wide letterforms cost horizontal room a dense panel does not have,
+     so it must never reach a control.
+     --display is the working face: industrial, condensed, legible small. */
+  --display-deco:"Poiret One","Bodoni MT","Didot",Georgia,serif;
+  --display:"Bahnschrift","Franklin Gothic Medium",Impact,sans-serif;
+  --body:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  --data:"Cascadia Mono","Consolas",ui-monospace,monospace;
+
+  --step--1:clamp(.72rem,.7rem + .1vw,.8rem);
+  --step-0:clamp(.94rem,.9rem + .2vw,1.02rem);
+  --step-1:clamp(1.15rem,1.05rem + .45vw,1.4rem);
+  --step-2:clamp(1.6rem,1.3rem + 1.3vw,2.4rem);
+  --step-3:clamp(2.2rem,1.6rem + 3vw,4.2rem);
+  --gap:clamp(.9rem,.6rem + 1.2vw,1.5rem);
+  --pad:clamp(.9rem,.65rem + .9vw,1.35rem);
+
+  --bg:#0C0B09; --bg-2:#131210;
+  --metal-hi:#3A382F; --metal:#26251F; --metal-lo:#191813;
+  --line:#3A3730; --line-hot:#5A5342;
+  --ink:#EDE6D6; --ink-2:#A79E88; --ink-3:#6E6858;
+  --accent:#C9A227; --accent-hi:#F2DCA0; --accent-lo:#7A5A1E; --accent-rgb:201 162 39;
+  /* --accent-2 is load-bearing: it is the far end of the ground's hue wash,
+     so every colourway MUST define it. */
+  --accent-2:#4FB89A;
+  --good:#6FBF8E; --warn:#D9A441; --crit:#C4503F;
+  --glow:.38;
+
+  /* the ground's four dials */
+  --ground-tint:11;     /* accent bleed into the metal, unitless %  */
+  --ground-tooth:.55;   /* brushed grain strength, 0–1              */
+  --ground-lamp:.55;    /* broad key light, 0–1                     */
+  --ground-wash:.5;     /* animated hue wash, 0–1                   */
+  --ground-period:40s;  /* one pass of the wash                     */
+}
+
+/* ==========================================================================
+   2. COLORWAYS
+   ========================================================================== */
+:root[data-way="nickel"]{
+  --bg:#07090C; --bg-2:#0C1014; --metal-hi:#333C44; --metal:#1E252B; --metal-lo:#141A1F;
+  --line:#2B343C; --line-hot:#41505C; --ink:#E6EEF4; --ink-2:#96A7B4; --ink-3:#5E6D79;
+  --accent:#9FC6D8; --accent-hi:#E2F1F8; --accent-lo:#4C7185; --accent-rgb:159 198 216;
+  --accent-2:#7FD4E8; --good:#6FC9A8; --warn:#E5C069; --crit:#DE6A5F; --glow:.42;
+}
+:root[data-way="oxblood"]{
+  --bg:#0B0808; --bg-2:#120D0C; --metal-hi:#3B302C; --metal:#241B19; --metal-lo:#181110;
+  --line:#3A2A26; --line-hot:#573B34; --ink:#F0E4D2; --ink-2:#B1A08C; --ink-3:#736455;
+  --accent:#D8C39B; --accent-hi:#F5EBD6; --accent-lo:#8A7449; --accent-rgb:216 195 155;
+  --accent-2:#A6342A; --good:#8FA86B; --warn:#D9A441; --crit:#A6342A; --glow:.26;
+}
+:root[data-way="jade"]{
+  --bg:#070A09; --bg-2:#0C110F; --metal-hi:#2E3B36; --metal:#1B2320; --metal-lo:#121816;
+  --line:#2A3733; --line-hot:#3F544D; --ink:#E4EFE9; --ink-2:#94A8A0; --ink-3:#5D6E68;
+  --accent:#5FC9A5; --accent-hi:#C6F0E1; --accent-lo:#2E7660; --accent-rgb:95 201 165;
+  --accent-2:#C9A227; --good:#5FC9A5; --warn:#D9A441; --crit:#D2604E; --glow:.34;
+}
+
+/* ==========================================================================
+   3. DRESS
+   Ornament level only. The silhouette NEVER changes — `plain` must still read
+   as the same product, which it cannot do if the chamfer resizes.
+   ========================================================================== */
+:root[data-dress="working"]{--plate:.55;--orn:.35;--bevel:.5}
+:root[data-dress="plain"]{--plate:0;--orn:0;--bevel:0}
+
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);
+  font-size:var(--step-0);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+.cut,.cut-sm,.cut-lg{clip-path:polygon(var(--c) 0,100% 0,100% calc(100% - var(--c)),
+  calc(100% - var(--c)) 100%,0 100%,0 var(--c))}
+.cut{--c:var(--cut)} .cut-sm{--c:var(--cut-sm)} .cut-lg{--c:var(--cut-lg)}
+
+/* ==========================================================================
+   4. GROUND — procedural brushed metal, derived from the accent
+
+   Four stacked jobs:
+     base    accent-derived dark metal colour   (this element)
+     tooth   the brushed grain                  (::before)
+     lamp    one broad off-axis key light       (this element, in the stack)
+     wash    the slow animated hue drift        (::after)
+
+   The grain is feTurbulence with an ANISOTROPIC baseFrequency — low across the
+   brush, high along it — which smears the noise field into fine uneven streaks.
+   That is the whole trick. A repeating-linear-gradient cannot get there: a comb
+   is regular and a brushed surface is not, so a gradient can only ever band.
+   Procedural, so it retints with the accent and costs ~1.2KB rather than the
+   several hundred a photographic plate would.
+   ========================================================================== */
+#dn-field,#dn-grain{position:fixed;inset:0;pointer-events:none}
+#dn-field{z-index:0;isolation:isolate;
+  --t:calc(var(--ground-tint) * 1%);
+  --gr-lo:color-mix(in srgb,var(--accent) calc(var(--t) * .5),#07080a);
+  --gr-mid:color-mix(in srgb,var(--accent) var(--t),#0f1012);
+  --gr-hi:color-mix(in srgb,var(--accent) calc(var(--t) * 1.7),#1b1c1f);
+  background-image:
+    /* lamp — strength carried in the alpha so it stays tokenised */
+    radial-gradient(80% 62% at 16% -6%,rgba(255,255,255,calc(.13 * var(--ground-lamp))),transparent 62%),
+    radial-gradient(90% 70% at 88% 112%,rgba(0,0,0,calc(.5 * var(--ground-lamp))),transparent 58%),
+    linear-gradient(168deg,var(--gr-hi),var(--gr-lo) 55%,var(--gr-mid))}
+
+/* tooth: two grits, because real brushing is never a single pass */
+#dn-field::before{content:"";position:absolute;inset:0;
+  opacity:var(--ground-tooth);mix-blend-mode:overlay;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='760' height='760'%3E%3Cfilter id='b' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004 0.85' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='1.9' intercept='-0.45'/%3E%3CfeFuncG type='linear' slope='1.9' intercept='-0.45'/%3E%3CfeFuncB type='linear' slope='1.9' intercept='-0.45'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cg transform='rotate(-14 380 380)'%3E%3Crect x='-260' y='-260' width='1280' height='1280' filter='url(%23b)'/%3E%3C/g%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1500' height='1500'%3E%3Cfilter id='c' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0016 0.34' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='1.5' intercept='-0.25'/%3E%3CfeFuncG type='linear' slope='1.5' intercept='-0.25'/%3E%3CfeFuncB type='linear' slope='1.5' intercept='-0.25'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cg transform='rotate(-14 750 750)'%3E%3Crect x='-500' y='-500' width='2500' height='2500' filter='url(%23c)'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:760px 760px,1500px 1500px;
+  background-blend-mode:soft-light,normal}
+
+/* wash: a slow drift between the two accents. NOT hue-rotate — that would drag
+   --accent off its own colour, and the accent is the one token that must stay
+   put. This shifts the METAL's apparent colour as the light angle crosses it.
+   40s per pass. It crawls, and it must keep crawling: a fast wash reads as an
+   animation playing on top of flat colour instead of as a lit surface. */
+#dn-field::after{content:"";position:absolute;inset:-30%;
+  opacity:var(--ground-wash);mix-blend-mode:soft-light;
+  background:linear-gradient(104deg,
+    transparent 8%,
+    rgb(var(--accent-rgb) / .30) 26%,
+    color-mix(in srgb,var(--accent-2) 55%,transparent) 42%,
+    rgba(255,255,255,.20) 50%,
+    color-mix(in srgb,var(--accent-2) 55%,transparent) 58%,
+    rgb(var(--accent-rgb) / .30) 74%,
+    transparent 92%);
+  background-size:250% 250%;background-position:0% 50%;
+  animation:dn-wash var(--ground-period) linear infinite}
+@keyframes dn-wash{to{background-position:250% 50%}}
+
+body[data-bg="off"] #dn-field{display:none}
+
+#dn-grain{z-index:9;mix-blend-mode:soft-light;opacity:.5;
+  image-rendering:pixelated;width:100%;height:100%}
+body[data-tex="off"] #dn-grain{display:none}
+
+/* ==========================================================================
+   5. FRAME — trim / bevel / face
+   A clipped box cannot carry a border or a box-shadow; both are sheared off at
+   the chamfer. Hence three layers. The depth lives in the gradients: a trim
+   that runs from near-white through brass to near-black, a glossy bevel strip,
+   and a face with two speculars.
+   ========================================================================== */
+.frame{position:relative;padding:calc(1px + 1px * var(--bevel));
+  background:linear-gradient(150deg,
+    color-mix(in srgb,var(--line-hot) calc(60% * var(--bevel)),var(--line)) 0%,
+    color-mix(in srgb,var(--accent) calc(34% * var(--bevel)),var(--line-hot)) 15%,
+    var(--line) 47%,
+    var(--metal-lo) 75%,
+    #050403 100%);
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,calc(.55 * var(--bevel))))}
+
+/* Above the glow layer, so the light stays in the trim ring instead of
+   washing over the whole card. */
+.frame>.bevel{position:relative;z-index:2;padding:calc(1.5px * var(--bevel));
+  background:linear-gradient(180deg,
+    rgba(255,255,255,calc(.22 * var(--bevel))),
+    rgba(255,255,255,calc(.04 * var(--bevel))) 18%,
+    rgba(0,0,0,calc(.55 * var(--bevel))) 82%,
+    rgba(0,0,0,calc(.80 * var(--bevel))))}
+
+.frame>.bevel>.face{position:relative;overflow:hidden;height:100%;
+  background:
+    radial-gradient(120% 95% at 14% -12%,rgba(255,255,255,calc(.12 * var(--bevel))),transparent 52%),
+    radial-gradient(120% 85% at 90% 118%,rgba(0,0,0,calc(.55 * var(--bevel))),transparent 55%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.016) 0 1px,transparent 1px 3px),
+    linear-gradient(162deg,var(--metal) 0%,var(--metal-lo) 58%,var(--bg-2) 100%)}
+
+.frame.lit{filter:drop-shadow(0 6px 18px rgba(0,0,0,.55))
+                  drop-shadow(0 0 16px rgb(var(--accent-rgb) / calc(var(--glow)*.45)))}
+
+/* TWO PARALLEL RULES along each cut corner, not a solid slab — the deco way
+   of dressing an edge.
+
+   The gradient runs perpendicular to the chamfer, so distance along its axis
+   IS distance out from the corner. The parent's clip-path removes everything
+   nearer the corner than `--c / √2` (the chamfer's perpendicular distance from
+   the corner), so the stops are measured from there outward. This is why the
+   pair holds its spacing at any --cut, which a pair of rotated bars does not.
+
+   z-index 3, ABOVE the bevel. At 2 it tied with the bevel, which comes later
+   in the markup and therefore painted over it. */
+.plate{--d:calc(var(--c,var(--cut)) * 0.7071);
+  position:absolute;width:calc(var(--c,var(--cut))*2.4);height:calc(var(--c,var(--cut))*2.4);
+  pointer-events:none;opacity:var(--plate);z-index:3;
+  transition:opacity var(--t-base) var(--ease)}
+.plate.tl{top:0;left:0;clip-path:polygon(0 0,100% 0,0 100%);
+  background:linear-gradient(135deg,
+    transparent 0 calc(var(--d) + 2px),
+    var(--accent-hi) calc(var(--d) + 2px) calc(var(--d) + 3.5px),
+    transparent calc(var(--d) + 3.5px) calc(var(--d) + 7px),
+    var(--accent) calc(var(--d) + 7px) calc(var(--d) + 8.5px),
+    transparent calc(var(--d) + 8.5px))}
+.plate.br{right:0;bottom:0;clip-path:polygon(100% 100%,100% 0,0 100%);
+  background:linear-gradient(315deg,
+    transparent 0 calc(var(--d) + 2px),
+    var(--accent-hi) calc(var(--d) + 2px) calc(var(--d) + 3.5px),
+    transparent calc(var(--d) + 3.5px) calc(var(--d) + 7px),
+    var(--accent) calc(var(--d) + 7px) calc(var(--d) + 8.5px),
+    transparent calc(var(--d) + 8.5px))}
+
+/* ---- ornament ----------------------------------------------------------- */
+.orn{opacity:var(--orn);color:var(--accent);flex:0 0 auto;transition:opacity var(--t-base) var(--ease)}
+.orn svg{display:block}
+.zig{width:40px;height:12px}
+/* sunburst — a conic repeat, no SVG needed */
+.fan{position:absolute;pointer-events:none;opacity:calc(var(--orn) * .5);
+  background:repeating-conic-gradient(from -90deg at 50% 100%,
+    rgb(var(--accent-rgb) / .55) 0deg 2.2deg,transparent 2.2deg 9deg)}
+/* bauhaus vertical fluting */
+.flute{position:absolute;top:0;bottom:0;width:14px;pointer-events:none;opacity:calc(var(--orn) * .6);
+  background:repeating-linear-gradient(90deg,
+    rgba(255,255,255,.05) 0 1px,rgba(0,0,0,.25) 1px 2px,transparent 2px 4px)}
+/* a slow bright band crossing a panel face. FULL dress only — on a dashboard
+   with twelve panels it is twelve competing animations. */
+.scanline{display:none}
+:root[data-dress="full"] .scanline{display:block;position:absolute;left:0;right:0;height:36%;
+  pointer-events:none;z-index:1;opacity:.4;
+  background:linear-gradient(180deg,transparent,rgb(var(--accent-rgb) / .09),transparent);
+  animation:dn-scan 9s linear infinite}
+@keyframes dn-scan{0%{transform:translateY(-120%)}100%{transform:translateY(2600%)}}
+
+/* ==========================================================================
+   6. CONTROLS
+   ========================================================================== */
+
+/* ---- ILLUMINATED KEY -----------------------------------------------------
+   A lit legend behind glass in a metal bezel, not a coloured rectangle. The
+   light lives INSIDE the key — a rim line plus an inner bloom — so the accent
+   reads as something switched on rather than as a fill colour.            */
+.btn{--k:var(--accent); --c:7px;
+  position:relative;isolation:isolate;border:0;cursor:pointer;
+  font-family:var(--display);font-size:var(--step--1);letter-spacing:.2em;
+  text-transform:uppercase;font-weight:600;
+  color:color-mix(in srgb,var(--k) 55%,var(--ink-3));
+  padding:.6rem 1.1rem;
+  /* The bezel is always the THEME's brass — every key is the same machined
+     part. Only the lamp behind the glass changes colour, which is how a real
+     panel works: you don't cast a red bezel for the red button. */
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--accent) 42%,var(--metal-hi)),
+    color-mix(in srgb,var(--accent) 22%,var(--metal)) 42%,
+    color-mix(in srgb,var(--accent) 12%,var(--metal-lo)));
+  box-shadow:0 2px 5px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.20),
+             inset 0 -2px 3px rgba(0,0,0,.6);
+  /* Outer halo, in the THEME's brass. --k is the legend colour and nothing
+     else — light spilling out of the key in the lamp's colour is what made
+     Preview and Abort read as green and red objects. drop-shadow rather than
+     box-shadow because it applies to the CLIPPED alpha, so the halo follows
+     the chamfer instead of being sheared off at it. */
+  filter:drop-shadow(0 0 calc(3px + var(--prox,0) * 16px)
+    color-mix(in srgb,var(--accent) calc(var(--prox,0) * 62%),transparent));
+  transition:color var(--t-base) var(--ease),transform 90ms var(--ease),
+             box-shadow var(--t-base) var(--ease),filter .25s ease-out}
+.btn::before{content:"";position:absolute;inset:3px;z-index:-1;
+  clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
+  background:linear-gradient(180deg,#0c0c0a,#000 70%);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent),
+             inset 0 8px 14px -8px color-mix(in srgb,var(--accent) 26%,transparent);
+  transition:box-shadow var(--t-base) var(--ease)}
+/* BORDER GLOW — the rim lights on the side the cursor is approaching from and
+   brightens the closer it gets to an edge, not a blob following the pointer.
+   A cone mask rotated to the cursor's bearing cuts a stacked set of rim
+   shadows down to the arc facing the cursor. --ca and --prox come from JS. */
+.btn::after{content:"";position:absolute;inset:3px;pointer-events:none;
+  clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
+  opacity:var(--prox,0);transition:opacity .25s ease-out;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb,var(--accent) 95%,transparent),
+    inset 0 0 3px 0 color-mix(in srgb,var(--accent) 60%,transparent),
+    inset 0 0 8px 0 color-mix(in srgb,var(--accent) 42%,transparent),
+    inset 0 0 18px 1px color-mix(in srgb,var(--accent) 26%,transparent),
+    inset 0 0 34px 2px color-mix(in srgb,var(--accent) 14%,transparent);
+  mask-image:conic-gradient(from var(--ca,45deg) at center,
+    #000 3%,transparent 13%,transparent 87%,#000 97%);
+  -webkit-mask-image:conic-gradient(from var(--ca,45deg) at center,
+    #000 3%,transparent 13%,transparent 87%,#000 97%)}
+.btn:hover{color:color-mix(in srgb,var(--k) 92%,#fff)}
+.btn:active{transform:translateY(1.5px);
+  box-shadow:0 0 2px rgba(0,0,0,.6),inset 0 2px 5px rgba(0,0,0,.75)}
+.btn[aria-pressed="true"],.btn-primary{
+  color:color-mix(in srgb,var(--k) 96%,#fff);
+  text-shadow:0 0 9px color-mix(in srgb,var(--k) 55%,transparent)}
+.btn[aria-pressed="true"]::before,.btn-primary::before{
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 80%,transparent),
+             inset 0 10px 20px -8px color-mix(in srgb,var(--accent) 45%,transparent),
+             inset 0 -12px 22px -10px color-mix(in srgb,var(--accent) 32%,transparent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn:disabled{cursor:not-allowed;opacity:.42;filter:none}
+.btn-lg{font-size:var(--step-0);padding:.78rem 1.5rem;--c:9px}
+.btn-sm{font-size:calc(var(--step--1)*.9);padding:.42rem .8rem;--c:6px}
+/* --k is the LEGEND colour only. Never the bezel, never the halo. */
+.btn-good{--k:var(--good)}
+.btn-crit{--k:var(--crit)}
+.keydiv{width:1px;height:22px;flex:0 0 auto;
+  background:linear-gradient(180deg,transparent,rgb(var(--accent-rgb) / .4),transparent)}
+
+/* ---- BREAKER SWITCH ------------------------------------------------------
+   Exactly ONE state word is ever shown, and four signals agree on it: the word
+   itself, a lamp, the paddle's position, and colour. Printing OFF and ON at the
+   same time forced the reader to work out which word the paddle was NEAR —
+   two labels competing, no winner. Reported as confusing by a dyslexic user
+   and rebuilt for that reason.
+
+   The lamp is the ACCENT, not --good. Green-for-on turns every switch on the
+   panel into a status light, and status is never the accent's job.        */
+.lever{display:inline-flex;align-items:center;gap:.8rem;cursor:pointer;user-select:none;
+  padding:.25rem;margin:-.25rem}
+.lever input{position:absolute;opacity:0;width:0;height:0}
+.slot{--c:5px;position:relative;width:62px;height:32px;flex:0 0 auto;
+  background:linear-gradient(180deg,#000,var(--metal-lo) 70%);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.95),inset 0 -1px 0 rgba(255,255,255,.07);
+  transition:box-shadow var(--t-base) var(--ease)}
+.paddle{--c:4px;position:absolute;top:3px;left:3px;width:28px;height:26px;
+  background:linear-gradient(180deg,var(--metal-hi),var(--metal) 40%,var(--metal-lo));
+  box-shadow:0 2px 5px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.18);
+  transition:transform var(--t-base) var(--snap),background var(--t-base) var(--ease)}
+.paddle::after{content:"";position:absolute;inset:6px 8px;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.5) 0 1px,transparent 1px 3px)}
+.lever input:checked+.slot .paddle{transform:translateX(28px);
+  background:linear-gradient(180deg,var(--accent-hi),var(--accent) 45%,var(--accent-lo))}
+.lever input:checked+.slot{box-shadow:inset 0 2px 6px rgba(0,0,0,.95),
+  0 0 12px rgb(var(--accent-rgb) / .35)}
+.lever input:focus-visible+.slot{outline:2px solid var(--accent);outline-offset:3px}
+.state{display:inline-flex;align-items:center;gap:.45rem;min-width:74px;
+  font-family:var(--display);font-size:var(--step-0);font-weight:700;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-3);transition:color var(--t-base) var(--ease)}
+.state .lamp{width:9px;height:9px;border-radius:50%;flex:0 0 auto;
+  background:var(--metal-lo);box-shadow:inset 0 1px 2px rgba(0,0,0,.9);
+  transition:background var(--t-base) var(--ease),box-shadow var(--t-base) var(--ease)}
+/* The .word span is intentionally empty — CSS fills it. Do NOT put text in it. */
+.state .word::after{content:"OFF"}
+.lever input:checked~.state{color:var(--accent-hi)}
+.lever input:checked~.state .lamp{background:var(--accent);
+  box-shadow:0 0 9px var(--accent),inset 0 1px 1px rgba(255,255,255,.5)}
+.lever input:checked~.state .word::after{content:"ON"}
+
+.tlabel{font-family:var(--data);font-size:var(--step--1);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-2)}
+.leverrow{display:flex;align-items:center;gap:1rem;margin-bottom:.85rem;flex-wrap:wrap}
+.leverrow .tlabel{min-width:96px}
+
+/* ---- FADER ---------------------------------------------------------------
+   The track IS the switch slot, stretched, and the cap IS the switch paddle:
+   same size, same knurl, same chamfer. A fader is visibly a long toggle rather
+   than a different family of control. The knurl rides in the background stack
+   because a thumb pseudo-element cannot have children.                    */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:32px;
+  background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:32px;
+  background:linear-gradient(180deg,#000,var(--metal-lo) 70%);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.95),inset 0 -1px 0 rgba(255,255,255,.07);
+  clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+input[type=range]::-moz-range-track{height:32px;background:linear-gradient(180deg,#000,var(--metal-lo) 70%);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.95)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:26px;margin-top:3px;
+  background:
+    repeating-linear-gradient(90deg,rgba(0,0,0,.5) 0 1px,transparent 1px 3px) center/14px 14px no-repeat,
+    linear-gradient(180deg,var(--accent-hi),var(--accent) 45%,var(--accent-lo));
+  box-shadow:0 2px 5px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.45);
+  clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)}
+input[type=range]::-moz-range-thumb{border:0;width:28px;height:26px;
+  background:
+    repeating-linear-gradient(90deg,rgba(0,0,0,.5) 0 1px,transparent 1px 3px) center/14px 14px no-repeat,
+    linear-gradient(180deg,var(--accent-hi),var(--accent) 45%,var(--accent-lo));
+  box-shadow:0 2px 5px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.45);
+  clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)}
+input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+
+/* ---- DIAL: knurled rim, tick ring, live arc ----------------------------- */
+.dialwrap{position:relative;width:76px;height:76px;flex:0 0 auto}
+.dialwrap svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.dial{position:absolute;inset:11px;border-radius:50%;cursor:ns-resize;touch-action:none;
+  background:
+    repeating-conic-gradient(from 0deg,
+      rgba(255,255,255,.10) 0 2deg, rgba(0,0,0,.30) 2deg 5deg),
+    radial-gradient(circle at 34% 27%,var(--metal-hi),var(--metal) 52%,var(--metal-lo) 84%);
+  box-shadow:0 3px 9px rgba(0,0,0,.65),inset 0 0 0 1px rgba(0,0,0,.6),
+             inset 0 2px 3px rgba(255,255,255,.12)}
+.dial::before{content:"";position:absolute;inset:7px;border-radius:50%;
+  background:radial-gradient(circle at 38% 30%,var(--metal-hi),var(--metal-lo));
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.14)}
+.dial::after{content:"";position:absolute;top:5px;left:50%;width:2px;height:13px;z-index:1;
+  transform-origin:50% 22px;transform:translateX(-50%) rotate(var(--deg,-135deg));
+  background:linear-gradient(180deg,var(--accent-hi),var(--accent));
+  box-shadow:0 0 5px rgb(var(--accent-rgb) / .85)}
+.dial:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.dialcap{font-family:var(--data);font-size:var(--step--1);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3);text-align:center;margin-top:.35rem}
+.dialval{font-family:var(--data);font-size:var(--step--1);color:var(--accent);
+  text-align:center;font-variant-numeric:tabular-nums}
+.dialrow{display:flex;gap:1.2rem;align-items:flex-start;flex-wrap:wrap}
+
+/* ---- CHECK + RADIO — machined, chamfered ------------------------------- */
+.check{display:inline-flex;align-items:center;gap:.7rem;cursor:pointer;
+  font-size:var(--step--1);color:var(--ink-2)}
+.check input{position:absolute;opacity:0;width:0;height:0}
+.check .box{--c:5px;width:18px;height:18px;flex:none;position:relative;background:#0a0907;
+  clip-path:polygon(var(--c) 0,100% 0,100% calc(100% - var(--c)),calc(100% - var(--c)) 100%,0 100%,0 var(--c));
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.08)}
+.check .box::after{content:"";position:absolute;inset:4px;background:var(--accent);opacity:0;
+  transform:scale(.4) rotate(45deg);
+  clip-path:polygon(3px 0,100% 0,100% calc(100% - 3px),calc(100% - 3px) 100%,0 100%,0 3px);
+  transition:opacity var(--t-fast) var(--ease),transform var(--t-base) var(--snap)}
+.check input:checked+.box::after{opacity:1;transform:none;box-shadow:0 0 10px rgb(var(--accent-rgb) / .7)}
+.check input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}
+.check input:checked~.txt{color:var(--ink)}
+.check .box.round,.check .box.round::after{border-radius:50%;clip-path:none}
+
+/* ---- SEGMENTED ---------------------------------------------------------- */
+.seg{--c:7px;display:inline-flex;background:#0a0907;padding:2px;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.8)}
+.seg button{border:0;cursor:pointer;background:none;padding:.5rem .9rem;color:var(--ink-3);
+  font-family:var(--display);font-size:var(--step--1);letter-spacing:.14em;
+  text-transform:uppercase;font-weight:600;transition:color var(--t-fast) var(--ease)}
+.seg button:hover{color:var(--ink-2)}
+.seg button[aria-pressed="true"]{color:var(--accent-hi);
+  background:linear-gradient(180deg,var(--metal-hi),var(--metal-lo));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 0 8px rgb(var(--accent-rgb) / .4)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* ---- FIELDS ------------------------------------------------------------- */
+.field{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem}
+.field label,.flabel{font-family:var(--data);font-size:var(--step--1);letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-3)}
+.inwrap{background:#0a0907;padding:1px;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.06)}
+.inwrap:focus-within{box-shadow:inset 0 2px 5px rgba(0,0,0,.8),
+  0 0 0 1px var(--accent),0 0 14px rgb(var(--accent-rgb) / .3)}
+.input{background:transparent;border:0;color:var(--ink);font:inherit;
+  padding:.55rem .75rem;width:100%;resize:vertical}
+.input:focus{outline:none}
+.input::placeholder{color:var(--ink-3)}
+.fhint{font-size:var(--step--1);color:var(--ink-3)}
+
+/* ---- PICKER (select) ---------------------------------------------------- */
+.picker{position:relative}
+.picktrigger{--c:5px;width:100%;display:flex;align-items:center;justify-content:space-between;
+  gap:.75rem;cursor:pointer;border:0;background:#0a0907;padding:.6rem .75rem;color:var(--ink);
+  font:inherit;box-shadow:inset 0 2px 5px rgba(0,0,0,.75)}
+.picktrigger:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.picktrigger .chev{width:0;height:0;border:5px solid transparent;
+  border-top-color:var(--accent);flex:none;transform:translateY(2px)}
+.picklist{--c:6px;position:absolute;z-index:40;top:calc(100% + 6px);left:0;right:0;padding:4px;
+  background:linear-gradient(180deg,var(--metal),var(--metal-lo));
+  box-shadow:0 12px 30px rgba(0,0,0,.7),inset 0 0 0 1px rgb(var(--accent-rgb) / .3)}
+.picklist[hidden]{display:none}
+.pickopt{display:block;width:100%;text-align:left;border:0;background:none;cursor:pointer;
+  padding:.5rem .7rem;color:var(--ink-2);font:inherit;
+  transition:background var(--t-fast) var(--ease),color var(--t-fast) var(--ease)}
+.pickopt:hover,.pickopt[aria-selected="true"]{background:rgb(var(--accent-rgb) / .13);color:var(--accent)}
+
+/* ==========================================================================
+   7. NAVIGATION
+   ========================================================================== */
+.rail{display:flex;flex-direction:column;gap:.55rem}
+.railitem{--c:var(--cut-sm);position:relative;display:flex;align-items:center;gap:.7rem;width:100%;
+  padding:.72rem .8rem;border:0;cursor:pointer;text-align:left;
+  font-family:var(--display);font-size:var(--step--1);letter-spacing:.13em;
+  text-transform:uppercase;font-weight:600;color:var(--ink-2);
+  background:linear-gradient(180deg,var(--metal),var(--metal-lo));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+  transition:color var(--t-fast) var(--ease),filter var(--t-base) var(--ease)}
+.railitem:hover{filter:brightness(1.18);color:var(--ink)}
+.railitem:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.railitem .ic{width:20px;height:20px;flex:none}
+.railitem[aria-current="true"]{color:var(--accent-hi);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 12%,var(--metal)),var(--metal-lo))}
+.railitem[aria-current="true"] .ic{filter:drop-shadow(0 0 6px var(--accent))}
+
+.tabs{display:flex;border-bottom:var(--hair) solid rgb(var(--accent-rgb) / .24)}
+.tab{position:relative;background:none;border:0;padding:.65rem 1.1rem;cursor:pointer;color:var(--ink-3);
+  font-family:var(--display);font-size:var(--step--1);letter-spacing:.16em;
+  text-transform:uppercase;font-weight:600;transition:color var(--t-base) var(--ease)}
+.tab:hover{color:var(--ink-2)}
+.tab[aria-selected="true"]{color:var(--accent-hi)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent-hi),transparent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+
+.breadcrumb{display:flex;gap:.55rem;align-items:center;font-family:var(--display);
+  font-size:var(--step--1);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.breadcrumb a{color:var(--ink-2);text-decoration:none}
+.breadcrumb a:hover{color:var(--accent)}
+.breadcrumb .sep{width:5px;height:5px;background:var(--accent);transform:rotate(45deg);opacity:.7}
+
+.pager{display:flex;gap:.4rem}
+.pager a{--c:7px;width:34px;height:34px;display:grid;place-items:center;text-decoration:none;
+  font-family:var(--data);font-size:var(--step--1);color:var(--ink-2);
+  background:linear-gradient(180deg,var(--metal-hi),var(--metal-lo));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.5);
+  transition:filter var(--t-fast) var(--ease)}
+.pager a:hover{filter:brightness(1.2)}
+.pager a[aria-current="page"]{color:var(--accent-hi);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 10px rgb(var(--accent-rgb) / .5)}
+
+/* ==========================================================================
+   8. DATA
+   ========================================================================== */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:var(--step--1)}
+th{font-family:var(--data);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);
+  text-align:left;font-weight:400;padding:.5rem .75rem;white-space:nowrap;
+  border-bottom:var(--hair) solid rgb(var(--accent-rgb) / .24);
+  background:linear-gradient(180deg,rgb(var(--accent-rgb) / .06),transparent)}
+th[data-sort]{cursor:pointer;user-select:none}
+th[data-sort]:hover{color:var(--accent)}
+th .caret{display:inline-block;margin-left:.45rem;width:0;height:0;
+  border:4px solid transparent;border-top-color:var(--accent);opacity:0;transform:translateY(2px)}
+th[data-sort="asc"] .caret{opacity:1;transform:translateY(2px) rotate(180deg)}
+th[data-sort="desc"] .caret{opacity:1}
+td{padding:.55rem .75rem;border-bottom:var(--hair) solid rgba(255,255,255,.05);color:var(--ink-2)}
+td.num{font-family:var(--data);font-variant-numeric:tabular-nums;color:var(--ink);text-align:right}
+td.key{color:var(--ink)}
+tbody tr{transition:background var(--t-fast) var(--ease)}
+tbody tr:hover td{background:rgb(var(--accent-rgb) / .06);color:var(--ink)}
+.swatch{--c:3px;display:inline-block;width:11px;height:11px;margin-right:.5rem;vertical-align:-1px}
+
+.meter{display:flex;flex-direction:column;gap:.4rem}
+.mtop{display:flex;justify-content:space-between;align-items:baseline}
+.mname{font-family:var(--data);font-size:var(--step--1);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3)}
+.mval{font-family:var(--data);font-size:var(--step--1);color:var(--ink);font-variant-numeric:tabular-nums}
+.mtrack{--c:4px;height:8px;background:#0a0907;position:relative;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.8)}
+.mfill{position:absolute;inset:0 auto 0 0;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 55%,#000),var(--accent));
+  box-shadow:0 0 12px rgb(var(--accent-rgb) / .55);transition:width var(--t-slow) var(--ease)}
+/* status, and ONLY status, may leave the accent */
+.mfill.warn{background:linear-gradient(90deg,color-mix(in srgb,var(--warn) 55%,#000),var(--warn));
+  box-shadow:0 0 12px color-mix(in srgb,var(--warn) 60%,transparent)}
+.mfill.crit{background:linear-gradient(90deg,color-mix(in srgb,var(--crit) 55%,#000),var(--crit));
+  box-shadow:0 0 12px color-mix(in srgb,var(--crit) 60%,transparent)}
+
+.gauge{display:grid;place-items:center;position:relative}
+.gauge svg{width:100%;max-width:200px;height:auto}
+.gauge .val{position:absolute;top:52%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.gauge .val b{display:block;font-family:var(--display);font-size:var(--step-2);line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--ink)}
+.gauge .val span{font-family:var(--data);font-size:var(--step--1);letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-3)}
+.arc-bg{stroke:var(--metal-lo)}
+.arc-fg{stroke:var(--accent);filter:drop-shadow(0 0 6px rgb(var(--accent-rgb) / .7));
+  transition:stroke-dashoffset 1s var(--ease)}
+
+.barrow{display:flex;align-items:flex-end;gap:6px;height:120px}
+.barrow .bar{width:100%;position:relative;clip-path:polygon(3px 0,100% 0,100% 100%,0 100%,0 3px);
+  background:linear-gradient(180deg,var(--accent-hi) 0%,var(--accent) 55%,
+    color-mix(in srgb,var(--accent) 45%,#000) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -3px 4px rgba(0,0,0,.35),
+             0 0 9px rgb(var(--accent-rgb) / .3);
+  transition:height 1.1s var(--ease)}
+.barrow .bar::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:rgba(255,255,255,.6)}
+
+/* sparkline. Named .trend, not .spark — .spark is the click particle. */
+.trend{width:100%;height:64px;display:block;overflow:visible}
+.trend path.line{fill:none;stroke:var(--accent-hi);stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 3px rgb(var(--accent-rgb) / .6));
+  stroke-dasharray:400;stroke-dashoffset:400;animation:dn-draw 1.6s var(--ease) .3s forwards}
+.trend path.fill{fill:rgb(var(--accent-rgb) / .14);stroke:none}
+.trend circle.pt{fill:var(--accent-hi)}
+@keyframes dn-draw{to{stroke-dashoffset:0}}
+
+.radarwrap{position:relative;width:100%;padding-top:100%}
+.radarwrap svg{position:absolute;inset:0;width:100%;height:100%}
+.radarwrap .grid-l{stroke:rgb(var(--accent-rgb) / .3);fill:none}
+.sweep{position:absolute;inset:8%;border-radius:50%;overflow:hidden;mix-blend-mode:screen;
+  background:conic-gradient(from 0deg,rgb(var(--accent-rgb) / .7) 0deg,
+    rgb(var(--accent-rgb) / .28) 10deg,transparent 34deg,transparent 360deg);
+  animation:dn-sweep 4s linear infinite}
+@keyframes dn-sweep{to{transform:rotate(360deg)}}
+.blip{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--accent-hi);
+  box-shadow:0 0 8px var(--accent-hi);animation:dn-blip 3.4s var(--ease) infinite}
+@keyframes dn-blip{0%,80%,100%{opacity:.12}88%{opacity:1}}
+
+.log{font-family:var(--data);font-size:var(--step--1);display:grid;gap:.45rem}
+.log div{display:grid;grid-template-columns:auto auto 1fr;gap:.7rem;align-items:baseline}
+.log time{color:var(--ink-3);font-variant-numeric:tabular-nums}
+.log b{font-weight:400;letter-spacing:.1em}
+.log b.good{color:var(--good)} .log b.warn{color:var(--warn)} .log b.crit{color:var(--crit)}
+.log span{color:var(--ink-2)}
+
+.tile .pbody{padding:.8rem 1rem}
+.tile .k{font-family:var(--data);font-size:var(--step--1);letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-3);margin:0}
+.tile .v{font-family:var(--display);font-size:var(--step-2);line-height:1;margin:.3rem 0 0;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(178deg,var(--ink),var(--ink-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.tile .v small{font-size:var(--step--1);font-family:var(--data);letter-spacing:.1em;
+  -webkit-text-fill-color:var(--ink-3)}
+
+.listrow{display:flex;align-items:center;gap:.85rem;padding:.75rem .25rem;
+  border-bottom:var(--hair) solid rgba(255,255,255,.05)}
+.listrow:last-child{border-bottom:0}
+.listmark{--c:9px;width:32px;height:32px;flex:none;
+  background:linear-gradient(155deg,var(--metal-hi),var(--metal-lo));
+  box-shadow:inset 0 0 0 1px rgb(var(--accent-rgb) / .3)}
+.listname{font-family:var(--display);font-size:var(--step--1);letter-spacing:.05em;color:var(--ink)}
+.listsub{font-size:var(--step--1);color:var(--ink-3)}
+
+/* ==========================================================================
+   9. FEEDBACK
+   ========================================================================== */
+/* NAMEPLATE — replaces the generic pill. Status colour is NEVER the accent:
+   the accent means interactive, and collapsing the two turns the interface
+   into a traffic light in which nothing means anything. */
+.tag{--c:4px;position:relative;display:inline-flex;align-items:center;gap:.45rem;
+  padding:.2rem .75rem;font-family:var(--data);font-size:calc(var(--step--1)*.92);
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);
+  background:linear-gradient(180deg,var(--metal-lo),#000);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.06)}
+/* rivets */
+.tag::before,.tag::after{content:"";position:absolute;top:50%;width:3px;height:3px;
+  border-radius:50%;transform:translateY(-50%);
+  background:radial-gradient(circle at 30% 30%,var(--ink-2),var(--metal-lo));opacity:var(--plate)}
+.tag::before{left:4px} .tag::after{right:4px}
+.tag i{width:6px;height:6px;border-radius:50%;font-style:normal;flex:0 0 auto;
+  box-shadow:0 0 6px currentColor}
+.tag.good{color:var(--good)} .tag.good i{background:var(--good)}
+.tag.warn{color:var(--warn)} .tag.warn i{background:var(--warn)}
+.tag.crit{color:var(--crit)} .tag.crit i{background:var(--crit);animation:dn-blip2 1.2s steps(1) infinite}
+@keyframes dn-blip2{50%{opacity:.25}}
+.lamp-dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--good);
+  color:var(--good);box-shadow:0 0 7px currentColor;animation:dn-lamp 2.2s var(--ease) infinite}
+@keyframes dn-lamp{0%,100%{opacity:.55}50%{opacity:1}}
+
+.callout{display:flex;gap:.7rem;padding:.75rem .9rem;margin:0 0 1em;color:var(--ink-2);
+  border-left:2px solid var(--accent);
+  background:linear-gradient(180deg,rgb(var(--accent-rgb) / .08),transparent)}
+.callout .cd{width:8px;height:8px;flex:none;margin-top:.45em;background:var(--accent);transform:rotate(45deg)}
+.callout.warn{border-left-color:var(--warn);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--warn) 12%,transparent),transparent)}
+.callout.warn .cd{background:var(--warn)}
+.callout.crit{border-left-color:var(--crit);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--crit) 12%,transparent),transparent)}
+.callout.crit .cd{background:var(--crit)}
+
+.scrim{position:absolute;inset:0;z-index:50;display:grid;place-items:center;padding:var(--pad);
+  background:rgba(6,5,4,.72);backdrop-filter:blur(2px)}
+.dialog{width:min(460px,100%)}
+.toaststack{position:absolute;z-index:60;top:16px;right:16px;display:flex;flex-direction:column;gap:.7rem}
+.toast{min-width:250px;animation:dn-rise var(--t-slow) var(--ease) both}
+@keyframes dn-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.hintwrap{position:relative;display:inline-flex}
+.hint{--c:7px;position:absolute;bottom:calc(100% + 10px);left:50%;
+  transform:translateX(-50%) translateY(4px);opacity:0;pointer-events:none;white-space:nowrap;
+  padding:.45rem .7rem;font-size:var(--step--1);color:var(--ink);background:var(--metal-lo);
+  box-shadow:0 6px 18px rgba(0,0,0,.7),inset 0 0 0 1px rgb(var(--accent-rgb) / .4);
+  transition:opacity var(--t-fast) var(--ease),transform var(--t-base) var(--ease);z-index:70}
+.hintwrap:hover .hint,.hintwrap:focus-within .hint{opacity:1;transform:translateX(-50%)}
+.infodot{width:17px;height:17px;flex:none;border-radius:50%;display:inline-grid;place-items:center;
+  font-family:var(--data);font-size:10px;color:var(--accent);
+  box-shadow:inset 0 0 0 1px rgb(var(--accent-rgb) / .5)}
+
+.spinner{width:24px;height:24px;flex:none;border-radius:50%;
+  border:2px solid rgb(var(--accent-rgb) / .25);border-top-color:var(--accent-hi);
+  box-shadow:0 0 10px rgb(var(--accent-rgb) / .3);animation:dn-spin .9s linear infinite}
+@keyframes dn-spin{to{transform:rotate(360deg)}}
+.loader{--c:2px;height:5px;background:linear-gradient(180deg,#000,var(--metal-lo));
+  position:relative;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.9)}
+.loader::after{content:"";position:absolute;inset:0;width:34%;
+  background:linear-gradient(90deg,transparent,var(--accent-hi),transparent);
+  animation:dn-sweepbar 1.6s var(--ease) infinite}
+@keyframes dn-sweepbar{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
+.skel{--c:4px;height:13px;
+  background:linear-gradient(100deg,var(--metal-lo) 20%,
+    color-mix(in srgb,var(--accent) 14%,var(--metal-lo)) 40%,var(--metal-lo) 60%);
+  background-size:220% 100%;animation:dn-sheen 2.6s linear infinite}
+@keyframes dn-sheen{0%{background-position:-200% 0}100%{background-position:300% 0}}
+
+.empty{display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2.2rem 1.2rem;text-align:center}
+.emptymark{--c:16px;width:52px;height:52px;
+  background:linear-gradient(155deg,var(--metal-hi),var(--metal-lo));
+  box-shadow:inset 0 0 0 1px rgb(var(--accent-rgb) / .3);animation:dn-bob 3.5s var(--ease) infinite}
+@keyframes dn-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+.ticker{overflow:hidden;position:relative}
+.tickertrack{display:inline-flex;gap:2.75rem;white-space:nowrap;will-change:transform;
+  animation:dn-marquee 32s linear infinite}
+@keyframes dn-marquee{to{transform:translateX(-50%)}}
+.tickitem{display:inline-flex;align-items:center;gap:.6rem;font-family:var(--display);
+  font-size:var(--step--1);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2)}
+.tickitem b{color:var(--accent-hi);font-weight:500}
+.tickitem .dmd{width:6px;height:6px;background:var(--accent);transform:rotate(45deg)}
+
+/* ==========================================================================
+   10. PROSE — long-form. This is what makes a CMS surface viable and not just
+   its settings page.
+   ========================================================================== */
+.prose{max-width:70ch}
+.prose h1{font-family:var(--display-deco);font-size:var(--step-2);letter-spacing:.1em;
+  text-transform:uppercase;font-weight:400;margin:.1em 0 .35em;color:var(--accent-hi)}
+.prose h2{font-family:var(--display-deco);font-size:var(--step-1);letter-spacing:.1em;
+  text-transform:uppercase;font-weight:400;margin:1.1em 0 .4em;color:var(--accent)}
+.prose h3{font-family:var(--display);font-size:var(--step-0);letter-spacing:.14em;
+  text-transform:uppercase;font-weight:600;margin:1.1em 0 .4em;color:var(--ink)}
+.prose p{color:var(--ink-2);margin:0 0 1em;text-wrap:pretty}
+.prose a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgb(var(--accent-rgb) / .4)}
+.prose a:hover{color:var(--accent-hi)}
+.prose strong{color:var(--ink);font-weight:600}
+.prose em{color:var(--ink-2)}
+.prose code{font-family:var(--data);font-size:.9em;color:var(--accent-hi);background:#0a0907;
+  padding:.1em .4em;box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}
+.prose ul,.prose ol{margin:0 0 1em;padding:0;list-style:none;display:flex;flex-direction:column;gap:.5rem}
+.prose ul li{position:relative;padding-left:1.4rem;color:var(--ink-2)}
+.prose ul li::before{content:"";position:absolute;left:.3rem;top:.55em;width:7px;height:7px;
+  background:linear-gradient(135deg,var(--accent-hi),var(--accent-lo));transform:rotate(45deg)}
+.prose ol{counter-reset:dn}
+.prose ol li{counter-increment:dn;position:relative;padding-left:1.7rem;color:var(--ink-2)}
+.prose ol li::before{content:counter(dn,decimal-leading-zero);position:absolute;left:0;top:.1em;
+  font-family:var(--data);font-size:.85em;color:var(--accent)}
+.codeblock{--c:9px;background:#0a0907;padding:.8rem .95rem;font-family:var(--data);
+  font-size:var(--step--1);line-height:1.7;color:var(--ink-2);overflow-x:auto;white-space:pre-wrap;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.7)}
+.codeblock .tok{color:var(--accent-hi)}
+.bq{position:relative;margin:0 0 1em;padding:.25rem 0 .25rem 1.25rem;
+  border-left:2px solid var(--accent);color:var(--ink);text-wrap:pretty}
+.bq cite{display:block;margin-top:.5rem;font-family:var(--display);font-size:var(--step--1);
+  letter-spacing:.14em;text-transform:uppercase;font-style:normal;color:var(--ink-3)}
+.dropcap::first-letter{font-family:var(--display-deco);font-size:3.2em;line-height:.8;
+  color:var(--accent-hi);float:left;padding:.08em .12em 0 0}
+.typerow{display:flex;align-items:baseline;gap:1rem;padding:.6rem 0;
+  border-bottom:var(--hair) solid rgba(255,255,255,.05)}
+.typerow:last-child{border-bottom:0}
+.typemeta{font-family:var(--data);font-size:var(--step--1);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);width:130px;flex:none}
+.port li{list-style:none;padding-left:1.35rem;position:relative;color:var(--ink-2);margin-bottom:.5rem}
+.port li::before{content:"";position:absolute;left:0;top:.55em;width:8px;height:8px;
+  background:linear-gradient(135deg,var(--accent-hi),var(--accent-lo));
+  clip-path:polygon(3px 0,100% 0,100% calc(100% - 3px),calc(100% - 3px) 100%,0 100%,0 3px)}
+.port strong{color:var(--ink);font-weight:600}
+
+/* ==========================================================================
+   11. LAYOUT
+   ========================================================================== */
+.wrap{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:0 var(--pad) 5rem}
+.controls{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);border-bottom:var(--hair) solid var(--line)}
+.controls-in{max-width:1320px;margin:0 auto;padding:.6rem var(--pad);
+  display:flex;gap:var(--gap);flex-wrap:wrap;align-items:center}
+.cgroup{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}
+.clabel{font-family:var(--data);font-size:var(--step--1);letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-3)}
+
+.masthead{margin:clamp(1.5rem,4vw,3rem) 0 var(--gap)}
+.mast-in{display:flex;align-items:center;gap:var(--gap);padding:.85rem var(--pad);
+  justify-content:center;flex-wrap:wrap}
+.wordmark{text-align:center}
+.wordmark h1{font-family:var(--display-deco);font-size:var(--step-3);margin:0;line-height:.86;
+  text-transform:uppercase;font-weight:400;letter-spacing:.12em;
+  background:linear-gradient(178deg,var(--accent-hi),var(--accent) 46%,var(--accent-lo));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.wordmark p{margin:.35rem 0 0;font-family:var(--data);font-size:var(--step--1);
+  letter-spacing:.42em;text-transform:uppercase;color:var(--ink-3)}
+.decomark{position:relative;width:40px;height:40px;flex:none}
+.decomark span{position:absolute}
+.decomark .ring{inset:0;border:2px solid var(--accent);border-radius:50%;
+  box-shadow:0 0 10px rgb(var(--accent-rgb) / .4),inset 0 0 8px rgb(var(--accent-rgb) / .3)}
+.decomark .bar{left:50%;top:1px;bottom:1px;width:1.5px;transform:translateX(-50%);
+  background:rgb(var(--accent-rgb) / .35)}
+.decomark .dia{inset:12px;background:linear-gradient(155deg,var(--accent-hi),var(--accent));
+  transform:rotate(45deg);box-shadow:0 0 8px rgb(var(--accent-rgb) / .6)}
+
+.phead{position:relative;display:flex;align-items:center;gap:.7rem;padding:.55rem var(--pad);
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--accent) calc(9% * var(--bevel)),var(--metal-hi)),var(--metal-lo));
+  border-bottom:var(--hair) solid var(--line);overflow:hidden;z-index:2}
+/* stepped deco fluting behind the title bar */
+.phead::before{content:"";position:absolute;inset:0;opacity:calc(.5 * var(--orn));pointer-events:none;
+  background:repeating-linear-gradient(90deg,
+    rgb(var(--accent-rgb) / .10) 0 1px, transparent 1px 5px,
+    rgba(0,0,0,.22) 5px 6px, transparent 6px 11px)}
+.phead>*{position:relative;z-index:1}
+.phead h3{font-family:var(--display-deco);font-size:var(--step-1);margin:0;text-transform:uppercase;
+  letter-spacing:.15em;font-weight:400;white-space:nowrap;color:var(--accent-hi);
+  text-shadow:0 1px 2px rgba(0,0,0,.6),0 0 14px rgb(var(--accent-rgb) / .3)}
+.phead .dmd{width:8px;height:8px;flex:none;background:var(--accent);transform:rotate(45deg);
+  box-shadow:0 0 6px rgb(var(--accent-rgb) / .6)}
+.phead .spacer{flex:1;height:9px;opacity:var(--orn);
+  background:
+    linear-gradient(90deg,var(--line-hot),transparent) bottom/100% 1px no-repeat,
+    repeating-linear-gradient(90deg,var(--line-hot) 0 1px,transparent 1px 4px,
+      transparent 4px 5px) center/100% 5px no-repeat}
+.pbody{padding:var(--pad);position:relative;z-index:2}
+
+/* align-items:start so a frame is as tall as its own contents. Stretching
+   every card to the tallest in the row is what left dead slabs of empty metal
+   under the short ones. */
+.grid{display:grid;gap:var(--gap);align-items:start}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(158px,1fr))}
+
+/* Brass, not white. A white section head sits outside the palette entirely and
+   reads as a different design pasted in above the panels. */
+h2{font-family:var(--display-deco);font-size:var(--step-2);text-transform:uppercase;
+  letter-spacing:.12em;margin:0;font-weight:400;
+  background:linear-gradient(178deg,var(--accent-hi),var(--accent) 52%,var(--accent-lo));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.sec{margin-top:clamp(2.5rem,6vw,4.5rem)}
+.sechead{display:flex;align-items:center;gap:var(--gap);margin-bottom:.4rem}
+/* three stepped rules — deco, and it reads as a rule rather than a hairline */
+.sechead .rule{flex:1;height:11px;opacity:calc(.55 + .45 * var(--orn));
+  background:
+    linear-gradient(90deg,var(--accent-lo),transparent 78%) top/100% 2px no-repeat,
+    linear-gradient(90deg,var(--line-hot),transparent 52%) center/100% 1px no-repeat,
+    linear-gradient(90deg,var(--line-hot),transparent 30%) bottom/100% 1px no-repeat}
+.sec-note{color:var(--ink-2);max-width:64ch;margin:0 0 var(--gap)}
+footer{margin-top:4rem;padding-top:1.2rem;border-top:var(--hair) solid var(--line);
+  color:var(--ink-3);font-size:var(--step--1);font-family:var(--data);letter-spacing:.1em}
+
+/* ==========================================================================
+   12. MOTION
+   ========================================================================== */
+.reveal{opacity:0;transform:translateY(12px);
+  transition:opacity var(--t-slow) var(--ease),transform var(--t-slow) var(--ease)}
+.reveal.in{opacity:1;transform:none}
+
+.spark{position:fixed;z-index:61;pointer-events:none;width:2px;height:11px;
+  background:linear-gradient(180deg,var(--accent-hi),transparent);
+  transform-origin:50% 0;animation:dn-spark .42s var(--ease) forwards}
+@keyframes dn-spark{from{opacity:1;scale:1 1}to{opacity:0;scale:1 2.4;translate:0 20px}}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::after,*::before{animation:none!important;transition-duration:1ms!important}
+  .reveal{opacity:1;transform:none}
+  .trend path.line{stroke-dashoffset:0}
+}
