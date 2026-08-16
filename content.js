@@ -1,8 +1,15 @@
-// content.js — BlankStare v0.5
-// Injected into every web page.
+// content.js — BlankStare
+// Injected into every web page. isDomainExcluded lives in utils/pure.js, which
+// the manifest loads immediately before this file.
 
 let floatingBtn = null;
 let currentSelectedText = '';
+let listenersAttached = false;
+
+// Live copies of the two settings that govern this script. Previously read once
+// at injection, so toggling either required reloading every open tab.
+let triggerFloating = true;
+let excludeList     = [];
 
 // Cached panel-open state so we're not making a round-trip on every mouseup
 let _panelOpenCache = false;
@@ -23,63 +30,79 @@ async function isPanelOpen() {
   return _panelOpenCache;
 }
 
-// ── Startup ────────────────────────────────────────────────────────────────────
+// ── Startup ───────────────────────────────────────────────────────────────────
 (async function init() {
-  const s = await chrome.storage.sync.get({
-    triggerFloating:  true,
-    triggerRightClick:true,
-    excludeList:      [],
-  });
-  if (isDomainExcluded(window.location.hostname, s.excludeList)) return;
-  if (s.triggerFloating) setupFloatingButton();
+  const s = await chrome.storage.sync.get({ triggerFloating: true, excludeList: [] });
+  triggerFloating = s.triggerFloating;
+  excludeList     = s.excludeList;
+  reconcile();
 })();
 
-function isDomainExcluded(hostname, list) {
-  if (!list?.length) return false;
-  return list.some(p => {
-    if (!p) return false;
-    const pat = p.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-    const h   = hostname.toLowerCase();
-    return h === pat || h.endsWith('.' + pat);
-  });
+// ── Settings sync ─────────────────────────────────────────────────────────────
+// The context menu already tracked its setting via SETTINGS_CHANGED; the
+// floating button did not, so turning it off appeared to do nothing until the
+// page was reloaded.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'sync') return;
+  let touched = false;
+
+  if (changes.triggerFloating) { triggerFloating = changes.triggerFloating.newValue !== false; touched = true; }
+  if (changes.excludeList)     { excludeList     = changes.excludeList.newValue || [];         touched = true; }
+
+  if (touched) reconcile();
+});
+
+// Attach or detach according to the current settings. Safe to call repeatedly.
+function reconcile() {
+  const active = triggerFloating && !isDomainExcluded(window.location.hostname, excludeList);
+  if (active) attachListeners();
+  else        detachListeners();
 }
 
 // ── Floating button — only shown when the panel is already open ────────────────
-// This guarantees 100% reliability: when the panel is open it polls for text
-// every 500ms, so clicking the button always works immediately.
-function setupFloatingButton() {
-  document.addEventListener('mouseup',  onSelectionChange);
-  document.addEventListener('keyup',    onSelectionChange);
-  document.addEventListener('mousedown', e => {
-    if (floatingBtn && !floatingBtn.contains(e.target)) hideButton();
-  });
-  document.addEventListener('scroll', hideButton, { passive: true });
+// This guarantees reliability: when the panel is open it is listening for
+// queued text, so clicking the button always works immediately.
+function attachListeners() {
+  if (listenersAttached) return;
+  document.addEventListener('mouseup',   onSelectionChange);
+  document.addEventListener('keyup',     onSelectionChange);
+  document.addEventListener('mousedown', onDocumentMouseDown);
+  document.addEventListener('scroll',    hideButton, { passive: true });
+  listenersAttached = true;
+}
+
+function detachListeners() {
+  if (!listenersAttached) return;
+  document.removeEventListener('mouseup',   onSelectionChange);
+  document.removeEventListener('keyup',     onSelectionChange);
+  document.removeEventListener('mousedown', onDocumentMouseDown);
+  document.removeEventListener('scroll',    hideButton);
+  listenersAttached = false;
+  removeButton();   // a button already on screen must go with the setting
+}
+
+function onDocumentMouseDown(e) {
+  if (floatingBtn && !floatingBtn.contains(e.target)) hideButton();
 }
 
 async function onSelectionChange() {
   const text = window.getSelection()?.toString().trim() ?? '';
   if (text.length < 4) { hideButton(); return; }
 
-  // Only show the button if the panel is open — if it's not, right-click is
+  // Only show the button if the panel is open — if it is not, right-click is
   // the trigger to use (it works regardless of panel state).
-  const open = await isPanelOpen();
-  if (!open) { hideButton(); return; }
+  if (!await isPanelOpen()) { hideButton(); return; }
 
   currentSelectedText = text;
-
-  // Greek text warning: if selection is mostly Greek and we're in EN mode
-  const greekRatio = (text.match(/[\u0370-\u03FF\u1F00-\u1FFF]/g) || []).length / text.length;
-  if (greekRatio > 0.2) {
-    showButton(window.getSelection().getRangeAt(0).getBoundingClientRect(), text, 'greek');
-    return;
-  }
 
   try {
     const range = window.getSelection().getRangeAt(0);
     const rect  = range.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) { hideButton(); return; }
-    showButton(rect, text, 'normal');
-  } catch (_) { hideButton(); }
+    showButton(rect, text, isLikelyGreek(text) ? 'greek' : 'normal');
+  } catch (_) {
+    hideButton();
+  }
 }
 
 function showButton(rect, text, mode = 'normal') {
@@ -87,23 +110,21 @@ function showButton(rect, text, mode = 'normal') {
     floatingBtn = document.createElement('div');
     floatingBtn.id = 'blankstare-floating-btn';
     floatingBtn.setAttribute('role', 'button');
+    floatingBtn.setAttribute('tabindex', '0');
     floatingBtn.setAttribute('aria-label', 'Explain with BlankStare');
     floatingBtn.innerHTML = `<span class="bs-icon">⚡</span><span class="bs-label">Explain</span>`;
     document.body.appendChild(floatingBtn);
     floatingBtn.addEventListener('click', onButtonClick);
+    floatingBtn.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onButtonClick(e); }
+    });
   }
 
-  if (mode === 'greek') {
-    floatingBtn.dataset.mode = 'greek';
-    floatingBtn.querySelector('.bs-icon').textContent = '🇬🇷';
-    floatingBtn.querySelector('.bs-label').textContent = 'Select English dev text';
-    floatingBtn.style.cursor = 'default';
-  } else {
-    floatingBtn.dataset.mode = 'normal';
-    floatingBtn.querySelector('.bs-icon').textContent = '⚡';
-    floatingBtn.querySelector('.bs-label').textContent = 'Explain';
-    floatingBtn.style.cursor = 'pointer';
-  }
+  const greek = mode === 'greek';
+  floatingBtn.dataset.mode = mode;
+  floatingBtn.querySelector('.bs-icon').textContent  = greek ? '🇬🇷' : '⚡';
+  floatingBtn.querySelector('.bs-label').textContent = greek ? 'Select English dev text' : 'Explain';
+  floatingBtn.style.cursor = greek ? 'default' : 'pointer';
 
   floatingBtn.dataset.state = 'default';
   floatingBtn.style.left = `${rect.left + window.scrollX + rect.width / 2}px`;
@@ -119,21 +140,25 @@ function hideButton() {
   _panelCacheTime = 0; // force re-check on next selection
 }
 
+function removeButton() {
+  floatingBtn?.remove();
+  floatingBtn = null;
+  currentSelectedText = '';
+}
+
 async function onButtonClick(e) {
   e.stopPropagation();
   if (floatingBtn?.dataset.mode === 'greek') return; // don't send Greek text
   if (!currentSelectedText) return;
 
-  // Panel is open (we only show this button if it is) — just queue the text.
-  // The panel's 500ms polling loop picks it up and explains it automatically.
+  // The panel is open (we only show this button if it is), so queueing the
+  // text is enough — the panel picks it up from session storage.
   try {
     const res = await chrome.runtime.sendMessage({ type: 'EXPLAIN_TEXT', text: currentSelectedText });
     if (res?.ok) {
-      // Brief "sending…" confirmation then hide
       const label = floatingBtn?.querySelector('.bs-label');
       if (label) label.textContent = '✓ Sending…';
       setTimeout(hideButton, 600);
-      // Invalidate cache so the next check re-pings the panel
       _panelCacheTime = 0;
     }
   } catch (err) {
@@ -141,7 +166,7 @@ async function onButtonClick(e) {
   }
 }
 
-// ── Message handlers ────────────────────────────────────────────────────────
+// ── Message handlers ──────────────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'GET_SELECTION') {
     sendResponse({ text: window.getSelection()?.toString().trim() || '' });

@@ -1,7 +1,13 @@
-// settings.js — BlankStare v0.5
+// settings.js — BlankStare
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
+
+// ── Version ───────────────────────────────────────────────────────────────────
+// Single source of truth. The string used to be maintained by hand in five
+// places, which is four too many.
+const versionEl = $('about-version');
+if (versionEl) versionEl.textContent = `v${chrome.runtime.getManifest().version}`;
 
 // ── Lottie loader ─────────────────────────────────────────────────────────────
 // Extension pages can load local files via chrome.runtime.getURL().

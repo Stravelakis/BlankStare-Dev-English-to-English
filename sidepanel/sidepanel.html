@@ -88,7 +88,10 @@
   </section>
 
   <!-- Result -->
-  <section id="state-result" class="state hidden" aria-live="polite">
+  <!-- No aria-live on the section itself: it wraps the whole result including
+       search results and would re-announce everything on any change. The
+       translation announces itself, once, when the stream finishes. -->
+  <section id="state-result" class="state hidden">
 
     <!-- Selected text -->
     <div class="selected-box">
@@ -99,8 +102,16 @@
 
     <!-- Explanation -->
     <div class="explanation-box">
-      <div id="explanation-text" class="explanation-text"></div>
+      <!-- aria-busy is set while tokens stream in, so assistive tech waits and
+           reads the finished translation instead of stuttering every token. -->
+      <div id="explanation-text" class="explanation-text"
+           aria-live="polite" aria-atomic="true" aria-busy="false"></div>
       <div id="explanation-cursor" class="typing-cursor" aria-hidden="true"></div>
+
+      <!-- Transient notices (e.g. hopping to another model on a rate limit).
+           Previously written into the translation itself, where the next token
+           overwrote it. -->
+      <div id="stream-status" class="stream-status hidden" role="status"></div>
 
       <!-- Inline action buttons -->
       <div id="explanation-actions" class="explanation-actions hidden">
@@ -197,6 +208,7 @@
 </div>
 
 <script src="../utils/lottie.min.js"></script>
+<script src="../utils/pure.js"></script>
 <script src="../utils/storage.js"></script>
 <script src="../utils/api.js"></script>
 <script src="sidepanel.js"></script>

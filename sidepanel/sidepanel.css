@@ -258,3 +258,25 @@ button{cursor:pointer;font-family:var(--font);border:none;background:none}
 }
 .lang-warning-inline strong { color: #fecaca; font-weight: 700; }
 .lang-warning-inline em     { font-style: italic; color: #f87171; }
+
+/* ── Stream status ───────────────────────────────────────────────────────────
+   Transient notices that sit beside the translation rather than inside it:
+   model fallback on a rate limit, a dropped connection, a shortened readout.
+   Previously written into the explanation text, where the next token erased it. */
+.stream-status {
+  margin-top: 8px;
+  padding: 7px 10px;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-dim);
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--accent);
+}
+
+/* ── Inline messages ─────────────────────────────────────────────────────────
+   Were repeated inline style attributes at every call site. */
+.inline-note  { padding: 10px 12px; font-size: 12px; color: var(--text-muted); }
+.inline-error { padding: 10px 12px; font-size: 12px; color: var(--error); }
+.inline-hint  { font-size: 11px; color: var(--text-faint); }
+.inline-note a { color: var(--accent); }

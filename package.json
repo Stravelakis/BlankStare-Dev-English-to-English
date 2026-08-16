@@ -1,0 +1,10 @@
+{
+  "name": "blankstare",
+  "version": "0.6.0",
+  "private": true,
+  "description": "Chrome extension that translates developer documentation into plain English. No build step — package.json exists only so `npm test` runs the Node test suite.",
+  "scripts": {
+    "test": "node --test tests/pure.test.js"
+  },
+  "license": "SEE LICENSE IN LICENSE"
+}
