@@ -5,7 +5,7 @@
       "name": "blankstare-lab",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "http-server", ".", "-c-1", "--silent"],
-      "port": 8080,
+      "port": 8123,
       "autoPort": true
     }
   ]

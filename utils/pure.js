@@ -100,6 +100,11 @@ function searxngOriginPattern(raw) {
   }
 }
 
+// ══ SHARED LIMITS ═════════════════════════════════════════════════════════════
+// The page-content budget was hardcoded as 4000 in both content.js and
+// sidepanel.js, so changing it meant changing it twice.
+const MAX_PAGE_CHARS = 4000;
+
 // ══ DOMAIN EXCLUSION ══════════════════════════════════════════════════════════
 // Entries may be pasted as full URLs; normalise to a bare hostname first.
 // Matching is exact or a true subdomain — 'example.com' must not silence
@@ -201,5 +206,6 @@ if (typeof module !== 'undefined' && module.exports) {
     VALID_LEVELS,
     LEVEL_DESC,
     GREEK_RATIO_THRESHOLD,
+    MAX_PAGE_CHARS,
   };
 }

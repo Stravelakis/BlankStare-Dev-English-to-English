@@ -11,17 +11,32 @@ if (versionEl) versionEl.textContent = `v${chrome.runtime.getManifest().version}
 
 // ── Lottie loader ─────────────────────────────────────────────────────────────
 // Extension pages can load local files via chrome.runtime.getURL().
-function loadLottie(containerId, iconName, { loop = true, autoplay = true } = {}) {
+//
+// Eight of these loop on this page. Under prefers-reduced-motion they hold on
+// their first frame: the icon still reads and nothing moves. The test-button
+// animations are exempt — they are the only feedback that a test is running, so
+// suppressing them entirely would remove information rather than motion.
+const REDUCED_MOTION = (() => {
+  try { return matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  catch (_) { return false; }
+})();
+
+function loadLottie(containerId, iconName, { loop = true, autoplay = true, decorative = true } = {}) {
   const container = $(containerId);
   if (!container || typeof lottie === 'undefined') return null;
+
+  const still = REDUCED_MOTION && decorative;
+
   try {
-    return lottie.loadAnimation({
+    const anim = lottie.loadAnimation({
       container,
       renderer: 'svg',
-      loop,
-      autoplay,
-      path: chrome.runtime.getURL(`icons/lottie/${iconName}`),
+      loop:     still ? false : loop,
+      autoplay: still ? false : autoplay,
+      path:     chrome.runtime.getURL(`icons/lottie/${iconName}`),
     });
+    if (still) anim.addEventListener('DOMLoaded', () => anim.goToAndStop(0, true));
+    return anim;
   } catch (e) {
     console.warn('[BlankStare] Lottie failed for', iconName, e);
     return null;
@@ -55,7 +70,10 @@ function testAnimStart(field) {
   if (anim)  anim.classList.remove('hidden');
 
   if (_testAnims[field]) { _testAnims[field].destroy(); }
-  _testAnims[field] = loadLottie(`test-anim-${field}`, 'icon-test.json', { loop: true });
+  // decorative:false — this spinner is the only signal that a test is in
+  // flight, so it keeps moving even under reduced motion. Removing it would
+  // remove information, not decoration.
+  _testAnims[field] = loadLottie(`test-anim-${field}`, 'icon-test.json', { loop: true, decorative: false });
 }
 
 function testAnimResult(field, success) {
@@ -63,7 +81,7 @@ function testAnimResult(field, success) {
   _testAnims[field] = loadLottie(
     `test-anim-${field}`,
     success ? 'icon-success.json' : 'icon-empty.json',
-    { loop: false, autoplay: true }
+    { loop: false, autoplay: true, decorative: false }
   );
   // After animation plays, show "Test" label again
   setTimeout(() => {

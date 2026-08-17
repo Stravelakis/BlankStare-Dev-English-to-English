@@ -175,14 +175,30 @@ function applyI18n(lang) {
 }
 
 // ══ LOTTIE ════════════════════════════════════════════════════════════════════
+// Six of these loop forever in a panel that stays open all day. Under
+// prefers-reduced-motion they load and hold on their first frame instead: the
+// icon still reads, nothing moves, and nothing spins the CPU. Deco Noir's rule 8
+// requires this and the animations were bypassing it.
+const REDUCED_MOTION = (() => {
+  try { return matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  catch (_) { return false; }
+})();
+
 function loadLottie(containerId, iconName, loop = true) {
   const container = $(containerId);
   if (!container || typeof lottie === 'undefined') return null;
   try {
-    return lottie.loadAnimation({
-      container, renderer: 'svg', loop, autoplay: true,
-      path: chrome.runtime.getURL(`icons/lottie/${iconName}`),
+    const anim = lottie.loadAnimation({
+      container,
+      renderer: 'svg',
+      loop:     REDUCED_MOTION ? false : loop,
+      autoplay: !REDUCED_MOTION,
+      path:     chrome.runtime.getURL(`icons/lottie/${iconName}`),
     });
+    // autoplay:false leaves the container blank until a frame is drawn, so hold
+    // the first one deliberately once the JSON has parsed.
+    if (REDUCED_MOTION) anim.addEventListener('DOMLoaded', () => anim.goToAndStop(0, true));
+    return anim;
   } catch (_) { return null; }
 }
 
@@ -192,8 +208,12 @@ function initLottie() {
   loadLottie('nokey-anim',   'icon-apikey.json',  true);
   loadLottie('loading-anim', 'icon-loading.json', true);
   loadLottie('error-anim',   'icon-empty.json',   true);
+  // Hover-to-play is a deliberate motion the user triggered, but it still has
+  // no business running when they have asked for reduced motion.
   const sa = loadLottie('settings-anim', 'icon-settings.json', false);
-  if (sa) el.settingsBtn?.addEventListener('mouseenter', () => { sa.stop(); sa.play(); });
+  if (sa && !REDUCED_MOTION) {
+    el.settingsBtn?.addEventListener('mouseenter', () => { sa.stop(); sa.play(); });
+  }
 }
 
 // ══ STARTUP ═══════════════════════════════════════════════════════════════════
@@ -485,9 +505,15 @@ async function handleFullPage() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id) return;
+    // The content script already trims to MAX_PAGE_CHARS after stripping the
+    // page furniture; slicing again here would only re-apply the same limit.
     const res = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_CONTENT' });
-    const txt = (res?.text || '').slice(0, 4000);
-    if (!txt) return;
+    const txt = (res?.text || '').slice(0, MAX_PAGE_CHARS);
+    if (!txt) {
+      el.errorMessage.textContent = 'There was no readable text on this page. Try selecting the part you want instead.';
+      showState('error');
+      return;
+    }
     explainText(txt, 'fullpage');
   } catch (_) {
     el.errorMessage.textContent = 'Could not read page content. Try selecting specific text instead.';

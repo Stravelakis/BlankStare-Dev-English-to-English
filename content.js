@@ -287,6 +287,74 @@ async function onButtonClick(e) {
   }
 }
 
+// ── Readable page text ────────────────────────────────────────────────────────
+// "Full page" used to send document.body.innerText, which on a typical docs site
+// means the nav, the sidebar, the cookie banner and the footer arrive before any
+// actual content — and the budget is only MAX_PAGE_CHARS, so the real article
+// could be truncated away entirely before the model ever saw it.
+//
+// Deliberately not a full readability port. It takes the first container that
+// looks like article content, falls back to the densest candidate, then to the
+// body, and drops the furniture either way.
+
+const CONTENT_SELECTORS = [
+  'main',
+  'article',
+  '[role="main"]',
+  '#content',
+  '.markdown-body',   // GitHub
+  '.md-content',      // MkDocs
+  '.theme-doc-markdown', // Docusaurus
+  '#main-content',
+];
+
+// Elements whose text is never the thing the reader is asking about.
+const FURNITURE = 'script,style,noscript,template,svg,nav,aside,footer,header,form,button,iframe,[aria-hidden="true"],[hidden]';
+
+// innerText reflects rendered layout, so it comes back empty for a document the
+// browser is not compositing — easy to hit, since the panel can query a tab that
+// is not in the foreground. textContent has no layout dependency and stands in.
+// Order matters: innerText first, because it honours line breaks and skips
+// hidden elements; textContent is the safety net.
+function textOf(el) {
+  return ((el && (el.innerText || el.textContent)) || '').trim();
+}
+
+function extractReadableText() {
+  const root = pickContentRoot();
+  if (!root) return '';
+
+  // Work on a copy: the furniture has to come out, and it must not come out of
+  // the page the user is actually looking at.
+  const clone = root.cloneNode(true);
+  clone.querySelectorAll(FURNITURE).forEach(n => n.remove());
+
+  const text = textOf(clone)
+    .replace(/[ \t ]+/g, ' ')      // collapse runs of spaces
+    .replace(/\n{3,}/g, '\n\n')         // keep paragraphs, drop the gaps
+    .split('\n').map(l => l.trim()).join('\n')
+    .trim();
+
+  return text.slice(0, MAX_PAGE_CHARS);
+}
+
+function pickContentRoot() {
+  for (const sel of CONTENT_SELECTORS) {
+    const el = document.querySelector(sel);
+    // A matching container that is nearly empty is a layout shell, not content.
+    if (el && textOf(el).length > 200) return el;
+  }
+
+  // Nothing semantic. Take the element with the most text that is not simply
+  // the whole body — on a wrapper-div site this lands on the content column.
+  const candidates = [...document.querySelectorAll('div,section,td')]
+    .map(el => ({ el, len: textOf(el).length }))
+    .filter(c => c.len > 400)
+    .sort((a, b) => a.len - b.len);   // ascending: smallest container that still holds the text
+
+  return candidates[0]?.el || document.body || null;
+}
+
 // ── Message handlers ──────────────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'GET_SELECTION') {
@@ -294,8 +362,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
   if (message.type === 'GET_PAGE_CONTENT') {
-    const text = document.body?.innerText?.replace(/\s+/g, ' ').trim().slice(0, 4000) || '';
-    sendResponse({ text });
+    sendResponse({ text: extractReadableText() });
     return true;
   }
 });
