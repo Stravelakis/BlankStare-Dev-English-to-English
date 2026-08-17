@@ -138,7 +138,14 @@ async function _streamGroq({ model, apiKey, systemPrompt, userPrompt, maxTokens,
     return { ok: false, status: response.status, error: errData?.error?.message, partial: '' };
   }
 
-  const reader  = response.body.getReader();
+  // A 2xx with no body is possible — a 204, or an intermediary that strips it.
+  // Reading .getReader() off null throws, and it must not throw from out here:
+  // an escaping error skips both onDone and onError and hangs the cursor
+  // forever, which is the exact failure the try block below exists to prevent.
+  if (!response.body) {
+    return { ok: false, status: response.status, error: 'The response arrived empty.', partial: '' };
+  }
+
   const decoder = new TextDecoder();
   const parser  = createSSEParser();
   let full = '';
@@ -150,10 +157,11 @@ async function _streamGroq({ model, apiKey, systemPrompt, userPrompt, maxTokens,
     }
   };
 
-  // The read loop can throw at any point — a dropped connection mid-stream used
-  // to escape here, leaving the caller with neither onDone nor onError and a
-  // cursor blinking forever. Whatever arrived before the drop is handed back.
+  // Everything that can throw mid-stream lives in here: acquiring the reader,
+  // each read, and the decode. A dropped connection used to escape and leave
+  // the caller with neither callback. Whatever arrived first is handed back.
   try {
+    const reader = response.body.getReader();
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
