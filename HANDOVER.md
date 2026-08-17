@@ -316,10 +316,12 @@ npx http-server . -p 8123 -c-1
   and was wrong — it ships no Greek subset at all. If you ever swap the Greek
   face, verify the subset exists before wiring it up:
   `ls node_modules/@fontsource/<face>/files | grep greek`.
-- **No screenshot has been reviewed.** Deco Noir's AGENTS.md §5 requires
-  actually looking, and the Browser pane has never been displayed in any session
-  so far, so every screenshot attempt times out. What *has* been verified, by
-  probing computed styles in the real page:
+- **Screenshots have now been reviewed**, via headless Chrome (see 14f). Two
+  defects were found that way that every computed-style probe had passed:
+  a native `<select>` painting the platform's grey border and arrow over the
+  chamfer, and grey section headings — which Deco Noir §4 lists explicitly among
+  the things already tried and rejected. Both fixed. The rest of the §5
+  checklist, verified by probing computed styles:
 
   | §5 item | Result |
   |---|---|
@@ -355,3 +357,24 @@ npx http-server . -p 8123 -c-1
   injecting on demand via `activeTab` + `chrome.scripting`, which would break
   select-to-explain — the button has to already be there when the selection
   happens.
+
+### 14f. Taking a screenshot
+
+The in-app Browser pane only composites frames while it is actually displayed,
+so `computer{action:"screenshot"}` times out whenever it is hidden — which it
+was for this entire project. Headless Chrome does not care:
+
+```bash
+"C:/Program Files/Google/Chrome/Application/chrome.exe"   --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=2   --window-size=900,1500 --virtual-time-budget=6000   --screenshot="out.png" "http://localhost:8123/lab/preview.html"
+```
+
+**Shoot `lab/preview.html`, not `sidepanel/sidepanel.html`.** Headless lays the
+page out wider than `--window-size` and then crops to it, so a narrow window
+looks like a horizontal-overflow bug that is not real — it fooled this session
+twice. `lab/preview.html` pins the panel to 380px inside its own frame, so a
+wide window renders it at true side-panel width. To check actual overflow, use
+the browser tool's `resize_window` and measure `scrollWidth` instead.
+
+Two things worth knowing: the visual defects found this way were invisible to
+token probes, and two of the four "bugs" spotted by eye turned out to be
+rendering artefacts. Measure before fixing what a screenshot appears to show.

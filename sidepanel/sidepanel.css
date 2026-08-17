@@ -158,6 +158,26 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
   color: var(--accent);
 }
 
+/* Panel headings are brass. Deco Noir lists grey section headings among the
+   things already tried and rejected — they sit outside the palette — and these
+   were rendering at --ink-2 while .selected-label and .history-header were
+   already brass, so the panel was inconsistent with itself as well as with the
+   system. Only visible by looking at it; every token probe passed.
+   They keep Comfortaa: at 11-12px the deco face's hairlines thin out, which is
+   the exact case rule 6 warns against. Brass and small-caps carries the
+   identity here instead. */
+.section-title, .jargon-label, .resources-label, .phase2-heading {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
+
+/* The tray is deliberately quiet, so it dims as a whole rather than by
+   greying its heading out of the palette. */
+.phase2-heading { color: var(--accent); opacity: 0.75; }
+
 /* ── HEADER ── */
 .header {
   display: flex; align-items: center; justify-content: space-between;
@@ -201,7 +221,31 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
   box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.55), inset 0 0 0 1px var(--line);
   transition: box-shadow var(--t-fast) var(--ease);
 }
-.level-select { flex: 1; padding: 5px 8px; cursor: pointer; }
+/* A native <select> paints the platform's own 1px grey border and arrow —
+   rgb(118,118,118) on Windows — no matter what the element is told, and the
+   native widget draws straight over the chamfer. appearance:none removes the
+   lot, so the field becomes an engraved slot like every other input.
+   The arrow is then drawn from two gradients, which keeps it on --accent
+   instead of hardcoding brass into an SVG the colourway cannot reach. */
+.level-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  flex: 1;
+  min-width: 0;
+  padding: 5px 26px 5px 8px;   /* room on the right for the arrow */
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg,  transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+  background-position: right 14px center, right 9px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* The popup list is drawn by the OS and cannot be themed, but giving the
+   options explicit colours stops it rendering as dark-on-dark. */
+.level-select option { background: var(--metal-lo); color: var(--ink); }
 .context-input, .custom-q-input { width: 100%; padding: 6px 10px; }
 .level-select:focus, .context-input:focus, .custom-q-input:focus {
   box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.55), inset 0 0 0 1px var(--accent);

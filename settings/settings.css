@@ -465,3 +465,20 @@ code {
    tokens missed them. Rule 1 is absolute: no rounded corners anywhere. */
 .badge, .badge-required, .badge-optional, .badge-active,
 .howto-step-num, .about-version { border-radius: 0; }
+
+/* Native selects paint the platform's own grey border and arrow over the
+   chamfer, whatever the element is told. Same treatment as the panel: strip the
+   native appearance, draw the arrow from gradients so it follows --accent. */
+.full-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  padding-right: 30px;
+  background-image:
+    linear-gradient(45deg,  transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+  background-position: right 17px center, right 11px center;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+.full-select option { background: var(--metal-lo); color: var(--ink); }
