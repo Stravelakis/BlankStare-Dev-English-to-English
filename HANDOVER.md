@@ -311,10 +311,11 @@ npx http-server . -p 8123 -c-1
 
 ### 14e. Still outstanding
 
-- **The two display fonts are not in the repo yet.** `fonts/display.css`
-  expects `poiret-one-latin-400-normal.woff2` and
-  `cormorant-greek-500/600-normal.woff2`. Until they are added, titles fall
-  back to Georgia and the identity is only half applied.
+- **Display fonts are bundled** (24KB total): `poiret-one-latin-400-normal.woff2`
+  plus `gfs-didot-greek-400/greek-ext-400`. Note Cormorant was the original plan
+  and was wrong — it ships no Greek subset at all. If you ever swap the Greek
+  face, verify the subset exists before wiring it up:
+  `ls node_modules/@fontsource/<face>/files | grep greek`.
 - **No screenshot has been reviewed.** The layout was verified by probing
   computed styles — chamfers, corner rules, fonts, no leftover radii, no
   horizontal overflow — but nobody has looked at the rendered result. Deco
