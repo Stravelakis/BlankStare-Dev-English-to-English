@@ -12,7 +12,12 @@
     "tabs"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "https://api.groq.com/*",
+    "https://www.googleapis.com/*"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "commands": {
     "_execute_action": {

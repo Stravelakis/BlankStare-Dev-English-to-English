@@ -70,6 +70,36 @@ function safeUrl(raw) {
   }
 }
 
+// ══ OPTIONAL-PERMISSION ORIGIN PATTERN ════════════════════════════════════════
+// The SearXNG instance is user-supplied, so its origin cannot be declared in the
+// manifest ahead of time. It is requested at runtime instead, which needs a
+// match pattern rather than a URL: "https://search.example.com/*".
+//
+// Scoped to the single origin the user typed — never a broad "https://*/*", so
+// granting SearXNG access does not hand the extension the whole web. Returns ''
+// for anything that is not an http(s) URL, so the caller can refuse to ask.
+
+function searxngOriginPattern(raw) {
+  const url = safeUrl(raw);
+  if (!url) return '';
+  try {
+    const { protocol, host } = new URL(url);
+    if (!host) return '';
+
+    // `new URL("https://*/*")` parses happily, with host "*". Echoing that back
+    // would turn a request for one server into a request for the entire web, so
+    // the host has to look like a real host: letters, digits, dots, hyphens,
+    // a port, or bracketed IPv6. Anything else is refused.
+    if (!/^[a-z0-9.\-]+(:\d+)?$/i.test(host) && !/^\[[0-9a-f:]+\](:\d+)?$/i.test(host)) {
+      return '';
+    }
+
+    return `${protocol}//${host}/*`;
+  } catch (_) {
+    return '';
+  }
+}
+
 // ══ DOMAIN EXCLUSION ══════════════════════════════════════════════════════════
 // Entries may be pasted as full URLs; normalise to a bare hostname first.
 // Matching is exact or a true subdomain — 'example.com' must not silence
@@ -164,6 +194,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     createSSEParser,
     safeUrl,
+    searxngOriginPattern,
     isDomainExcluded,
     isLikelyGreek,
     buildSystemPrompt,

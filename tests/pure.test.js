@@ -10,6 +10,7 @@ const assert = require('node:assert');
 const {
   createSSEParser,
   safeUrl,
+  searxngOriginPattern,
   isDomainExcluded,
   isLikelyGreek,
   buildSystemPrompt,
@@ -131,6 +132,43 @@ test('safeUrl: rejects malformed and empty input', () => {
 
 test('safeUrl: tolerates leading/trailing whitespace around a valid URL', () => {
   assert.strictEqual(safeUrl('  https://example.com/  '), 'https://example.com/');
+});
+
+// ══ OPTIONAL-PERMISSION ORIGIN PATTERN ════════════════════════════════════════
+// This string is handed to chrome.permissions.request. Too broad and the user
+// grants the whole web when they meant one server.
+
+test('searxngOriginPattern: builds a single-origin match pattern', () => {
+  assert.strictEqual(searxngOriginPattern('https://search.example.com'),  'https://search.example.com/*');
+  assert.strictEqual(searxngOriginPattern('https://search.example.com/'), 'https://search.example.com/*');
+});
+
+test('searxngOriginPattern: a path on the URL does not widen the pattern', () => {
+  assert.strictEqual(
+    searxngOriginPattern('https://search.example.com/search?q=x'),
+    'https://search.example.com/*'
+  );
+});
+
+test('searxngOriginPattern: keeps a non-default port, which LAN instances use', () => {
+  assert.strictEqual(searxngOriginPattern('http://192.168.1.20:8080'), 'http://192.168.1.20:8080/*');
+});
+
+test('searxngOriginPattern: preserves the scheme rather than assuming https', () => {
+  assert.strictEqual(searxngOriginPattern('http://searx.lan'), 'http://searx.lan/*');
+});
+
+test('searxngOriginPattern: never returns a wildcard host', () => {
+  for (const input of ['https://*/*', 'https://*.example.com', '*://*/*']) {
+    const out = searxngOriginPattern(input);
+    assert.ok(!/\/\/\*/.test(out), `wildcard host leaked from ${input}: ${out}`);
+  }
+});
+
+test('searxngOriginPattern: refuses non-http schemes and junk', () => {
+  for (const bad of ['javascript:alert(1)', 'file:///etc', 'ftp://x.com', '', null, undefined, 'not a url']) {
+    assert.strictEqual(searxngOriginPattern(bad), '', `expected '' for ${JSON.stringify(bad)}`);
+  }
 });
 
 // ══ DOMAIN EXCLUSION ══════════════════════════════════════════════════════════

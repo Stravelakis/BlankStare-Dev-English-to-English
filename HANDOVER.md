@@ -320,6 +320,19 @@ npx http-server . -p 8123 -c-1
   computed styles — chamfers, corner rules, fonts, no leftover radii, no
   horizontal overflow — but nobody has looked at the rendered result. Deco
   Noir's AGENTS.md §5 requires it.
-- **`host_permissions: ["<all_urls>"]`** still triggers "Read and change all
-  your data on all websites" at install. Fetches only reach Groq, YouTube and
-  a user-supplied SearXNG. Narrowing it deserves its own pass.
+- **`host_permissions` is now narrowed** to `api.groq.com` and
+  `www.googleapis.com`. The self-hosted SearXNG origin is requested at runtime
+  via `optional_host_permissions`, from the **Test** button in settings —
+  `chrome.permissions.request` needs a user gesture, so it cannot move to
+  `saveForm` or to the side panel. `searchWeb()` checks
+  `chrome.permissions.contains` first, so a missing grant reads as "falls back
+  to DuckDuckGo" rather than an opaque network error.
+
+  Note this does **not** remove the "Read and change all your data on all
+  websites" install warning: `content_scripts.matches` is `<all_urls>`, which
+  generates that warning on its own, and the floating button needs the script
+  present on any page the user selects text on. Narrowing was worth doing for
+  least privilege, not for install friction. Removing the warning would mean
+  injecting on demand via `activeTab` + `chrome.scripting`, which would break
+  select-to-explain — the button has to already be there when the selection
+  happens.

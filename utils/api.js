@@ -303,6 +303,20 @@ async function searchYouTube(query, apiKey, signal) {
 // caller renders as the DuckDuckGo hand-off.
 async function searchWeb(query, searxngUrl, signal) {
   if (!searxngUrl?.trim()) return null;
+
+  // The manifest only declares Groq and YouTube. A self-hosted instance is
+  // granted at runtime from the settings page, so check before fetching —
+  // otherwise the failure surfaces as an opaque network error and the user has
+  // no way to know that a permission is what is missing.
+  const origin = searxngOriginPattern(searxngUrl);
+  if (!origin) return null;
+
+  const allowed = await chrome.permissions.contains({ origins: [origin] }).catch(() => false);
+  if (!allowed) {
+    console.warn(`[BlankStare] No permission for ${origin} — press Test in Settings to grant it.`);
+    return null;
+  }
+
   try {
     return await _searchSearXNG(query, searxngUrl.trim(), signal);
   } catch (err) {

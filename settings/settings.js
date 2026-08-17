@@ -299,6 +299,27 @@ async function runTest(field) {
     else if (field === 'searxng') {
       const url = $('searxng-url').value.trim();
       if (!url) { result.textContent = '⚠ Enter a URL first'; result.className = 'test-result warn'; testAnimResult(field, false); btn.disabled = false; return; }
+
+      // The instance is self-hosted, so its origin is not in the manifest.
+      // Ask for just this one origin, now, while the click is still a user
+      // gesture — chrome.permissions.request requires one.
+      const origin = searxngOriginPattern(url);
+      if (!origin) {
+        result.textContent = '❌ That is not a valid http:// or https:// URL';
+        result.className = 'test-result error';
+        testAnimResult(field, false); btn.disabled = false; return;
+      }
+
+      const granted = await chrome.permissions.request({ origins: [origin] });
+      if (!granted) {
+        result.textContent = `⚠ Permission declined for ${origin} — BlankStare cannot reach that instance without it. DuckDuckGo will be used instead.`;
+        result.className = 'test-result warn';
+        testAnimResult(field, false);
+        updateSearchActiveUI({ forceActive: false });
+        btn.disabled = false;
+        return;
+      }
+
       const res = await fetch(`${url.replace(/\/$/, '')}/search?q=test&format=json`, { headers: { Accept: 'application/json' } });
       ok = res.ok;
       msg = ok ? '✅ SearXNG is reachable and responding! It will now be used for searches first — DuckDuckGo only as a fallback.' : `❌ Error ${res.status} — check URL and that CORS is enabled`;

@@ -172,6 +172,13 @@ server:
 ```
 Then restart SearXNG. Click **Test** in BlankStare settings to verify.
 
+> 🔐 **Chrome will ask permission for your instance.** BlankStare requests access
+> to Groq and YouTube only; it does not ask for blanket access to every site.
+> Because your SearXNG instance is self-hosted, its address cannot be known in
+> advance, so pressing **Test** asks Chrome for that **one origin** — e.g.
+> `https://search.example.com/*`. Decline it and BlankStare simply falls back to
+> DuckDuckGo.
+
 ---
 
 ## 📄 License
