@@ -316,10 +316,29 @@ npx http-server . -p 8123 -c-1
   and was wrong — it ships no Greek subset at all. If you ever swap the Greek
   face, verify the subset exists before wiring it up:
   `ls node_modules/@fontsource/<face>/files | grep greek`.
-- **No screenshot has been reviewed.** The layout was verified by probing
-  computed styles — chamfers, corner rules, fonts, no leftover radii, no
-  horizontal overflow — but nobody has looked at the rendered result. Deco
-  Noir's AGENTS.md §5 requires it.
+- **No screenshot has been reviewed.** Deco Noir's AGENTS.md §5 requires
+  actually looking, and the Browser pane has never been displayed in any session
+  so far, so every screenshot attempt times out. What *has* been verified, by
+  probing computed styles in the real page:
+
+  | §5 item | Result |
+  |---|---|
+  | Double brass rule, two chamfered corners only | 2 gradients, at `0% 0%` and `100% 100%` |
+  | Every button a brass bezel, no green/red frames | no non-brass frames found |
+  | Switch shows one state word, lamp lights | switch carries no text of its own |
+  | Sliders use the same paddle | n/a — this UI has no sliders |
+  | Section titles brass + deco face, controls not | display face on 0 controls |
+  | Status pills good/warn/crit, never the accent | error resolves `--crit`, not `--accent` |
+  | Nothing scrolls the page body horizontally | no horizontal overflow |
+  | Keyboard focus visible on every control | 49 interactive elements, global `:focus-visible` |
+  | `data-dress="plain"` still reads as the product | `--cut` and clip-path identical across all three levels; ornament steps 1 → 0.55 → 0 |
+  | Ground grain irregular / retints | n/a — ground is off on both surfaces |
+  | No `--panel-a/-b`, `--ink-dim`, `--ink-faint` | none present |
+  | `.prose` styles long-form | the About and How-to-use bodies keep their existing bespoke classes; adding `.prose` would fight them |
+
+  Colourways were also checked: all four resolve both `--accent` and the
+  load-bearing `--accent-2`. What remains unverified is purely visual judgement
+  — whether it actually looks right.
 - **`host_permissions` is now narrowed** to `api.groq.com` and
   `www.googleapis.com`. The self-hosted SearXNG origin is requested at runtime
   via `optional_host_permissions`, from the **Test** button in settings —
