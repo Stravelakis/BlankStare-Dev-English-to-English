@@ -180,7 +180,8 @@ compound                → 250/day    (no token limit)
 
 ## 10. Bigger feature backlog (unchanged, in rough priority order)
 
-1. Screenshots for GitHub README
+1. ~~Screenshots for GitHub README~~ — done, see `screenshots/` and 14f for how
+   they are produced
 2. Voice picker in the panel itself (not just settings)
 3. "What do I need to know first?" prereq mode
 4. Onboarding flow — first install opens How To Use tab

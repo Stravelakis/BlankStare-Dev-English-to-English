@@ -10,15 +10,14 @@ A Chrome sidebar extension powered by Groq's free AI API. Built first for **vibe
 
 ## Screenshots
 
-> 📸 _Screenshots coming soon — the extension is actively being developed._
-> 
-> Want to contribute screenshots? Open a [feature request](https://github.com/Stravelakis/BlankStare-Dev-English-to-English/issues/new?template=feature_request.md) with "Screenshots" in the title.
+| The panel, mid-translation | Settings |
+|---|---|
+| ![BlankStare panel translating a TypeError](screenshots/sidepanel-result.png) | ![BlankStare settings](screenshots/settings.png) |
 
-<!-- Add screenshots here once available:
-![BlankStare panel explaining an error message](screenshots/panel-error-explanation.png)
-![BlankStare settings page](screenshots/settings-page.png)
-![BlankStare floating button on a GitHub page](screenshots/floating-button.png)
--->
+The panel wears [Deco Noir](#-look--feel): a chamfer on two opposing corners,
+brass on near-black. Greek titles are set in GFS Didot and Latin ones in Poiret
+One, chosen per glyph — visible on the settings page, where "LANGUAGE / ΓΛΩΣΣΑ"
+uses both faces in a single line.
 
 ---
 
