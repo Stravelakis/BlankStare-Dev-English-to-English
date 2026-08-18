@@ -1,5 +1,5 @@
 # BlankStare — Developer Handover Document
-_Updated end of v0.5.0 session. Use this to brief a new Claude instance._
+_Updated end of v0.6.0 session. Use this to brief a new Claude instance._
 
 ---
 
@@ -180,7 +180,8 @@ compound                → 250/day    (no token limit)
 
 ## 10. Bigger feature backlog (unchanged, in rough priority order)
 
-1. Screenshots for GitHub README
+1. ~~Screenshots for GitHub README~~ — done, see `screenshots/` and 14f for how
+   they are produced
 2. Voice picker in the panel itself (not just settings)
 3. "What do I need to know first?" prereq mode
 4. Onboarding flow — first install opens How To Use tab
@@ -224,3 +225,157 @@ written permission. Contact: lambros@stravelakis.com
 ---
 
 _End of handover. Good luck, next Claude!_
+
+---
+
+## 14. v0.6.0 — hardening pass and Deco Noir (read this before touching CSS)
+
+### 14a. The eleven defects fixed
+
+Four streaming faults in `utils/api.js` shared one root cause: a network
+chunk was being treated as a message frame.
+
+- **SSE frames split across chunk boundaries were silently dropped.** Each
+  chunk was split on `\n` independently, so a `data:` line straddling two
+  reads failed `JSON.parse` and was swallowed by a bare `catch`. Translations
+  lost words with no error anywhere — it read as "the AI dropped a word".
+  `createSSEParser()` in `utils/pure.js` now holds the incomplete tail back.
+  **Do not "simplify" this back to a per-chunk split.**
+- **The read loop had no try/catch**, so a connection dropped mid-stream threw
+  past both `onDone` and `onError` and left the cursor blinking forever.
+  Partial text is now returned and stays on screen with an explanation.
+- **Nothing could be cancelled.** `explainWithGroq` takes an `AbortSignal`.
+  The panel runs three lanes — translation, glossary, follow-up — so a second
+  request replaces its predecessor without cancelling the one the reader is
+  watching.
+- **`max_tokens` was hardcoded at 700**, so "More detail" truncated at the
+  same budget as the first pass. Now per-mode: 1400 for deeper/fullpage.
+
+Security: SearXNG result URLs reached `href` unvalidated. `safeUrl()` gates
+every remote string that becomes a URL; `embedVideo()` validates the id it
+interpolates into a path.
+
+Also: the glossary moved into `api.js`; history persists to
+`chrome.storage.session` so it survives the panel closing; a 500ms polling
+loop became `chrome.storage.session.onChanged`; the content script tracks
+`triggerFloating`/`excludeList` live instead of needing a page reload; the
+version comes from `chrome.runtime.getManifest().version`.
+
+### 14b. Tests — there is still no build step
+
+`utils/pure.js` holds the side-effect-free logic and ends with a guarded
+`module.exports`, so it loads as a plain `<script>` in the extension and as a
+CommonJS module under `node --test`. `npm test` runs 32 cases. Anyone without
+Node still loads unpacked exactly as before.
+
+**Nothing in `utils/pure.js` may touch `chrome`, `document`, `window` or
+`fetch`.** That constraint is what keeps it testable.
+
+### 14c. Deco Noir
+
+The identity system from `deco-noir/` is vendored into `vendor/`. Read
+`deco-noir/AGENTS.md` before changing any styling — it carries MUST/NEVER
+rules and a list of ideas already tried and rejected.
+
+- **Side panel** is `data-dress="working"` — a documented departure. Deco Noir
+  puts an extension surface at `plain`; the panel is the hero surface and sits
+  open all day, so it carries ornament. Settings stays `plain`.
+- **Ground and grain are off** on both surfaces. The panel streams text; an
+  animated background behind live output is noise and would run all day.
+- **`.state` was renamed to `.panel-state`.** Deco Noir defines `.state` as a
+  switch's ON/OFF readout — inline-flex, uppercase, letter-spaced, display
+  face — and BlankStare had it on all five full-panel sections. Loading the
+  system silently restyled every state screen and pushed the display face onto
+  body copy. **Before adding any class name, check it against
+  `vendor/deco-noir.css`.** The remaining overlaps (`.btn`, `.btn-sm`, `.tab`)
+  are the intended conversions.
+- **Typography is per-language.** Poiret One carries no Greek glyphs, so
+  `fonts/display.css` pairs it with Cormorant for Greek and lets
+  `unicode-range` pick per glyph. Both must be self-hosted — a CDN link in an
+  extension fails silently to a serif.
+- **The floating button gets none of this.** It is injected into every site on
+  the web. It lives in a closed shadow root with hand-written styles, and the
+  host element pins its layout inline at `!important` because the host is an
+  ordinary div in the page's DOM that the site's own `div` rules match. A
+  `:host` rule does not help — the outer document beats `:host` by spec.
+
+### 14d. Previewing without loading the extension
+
+`lab/preview.html` renders the real panel markup and stylesheet with the
+extension APIs stubbed, with buttons for state, colourway, dress and language.
+`lab/button-preview.html` is the floating button's isolation test against a
+deliberately hostile host page. Serve the repo root over http and open them:
+
+```
+npx http-server . -p 8123 -c-1
+```
+
+### 14e. Still outstanding
+
+- **Display fonts are bundled** (24KB total): `poiret-one-latin-400-normal.woff2`
+  plus `gfs-didot-greek-400/greek-ext-400`. Note Cormorant was the original plan
+  and was wrong — it ships no Greek subset at all. If you ever swap the Greek
+  face, verify the subset exists before wiring it up:
+  `ls node_modules/@fontsource/<face>/files | grep greek`.
+- **Screenshots have now been reviewed**, via headless Chrome (see 14f). Two
+  defects were found that way that every computed-style probe had passed:
+  a native `<select>` painting the platform's grey border and arrow over the
+  chamfer, and grey section headings — which Deco Noir §4 lists explicitly among
+  the things already tried and rejected. Both fixed. The rest of the §5
+  checklist, verified by probing computed styles:
+
+  | §5 item | Result |
+  |---|---|
+  | Double brass rule, two chamfered corners only | 2 gradients, at `0% 0%` and `100% 100%` |
+  | Every button a brass bezel, no green/red frames | no non-brass frames found |
+  | Switch shows one state word, lamp lights | switch carries no text of its own |
+  | Sliders use the same paddle | n/a — this UI has no sliders |
+  | Section titles brass + deco face, controls not | display face on 0 controls |
+  | Status pills good/warn/crit, never the accent | error resolves `--crit`, not `--accent` |
+  | Nothing scrolls the page body horizontally | no horizontal overflow |
+  | Keyboard focus visible on every control | 49 interactive elements, global `:focus-visible` |
+  | `data-dress="plain"` still reads as the product | `--cut` and clip-path identical across all three levels; ornament steps 1 → 0.55 → 0 |
+  | Ground grain irregular / retints | n/a — ground is off on both surfaces |
+  | No `--panel-a/-b`, `--ink-dim`, `--ink-faint` | none present |
+  | `.prose` styles long-form | the About and How-to-use bodies keep their existing bespoke classes; adding `.prose` would fight them |
+
+  Colourways were also checked: all four resolve both `--accent` and the
+  load-bearing `--accent-2`. What remains unverified is purely visual judgement
+  — whether it actually looks right.
+- **`host_permissions` is now narrowed** to `api.groq.com` and
+  `www.googleapis.com`. The self-hosted SearXNG origin is requested at runtime
+  via `optional_host_permissions`, from the **Test** button in settings —
+  `chrome.permissions.request` needs a user gesture, so it cannot move to
+  `saveForm` or to the side panel. `searchWeb()` checks
+  `chrome.permissions.contains` first, so a missing grant reads as "falls back
+  to DuckDuckGo" rather than an opaque network error.
+
+  Note this does **not** remove the "Read and change all your data on all
+  websites" install warning: `content_scripts.matches` is `<all_urls>`, which
+  generates that warning on its own, and the floating button needs the script
+  present on any page the user selects text on. Narrowing was worth doing for
+  least privilege, not for install friction. Removing the warning would mean
+  injecting on demand via `activeTab` + `chrome.scripting`, which would break
+  select-to-explain — the button has to already be there when the selection
+  happens.
+
+### 14f. Taking a screenshot
+
+The in-app Browser pane only composites frames while it is actually displayed,
+so `computer{action:"screenshot"}` times out whenever it is hidden — which it
+was for this entire project. Headless Chrome does not care:
+
+```bash
+"C:/Program Files/Google/Chrome/Application/chrome.exe"   --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=2   --window-size=900,1500 --virtual-time-budget=6000   --screenshot="out.png" "http://localhost:8123/lab/preview.html"
+```
+
+**Shoot `lab/preview.html`, not `sidepanel/sidepanel.html`.** Headless lays the
+page out wider than `--window-size` and then crops to it, so a narrow window
+looks like a horizontal-overflow bug that is not real — it fooled this session
+twice. `lab/preview.html` pins the panel to 380px inside its own frame, so a
+wide window renders it at true side-panel width. To check actual overflow, use
+the browser tool's `resize_window` and measure `scrollWidth` instead.
+
+Two things worth knowing: the visual defects found this way were invisible to
+token probes, and two of the four "bugs" spotted by eye turned out to be
+rendering artefacts. Measure before fixing what a screenshot appears to show.

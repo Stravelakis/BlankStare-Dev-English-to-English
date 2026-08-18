@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- data-dress="plain": a settings page carries the silhouette and the palette
+     but no ornament, per Deco Noir. A plain surface also omits deco-noir.js
+     entirely — no ground, no grain, no key glow on this page. -->
+<html lang="en" data-way="brass" data-dress="plain" data-bg="off">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BlankStare — Settings</title>
+  <link rel="stylesheet" href="../vendor/deco-noir.css">
   <link rel="stylesheet" href="../fonts/comfortaa.css">
+  <link rel="stylesheet" href="../fonts/display.css">
   <link rel="stylesheet" href="settings.css">
 </head>
 <body>
@@ -427,7 +432,7 @@
         <div id="lottie-about" class="about-lottie" aria-hidden="true"></div>
         <h2>BlankStare</h2>
         <p class="about-tagline">Dev English → English &nbsp;·&nbsp; Zero cost BYOK</p>
-        <span class="about-version">v0.5.0</span>
+        <span class="about-version" id="about-version"></span>
       </div>
       <div class="about-desc">
         <p>BlankStare is a Chrome sidebar extension that translates developer documentation, error messages, READMEs, terminal output, and technical jargon into plain English — instantly, while you browse.</p>
@@ -472,6 +477,7 @@
 
 </div><!-- /.page -->
 <script src="../utils/lottie.min.js"></script>
+<script src="../utils/pure.js"></script>
 <script src="../utils/storage.js"></script>
 <script src="settings.js"></script>
 </body>

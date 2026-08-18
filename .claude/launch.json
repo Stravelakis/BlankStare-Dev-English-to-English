@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "blankstare-lab",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-server", ".", "-c-1", "--silent"],
+      "port": 8123,
+      "autoPort": true
+    }
+  ]
+}

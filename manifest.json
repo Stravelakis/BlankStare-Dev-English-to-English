@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "BlankStare: Dev English to English",
   "short_name": "BlankStare",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Zero cost BYOK \u2014 Translate developer docs, error messages, READMEs, and tech jargon into plain English, instantly, while you browse. Bring your own free Groq API key.",
   "permissions": [
     "storage",
@@ -12,7 +12,12 @@
     "tabs"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "https://api.groq.com/*",
+    "https://www.googleapis.com/*"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "commands": {
     "_execute_action": {
@@ -39,10 +44,8 @@
         "<all_urls>"
       ],
       "js": [
+        "utils/pure.js",
         "content.js"
-      ],
-      "css": [
-        "content.css"
       ],
       "run_at": "document_idle"
     }

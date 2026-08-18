@@ -1,27 +1,42 @@
-/* settings.css — BlankStare v0.5 */
+/* settings.css — BlankStare, dressed in Deco Noir at `plain`
+   ---------------------------------------------------------------------------
+   Deco Noir puts a settings page at data-dress="plain": same silhouette, same
+   palette, no ornament. Per its own instructions a plain surface omits
+   deco-noir.js entirely, so there is no ground, no grain and no key glow here.
+
+   The rule that matters: `plain` must still read as the same product. That
+   works because the chamfer never changes size between dress levels — only the
+   brass corner rules and the bevel drop away.
+   =========================================================================== */
 
 :root {
-  --bg:           #0c0e14;
-  --surface:      #13161f;
-  --surface-2:    #1b1f2b;
-  --border:       #252a38;
-  --border-2:     #2f3547;
-  --text:         #e8ecf4;
-  --text-muted:   #8892a8;
-  --text-faint:   #4e5668;
-  --accent:       #e8a838;
-  --accent-hover: #f5be59;
-  --accent-dim:   rgba(232,168,56,0.10);
-  --accent-glow:  rgba(232,168,56,0.20);
-  --link:         #60a5fa;
-  --success:      #3dd68c;
-  --error:        #f87171;
-  --warning:      #f59e0b;
-  --radius:       8px;
-  --radius-sm:    4px;
-  --radius-lg:    12px;
-  --font:         'Comfortaa', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono:    ui-monospace, 'Cascadia Code', 'Courier New', monospace;
+  /* ── Bridge ────────────────────────────────────────────────────────────────
+     The old names now resolve to Deco Noir tokens, so this page retints with
+     the colourway instead of holding its own hardcoded hex. */
+  --surface:      var(--metal-lo);
+  --surface-2:    var(--metal);
+  --border:       var(--line);
+  --border-2:     var(--line-hot);
+  --text:         var(--ink);
+  --text-muted:   var(--ink-2);
+  --text-faint:   var(--ink-3);
+  --accent-hover: var(--accent-hi);
+  --accent-dim:   rgb(var(--accent-rgb) / 0.10);
+  --accent-glow:  rgb(var(--accent-rgb) / 0.20);
+  --link:         var(--accent-hi);
+  --success:      var(--good);
+  --error:        var(--crit);
+  --warning:      var(--warn);
+
+  /* Rounded corners are not part of this identity. Zeroing the three radius
+     tokens squares off all 36 call sites at once; the chamfer is then applied
+     to the surfaces that should carry it, at the end of this file. */
+  --radius:    0;
+  --radius-sm: 0;
+  --radius-lg: 0;
+
+  --font:      'Comfortaa', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: var(--data);
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -291,3 +306,179 @@ kbd{background:var(--surface);border:1px solid var(--border-2);border-radius:var
 .guide-steps-open {
   padding: 4px 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DECO NOIR — the chamfer and the machined surfaces
+
+   Appended last so it wins over the rules above without editing 36 call sites.
+   Sizes are tuned for a 720px page, unlike the 380px panel.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root { --cut: 16px; --cut-sm: 9px; --cut-lg: 30px; }
+
+/* THE SIGNATURE — two opposing corners, never four, never adjacent. */
+.settings-section, .about-section, .howto-extra-card, .search-provider-card,
+.search-upgrade-card, .guide-block, .inner-section, .section-accordion,
+.section-accordion-top, .test-result, .easter-egg, .howto-step,
+.btn, .test-btn, .lang-btn, .tts-btn, .about-link-btn, .badge, .tab,
+.text-input, .url-input, .full-select, .exclude-textarea, .visibility-btn,
+.howto-step-num, .about-version {
+  clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)),
+                     calc(100% - var(--c)) 100%, 0 100%, 0 var(--c));
+}
+
+.settings-section, .about-section, .howto-extra-card, .search-provider-card,
+.search-upgrade-card, .guide-block, .inner-section, .section-accordion,
+.section-accordion-top, .howto-step { --c: var(--cut); }
+
+.btn, .test-btn, .lang-btn, .tts-btn, .about-link-btn, .badge, .tab,
+.text-input, .url-input, .full-select, .exclude-textarea, .visibility-btn,
+.test-result, .easter-egg, .howto-step-num, .about-version { --c: var(--cut-sm); }
+
+/* Panels. A clipped box cannot carry a border — the chamfer shears it off —
+   so the "border" is a trim gradient with the face laid over it on ::before.
+   At `plain` the bevel is flat; the silhouette is what carries the identity. */
+.settings-section, .about-section, .guide-block, .inner-section,
+.howto-extra-card, .search-provider-card, .search-upgrade-card {
+  position: relative;
+  border: none;
+  background: linear-gradient(160deg, var(--line-hot), var(--line) 45%, var(--metal-lo));
+}
+.settings-section::before, .about-section::before, .guide-block::before,
+.inner-section::before, .howto-extra-card::before,
+.search-provider-card::before, .search-upgrade-card::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: var(--metal-lo);
+  clip-path: polygon(calc(var(--c) - 1px) 0, 100% 0, 100% calc(100% - var(--c) + 1px),
+                     calc(100% - var(--c) + 1px) 100%, 0 100%, 0 calc(var(--c) - 1px));
+  pointer-events: none;
+}
+.settings-section > *, .about-section > *, .guide-block > *, .inner-section > *,
+.howto-extra-card > *, .search-provider-card > *, .search-upgrade-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Titles use the ornamental face — read once, never operated. Section titles
+   are brass; grey or white headings sit outside this palette. */
+.page-logo, .logo-text, .section-title, .about-tagline, .inner-title,
+.guide-block-title, .search-upgrade-title {
+  font-family: var(--display-deco);
+  font-weight: var(--display-deco-weight);
+  letter-spacing: var(--display-deco-track);
+  color: var(--accent);
+}
+
+/* Fields are engraved slots, not outlined boxes. */
+.text-input, .url-input, .full-select, .exclude-textarea {
+  border: none;
+  background: var(--metal-lo);
+  color: var(--ink);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.55), inset 0 0 0 1px var(--line);
+  transition: box-shadow var(--t-fast, 120ms) ease;
+}
+.text-input:focus, .url-input:focus, .full-select:focus, .exclude-textarea:focus {
+  outline: none;
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.55), inset 0 0 0 1px var(--accent);
+}
+
+/* Keys: the bezel is always brass. Only the legend behind it changes colour. */
+.btn, .test-btn, .lang-btn, .tts-btn, .about-link-btn, .visibility-btn {
+  border: none;
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal));
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--line-hot), 0 1px 2px rgb(0 0 0 / 0.5);
+  transition: box-shadow 120ms ease, color 120ms ease;
+}
+.btn:hover, .test-btn:hover, .lang-btn:hover, .tts-btn:hover,
+.about-link-btn:hover, .visibility-btn:hover {
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.btn-primary, .lang-btn.active, .tts-btn.active {
+  background: linear-gradient(180deg, var(--accent-hi), var(--accent));
+  color: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--accent-hi);
+}
+.btn-primary:hover { color: var(--bg); box-shadow: inset 0 0 0 1px var(--accent-hi); }
+
+/* Toggles: engraved slot, machined paddle, one brass lamp. A green lamp for ON
+   would turn every switch on the page into a status light. */
+.toggle-knob {
+  border-radius: 0;
+  background: var(--metal-lo);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.6), inset 0 0 0 1px var(--line);
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+}
+.toggle-knob::before {
+  border-radius: 0;
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal));
+  box-shadow: inset 0 0 0 1px var(--line-hot), 0 1px 2px rgb(0 0 0 / 0.6);
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+.toggle-switch input:checked ~ .toggle-knob {
+  background: var(--metal-lo);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.6), inset 0 0 0 1px var(--accent),
+              0 0 10px rgb(var(--accent-rgb) / 0.3);
+}
+
+/* Tabs. aria-selected marks the live one. */
+.tab { border: none; background: transparent; color: var(--ink-3); }
+.tab:hover { color: var(--accent); }
+.tab.active, .tab[aria-selected="true"] {
+  color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* Status pills carry good/warn/crit — never the accent, which means
+   interactive. A required key and an optional one are states, not controls. */
+.badge { border: none; box-shadow: inset 0 0 0 1px currentColor; background: transparent; }
+.badge-required { color: var(--warn); }
+.badge-optional { color: var(--ink-3); }
+.badge-active   { color: var(--good); }
+
+/* Accordions keep the silhouette; the summary row is the only affordance. */
+.section-accordion, .section-accordion-top {
+  border: none;
+  background: var(--metal);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.section-accordion summary:hover, .section-accordion-top-summary:hover { color: var(--accent); }
+
+code {
+  background: var(--metal);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--line-hot); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-lo); }
+
+:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+
+/* These three set a literal radius rather than the token, so zeroing the
+   tokens missed them. Rule 1 is absolute: no rounded corners anywhere. */
+.badge, .badge-required, .badge-optional, .badge-active,
+.howto-step-num, .about-version { border-radius: 0; }
+
+/* Native selects paint the platform's own grey border and arrow over the
+   chamfer, whatever the element is told. Same treatment as the panel: strip the
+   native appearance, draw the arrow from gradients so it follows --accent. */
+.full-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  padding-right: 30px;
+  background-image:
+    linear-gradient(45deg,  transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+  background-position: right 17px center, right 11px center;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+.full-select option { background: var(--metal-lo); color: var(--ink); }

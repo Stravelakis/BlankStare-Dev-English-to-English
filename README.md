@@ -10,15 +10,14 @@ A Chrome sidebar extension powered by Groq's free AI API. Built first for **vibe
 
 ## Screenshots
 
-> 📸 _Screenshots coming soon — the extension is actively being developed._
-> 
-> Want to contribute screenshots? Open a [feature request](https://github.com/Stravelakis/BlankStare-Dev-English-to-English/issues/new?template=feature_request.md) with "Screenshots" in the title.
+| The panel, mid-translation | Settings |
+|---|---|
+| ![BlankStare panel translating a TypeError](screenshots/sidepanel-result.png) | ![BlankStare settings](screenshots/settings.png) |
 
-<!-- Add screenshots here once available:
-![BlankStare panel explaining an error message](screenshots/panel-error-explanation.png)
-![BlankStare settings page](screenshots/settings-page.png)
-![BlankStare floating button on a GitHub page](screenshots/floating-button.png)
--->
+The panel wears [Deco Noir](#-look--feel): a chamfer on two opposing corners,
+brass on near-black. Greek titles are set in GFS Didot and Latin ones in Poiret
+One, chosen per glyph — visible on the settings page, where "LANGUAGE / ΓΛΩΣΣΑ"
+uses both faces in a single line.
 
 ---
 
@@ -79,13 +78,13 @@ A Chrome sidebar extension powered by Groq's free AI API. Built first for **vibe
 BlankStare/
 ├── manifest.json         ← Extension config (MV3)
 ├── background.js         ← Service worker — gesture-safe sidePanel coordinator
-├── content.js            ← Page-injected — text selection, floating button
-├── content.css           ← Floating button styles
+├── content.js            ← Page-injected — selection, floating button (shadow DOM)
 │
 ├── sidepanel/
 │   ├── sidepanel.html    ← Panel UI (all features)
 │   ├── sidepanel.js      ← Panel logic — streaming, i18n, history, voice
-│   └── sidepanel.css     ← Panel styles (amber dark theme)
+│   ├── sidepanel.css     ← Panel styles (Deco Noir, brass)
+│   └── deco-init.js      ← Identity runtime init (MV3 forbids inline scripts)
 │
 ├── settings/
 │   ├── settings.html     ← 3-tab settings (Settings · How to use · About)
@@ -93,9 +92,21 @@ BlankStare/
 │   └── settings.css      ← Settings styles
 │
 ├── utils/
+│   ├── pure.js           ← Testable logic — SSE parsing, URL filtering, prompts
 │   ├── api.js            ← All external API calls (Groq, YouTube, SearXNG)
 │   ├── storage.js        ← Chrome storage helpers + defaults
 │   └── lottie.min.js     ← Bundled Lottie player (168KB, light build)
+│
+├── vendor/
+│   ├── deco-noir.css     ← Visual identity system (vendored, not a dependency)
+│   └── deco-noir.js      ← Its optional runtime
+│
+├── tests/
+│   └── pure.test.js      ← `npm test` — no build step, Node's own test runner
+│
+├── lab/
+│   ├── preview.html      ← The panel, rendered without loading the extension
+│   └── button-preview.html ← Floating-button isolation test
 │
 ├── fonts/
 │   └── comfortaa*.woff2  ← Comfortaa font, Latin + Greek, 400/600/700
@@ -112,6 +123,45 @@ BlankStare/
 
 ---
 
+## 🎨 Look & feel
+
+BlankStare wears **Deco Noir** — an art-deco visual identity shared across
+these projects. The signature is a chamfer on two opposing corners, top-left
+and bottom-right, dressed with a double brass rule.
+
+The system is vendored into `vendor/`, never linked from a CDN: an extension
+cannot fetch remote code at runtime, and a CDN font that fails to load
+degrades silently to a serif with no error.
+
+Two surfaces, two ornament levels — the side panel is dressed `working`, the
+settings page `plain`. The floating button injected into web pages carries the
+identity by hand inside a closed shadow root, so neither the button nor the
+host page can restyle the other.
+
+To see either surface without loading the extension:
+
+```
+npx http-server . -p 8123 -c-1
+```
+
+then open `lab/preview.html`.
+
+---
+
+## 🧪 Tests
+
+```
+npm test
+```
+
+Runs Node's built-in test runner over the pure logic — SSE frame reassembly,
+URL scheme filtering, domain exclusion, the Greek heuristic. **There is no
+build step and no dependency to install**; `package.json` exists only so
+`npm test` has somewhere to live. Loading the extension unpacked works exactly
+as before, with or without Node.
+
+---
+
 ## 🔧 SearXNG CORS Setup
 
 In your SearXNG `settings.yml`, add:
@@ -120,6 +170,13 @@ server:
   cors_cors_allowed_origins: "*"
 ```
 Then restart SearXNG. Click **Test** in BlankStare settings to verify.
+
+> 🔐 **Chrome will ask permission for your instance.** BlankStare requests access
+> to Groq and YouTube only; it does not ask for blanket access to every site.
+> Because your SearXNG instance is self-hosted, its address cannot be known in
+> advance, so pressing **Test** asks Chrome for that **one origin** — e.g.
+> `https://search.example.com/*`. Decline it and BlankStare simply falls back to
+> DuckDuckGo.
 
 ---
 

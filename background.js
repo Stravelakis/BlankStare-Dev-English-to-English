@@ -1,4 +1,4 @@
-// background.js — BlankStare v0.5
+// background.js — BlankStare
 // ─────────────────────────────────────────────────────────────────────────────
 // CRITICAL: sidePanel.open() MUST be called synchronously inside a user-gesture
 // handler. Never use async/await before it — the gesture token expires.
@@ -12,7 +12,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   const { triggerRightClick = true } = await chrome.storage.sync.get('triggerRightClick');
   if (triggerRightClick) createContextMenu();
   chrome.runtime.openOptionsPage();
-  console.log('[BlankStare] v0.5 installed.');
+  console.log(`[BlankStare] v${chrome.runtime.getManifest().version} installed.`);
 });
 
 function createContextMenu() {

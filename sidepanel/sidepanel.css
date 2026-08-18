@@ -1,260 +1,617 @@
-/* sidepanel.css — BlankStare v0.2 */
+/* sidepanel.css — BlankStare, dressed in Deco Noir
+   ---------------------------------------------------------------------------
+   vendor/deco-noir.css supplies the tokens, the colourway and the ground.
+   This file adapts BlankStare's own components to that identity.
+
+   THE SIGNATURE: a chamfer on two OPPOSING corners — top-left and bottom-right
+   — dressed with a double brass rule. Never four corners, never adjacent,
+   never border-radius. Everything below inherits that one silhouette.
+
+   Panels use the documented single-element approximation rather than the
+   three-div .frame: the panel carries the trim gradient, ::before paints the
+   face inset by 1px, ::after draws the corner rules. A clipped box cannot
+   carry a border — the chamfer shears it off — which is why the "border" is a
+   background the face sits on top of.
+   =========================================================================== */
 
 :root {
-  --font:         'Comfortaa', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono:    ui-monospace, 'Cascadia Code', 'Courier New', monospace;
-  --bg:           #0c0e14;
-  --surface:      #13161f;
-  --surface-2:    #1b1f2b;
-  --border:       #252a38;
-  --border-2:     #2f3547;
-  --text:         #e8ecf4;
-  --text-muted:   #8892a8;
-  --text-faint:   #4e5668;
-  --accent:       #e8a838;
-  --accent-hover: #f5be59;
-  --accent-dim:   rgba(232,168,56,0.10);
-  --accent-glow:  rgba(232,168,56,0.20);
-  --link:         #60a5fa;
-  --success:      #3dd68c;
-  --error:        #f87171;
-  --radius:       6px;
-  --radius-sm:    4px;
-  --radius-lg:    10px;
+  /* ── Bridge ────────────────────────────────────────────────────────────────
+     BlankStare's component rules were written against its own names. Rather
+     than rename them at 200 call sites, the old names now resolve to Deco Noir
+     tokens, so the whole panel retints with the colourway and with setAccent().
+     Nothing below hardcodes a colour. */
+  --surface:      var(--metal-lo);
+  --surface-2:    var(--metal);
+  --border:       var(--line);
+  --border-2:     var(--line-hot);
+  --text:         var(--ink);
+  --text-muted:   var(--ink-2);
+  --text-faint:   var(--ink-3);
+  --accent-hover: var(--accent-hi);
+  --accent-dim:   rgb(var(--accent-rgb) / 0.10);
+  --accent-glow:  rgb(var(--accent-rgb) / 0.20);
+  --link:         var(--accent-hi);
+  --success:      var(--good);
+  --error:        var(--crit);
+
+  /* Comfortaa stays the body face: it carries Greek, and this panel is read
+     continuously rather than once. */
+  --font:      'Comfortaa', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: var(--data);
+
+  /* Chamfer depths for a 380px-wide panel. Deco Noir's defaults are sized for
+     full pages; at this width a 16px cut eats the corner of a 28px button. */
+  --cut:    12px;
+  --cut-sm: 7px;
+  --cut-lg: 20px;
+
+  /* border-radius is not part of this identity. The names survive only so any
+     rule that still reaches for them gets a square corner, not a rounded one. */
+  --radius:    0;
+  --radius-sm: 0;
+  --radius-lg: 0;
 }
 
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-#app{display:flex;flex-direction:column;min-height:100vh}
-a{color:var(--link);text-decoration:none}
-a:hover{text-decoration:underline}
-button{cursor:pointer;font-family:var(--font);border:none;background:none}
-.hidden{display:none!important}
-.state{display:block}
+* , *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+#app { display: flex; flex-direction: column; min-height: 100vh; position: relative; z-index: 1; }
+
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { cursor: pointer; font-family: var(--font); border: none; background: none; color: inherit; }
+.hidden { display: none !important; }
+.panel-state { display: block; }
+
+/* Keyboard focus must be visible on every control — Deco Noir checklist item. */
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── THE CHAMFER ─────────────────────────────────────────────────────────────
+   Applied to the component classes directly. A component that sets --c without
+   also clipping renders as a plain rectangle, which is the single most common
+   way this identity gets silently dropped. */
+.selected-box, .explanation-box, .jargon-section, .resources-section,
+.collapsible-section, .phase2-tray, .history-panel, .stream-status,
+.lang-warning-inline, .btn, .action-pill, .hint-chip, .resource-btn,
+.level-select, .context-input, .custom-q-input, .yt-thumb, .header-pill,
+.header-icon-btn, .icon-btn-sm, .history-item, .rerun-btn, .context-toggle-btn {
+  clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)),
+                     calc(100% - var(--c)) 100%, 0 100%, 0 var(--c));
+}
+
+/* Three sizes. Small parts get the small cut or the corner swallows them. */
+.selected-box, .explanation-box, .jargon-section, .resources-section,
+.collapsible-section, .phase2-tray, .history-panel, .lang-warning-inline { --c: var(--cut); }
+
+.btn, .action-pill, .hint-chip, .resource-btn, .level-select, .context-input,
+.custom-q-input, .yt-thumb, .header-pill, .header-icon-btn, .icon-btn-sm,
+.history-item, .rerun-btn, .context-toggle-btn, .stream-status { --c: var(--cut-sm); }
+
+/* ── PANELS ──────────────────────────────────────────────────────────────────
+   background = the trim hairline · ::before = the face · ::after = corner rules */
+.selected-box, .explanation-box, .jargon-section, .resources-section,
+.collapsible-section, .phase2-tray {
+  position: relative;
+  background: linear-gradient(160deg, var(--line-hot), var(--line) 40%, var(--metal-lo));
+}
+
+.selected-box::before, .explanation-box::before, .jargon-section::before,
+.resources-section::before, .collapsible-section::before, .phase2-tray::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: linear-gradient(168deg,
+              color-mix(in srgb, var(--metal) 92%, var(--accent)),
+              var(--metal-lo));
+  clip-path: polygon(calc(var(--c) - 1px) 0, 100% 0, 100% calc(100% - var(--c) + 1px),
+                     calc(100% - var(--c) + 1px) 100%, 0 100%, 0 calc(var(--c) - 1px));
+  pointer-events: none;
+}
+
+/* The double brass rule, on the two chamfered corners only. --plate is set by
+   data-dress, so stepping down to `plain` retires the ornament without
+   touching the silhouette. */
+.selected-box::after, .explanation-box::after, .jargon-section::after,
+.resources-section::after, .collapsible-section::after, .phase2-tray::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--plate, 1);
+  background:
+    linear-gradient(135deg, transparent 0 34%, var(--accent) 34% 39%,
+                    transparent 39% 49%, var(--accent) 49% 54%, transparent 54%)
+      top left / var(--c) var(--c) no-repeat,
+    linear-gradient(135deg, transparent 0 34%, var(--accent) 34% 39%,
+                    transparent 39% 49%, var(--accent) 49% 54%, transparent 54%)
+      bottom right / var(--c) var(--c) no-repeat;
+}
+
+/* Children sit above the face. */
+.selected-box > *, .explanation-box > *, .jargon-section > *,
+.resources-section > *, .collapsible-section > *, .phase2-tray > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── TITLES ──────────────────────────────────────────────────────────────────
+   The ornamental face is for type read once: the wordmark and the state
+   headings. Never a button, label or value — its hairlines thin out at UI
+   sizes. See fonts/display.css for the Latin/Greek pairing. */
+.logo-text, .welcome-title, .nokey-title {
+  font-family: var(--display-deco);
+  font-weight: var(--display-deco-weight);
+  letter-spacing: var(--display-deco-track);
+  color: var(--accent);
+}
+
+/* Panel headings are brass. Deco Noir lists grey section headings among the
+   things already tried and rejected — they sit outside the palette — and these
+   were rendering at --ink-2 while .selected-label and .history-header were
+   already brass, so the panel was inconsistent with itself as well as with the
+   system. Only visible by looking at it; every token probe passed.
+   They keep Comfortaa: at 11-12px the deco face's hairlines thin out, which is
+   the exact case rule 6 warns against. Brass and small-caps carries the
+   identity here instead. */
+.section-title, .jargon-label, .resources-label, .phase2-heading {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
+
+/* The tray is deliberately quiet, so it dims as a whole rather than by
+   greying its heading out of the palette. */
+.phase2-heading { color: var(--accent); opacity: 0.75; }
 
 /* ── HEADER ── */
-.header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:20}
-.header-logo{display:flex;align-items:center;gap:7px}
-.logo-anim{width:22px;height:22px;flex-shrink:0}
-.logo-text{font-size:14px;font-weight:700;letter-spacing:-0.01em}
-.header-actions{display:flex;align-items:center;gap:4px}
-.header-pill{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.04em;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-muted);transition:all 0.15s}
-.header-pill:hover,.header-pill.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
-.header-icon-btn{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);color:var(--text-muted);font-size:14px;transition:background 0.15s,color 0.15s}
-.header-icon-btn:hover{background:var(--surface-2);color:var(--text)}
-.icon-anim-sm{width:16px;height:16px}
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 20;
+  background: linear-gradient(180deg, var(--metal), var(--bg));
+}
+.header-logo { display: flex; align-items: center; gap: 7px; }
+.logo-anim { width: 22px; height: 22px; flex-shrink: 0; }
+.logo-text { font-size: 17px; }
+.header-actions { display: flex; align-items: center; gap: 4px; }
+
+.header-pill {
+  padding: 3px 9px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  background: var(--metal); color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.header-pill:hover, .header-pill.active {
+  color: var(--accent); background: var(--accent-dim);
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 8px rgb(var(--accent-rgb) / 0.25);
+}
+
+.header-icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; color: var(--ink-2); font-size: 14px;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.header-icon-btn:hover { background: var(--metal); color: var(--accent); }
+.icon-anim-sm { width: 16px; height: 16px; }
 
 /* ── CONTEXT BAR ── */
-.context-bar{padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
-.context-bar-top{display:flex;align-items:center;gap:8px}
-.level-select{flex:1;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--text);font-size:12px;font-family:var(--font);outline:none;cursor:pointer}
-.level-select:focus{border-color:rgba(232,168,56,0.4)}
-.context-toggle-btn{font-size:11px;color:var(--text-faint);padding:3px 7px;border-radius:var(--radius-sm);border:1px solid var(--border);transition:all 0.15s;white-space:nowrap}
-.context-toggle-btn:hover{color:var(--accent);border-color:rgba(232,168,56,0.3)}
-.context-input-area{margin-top:7px}
-.context-input{width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--font);outline:none}
-.context-input:focus{border-color:rgba(232,168,56,0.4)}
-.context-input::placeholder{color:var(--text-faint)}
+.context-bar { padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--bg-2); }
+.context-bar-top { display: flex; align-items: center; gap: 8px; }
+
+/* Fields are engraved: the inset shadow reads as a slot cut into the panel. */
+.level-select, .context-input, .custom-q-input {
+  background: var(--metal-lo); color: var(--ink);
+  font-size: 12px; font-family: var(--font); outline: none;
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.55), inset 0 0 0 1px var(--line);
+  transition: box-shadow var(--t-fast) var(--ease);
+}
+/* A native <select> paints the platform's own 1px grey border and arrow —
+   rgb(118,118,118) on Windows — no matter what the element is told, and the
+   native widget draws straight over the chamfer. appearance:none removes the
+   lot, so the field becomes an engraved slot like every other input.
+   The arrow is then drawn from two gradients, which keeps it on --accent
+   instead of hardcoding brass into an SVG the colourway cannot reach. */
+.level-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  flex: 1;
+  min-width: 0;
+  padding: 5px 26px 5px 8px;   /* room on the right for the arrow */
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg,  transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+  background-position: right 14px center, right 9px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* The popup list is drawn by the OS and cannot be themed, but giving the
+   options explicit colours stops it rendering as dark-on-dark. */
+.level-select option { background: var(--metal-lo); color: var(--ink); }
+.context-input, .custom-q-input { width: 100%; padding: 6px 10px; }
+.level-select:focus, .context-input:focus, .custom-q-input:focus {
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.55), inset 0 0 0 1px var(--accent);
+}
+.context-input::placeholder, .custom-q-input::placeholder { color: var(--ink-3); }
+
+.context-toggle-btn {
+  font-size: 11px; color: var(--ink-3); padding: 4px 8px; white-space: nowrap;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.context-toggle-btn:hover { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.context-input-area { margin-top: 7px; }
 
 /* ── HISTORY PANEL ── */
-.history-panel{position:sticky;top:50px;z-index:15;background:var(--surface);border-bottom:1px solid var(--border);max-height:240px;overflow-y:auto}
-.history-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted)}
-.icon-btn-sm{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:var(--radius-sm);font-size:11px;color:var(--text-faint);transition:background 0.15s}
-.icon-btn-sm:hover{background:var(--surface-2);color:var(--text)}
-.history-list{padding:0 8px 8px}
-.history-item{padding:6px 8px;border-radius:var(--radius-sm);cursor:pointer;transition:background 0.12s;border-bottom:1px solid var(--border)}
-.history-item:last-child{border-bottom:none}
-.history-item:hover{background:var(--surface-2)}
-.history-item-query{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
-.history-item-time{font-size:10px;color:var(--text-faint)}
-.history-empty{padding:12px;font-size:12px;color:var(--text-faint);text-align:center}
+.history-panel {
+  position: sticky; top: 50px; z-index: 15;
+  background: var(--metal-lo);
+  box-shadow: inset 0 0 0 1px var(--line);
+  max-height: 240px; overflow-y: auto;
+}
+.history-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent);
+}
+.icon-btn-sm {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; font-size: 11px; color: var(--ink-3);
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.icon-btn-sm:hover { background: var(--metal); color: var(--ink); }
+.history-list { padding: 0 8px 8px; }
+.history-item {
+  padding: 6px 8px; cursor: pointer;
+  border-bottom: 1px solid var(--line);
+  transition: background var(--t-fast) var(--ease);
+}
+.history-item:last-child { border-bottom: none; }
+.history-item:hover { background: var(--accent-dim); }
+.history-item-query {
+  font-size: 11px; font-weight: 600; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;
+}
+.history-item-time { font-size: 10px; color: var(--ink-3); }
+.history-empty { padding: 12px; font-size: 12px; color: var(--ink-3); text-align: center; }
 
-/* ── WELCOME STATE ── */
-.welcome-body{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 24px 24px;gap:10px}
-.icon-anim-lg{width:56px;height:56px;margin-bottom:4px}
-.welcome-title{font-size:16px;font-weight:700;letter-spacing:-0.02em}
-.welcome-desc{font-size:13px;color:var(--text-muted);line-height:1.65;max-width:280px}
-.welcome-desc strong{color:var(--accent);font-weight:600}
-.hint-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
-.hint-chip{padding:4px 11px;background:var(--accent-dim);border:1px solid rgba(232,168,56,0.2);border-radius:20px;color:var(--accent);font-size:11px;font-weight:500}
+/* ── WELCOME / NO-KEY / LOADING ── */
+.welcome-body, .nokey-body {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 36px 24px 24px; gap: 10px;
+}
+.icon-anim-lg { width: 56px; height: 56px; margin-bottom: 4px; }
+.welcome-title { font-size: 20px; }
+.nokey-title   { font-size: 19px; }
+.welcome-desc, .nokey-desc {
+  font-size: 13px; color: var(--ink-2); line-height: 1.7; max-width: 280px;
+}
+.welcome-desc strong { color: var(--accent); font-weight: 600; }
+.nokey-link { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
 
-/* ── NO-KEY STATE ── */
-.nokey-body{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 24px;gap:10px}
-.nokey-title{font-size:15px;font-weight:700}
-.nokey-desc{font-size:13px;color:var(--text-muted);max-width:260px;line-height:1.6}
-.nokey-link{font-size:12px;color:var(--text-muted);margin-top:4px}
+.hint-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+.hint-chip {
+  padding: 4px 11px; background: var(--accent-dim); color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgb(var(--accent-rgb) / 0.3);
+  font-size: 11px; font-weight: 500;
+}
 
-/* ── LOADING STATE ── */
-.loading-body{display:flex;flex-direction:column;align-items:center;padding:56px 24px;gap:14px}
-.loading-text{color:var(--text-muted);font-size:13px}
+.loading-body { display: flex; flex-direction: column; align-items: center; padding: 56px 24px; gap: 14px; }
+.loading-text { color: var(--ink-2); font-size: 13px; letter-spacing: 0.04em; }
 
-/* ── RESULT STATE ── */
-.selected-box{position:relative;margin:10px 12px 0;padding:9px 30px 9px 12px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius)}
-.selected-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin-bottom:3px}
-.selected-text{font-size:12px;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
-.clear-btn{position:absolute;top:7px;right:7px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text-faint);font-size:11px;transition:background 0.15s,color 0.15s}
-.clear-btn:hover{background:var(--surface-2);color:var(--text-muted)}
+/* ── RESULT ── */
+.selected-box { margin: 10px 12px 0; padding: 9px 30px 9px 12px; }
+.selected-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--accent); margin-bottom: 3px;
+}
+.selected-text {
+  font-size: 12px; color: var(--ink-2); line-height: 1.5; word-break: break-word;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.clear-btn {
+  position: absolute; top: 7px; right: 7px; z-index: 2;
+  width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  color: var(--ink-3); font-size: 11px;
+  transition: color var(--t-fast) var(--ease);
+}
+.clear-btn:hover { color: var(--crit); }
 
-.explanation-box{margin:8px 12px 0;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-height:50px;position:relative}
-.explanation-text{font-size:13.5px;line-height:1.75;color:var(--text);white-space:pre-wrap;word-break:break-word}
-.explanation-text .jargon-term{border-bottom:1px dashed var(--accent);color:var(--text);cursor:help;position:relative}
-.explanation-text .jargon-tip{display:none;position:absolute;bottom:100%;left:0;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:4px 8px;font-size:11px;color:var(--text-muted);white-space:nowrap;z-index:100;margin-bottom:4px;max-width:220px;white-space:normal}
-.explanation-text .jargon-term:hover .jargon-tip{display:block}
-.typing-cursor{display:inline-block;width:2px;height:14px;background:var(--accent);margin-left:1px;vertical-align:text-bottom;animation:blink 0.9s step-end infinite}
-@keyframes blink{50%{opacity:0}}
+.explanation-box { margin: 8px 12px 0; padding: 12px; min-height: 50px; }
+.explanation-text {
+  font-size: 13.5px; line-height: 1.78; color: var(--ink);
+  white-space: pre-wrap; word-break: break-word;
+}
+.typing-cursor {
+  display: inline-block; width: 2px; height: 14px; background: var(--accent);
+  margin-left: 1px; vertical-align: text-bottom;
+  animation: blink 0.9s step-end infinite;
+  box-shadow: 0 0 6px rgb(var(--accent-rgb) / 0.6);
+}
+@keyframes blink { 50% { opacity: 0; } }
 
-/* Explanation action buttons */
-.explanation-actions{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);flex-wrap:wrap}
-.action-pill{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border-2);font-size:13px;transition:border-color 0.15s,background 0.15s}
-.action-pill:hover{border-color:var(--accent);background:var(--accent-dim)}
-.action-pill.active{color:var(--error)} /* voice active = red */
-.action-link{font-size:11px;color:var(--text-faint);background:none;border:none;padding:3px 6px;border-radius:var(--radius-sm);transition:color 0.15s,background 0.15s}
-.action-link:hover{color:var(--accent);background:var(--accent-dim)}
+.explanation-actions {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line);
+}
 
-/* ── JARGON SECTION ── */
-.jargon-section{margin:6px 12px 0;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
-.jargon-toggle-row{display:flex;align-items:center;justify-content:space-between}
-.jargon-label{font-size:11px;color:var(--text-muted)}
-.jargon-results{margin-top:8px;display:flex;flex-direction:column;gap:4px}
-.jargon-item{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)}
-.jargon-item:last-child{border-bottom:none}
-.jargon-term-text{font-size:12px;font-weight:600;color:var(--accent);min-width:80px}
-.jargon-def-text{font-size:12px;color:var(--text-muted)}
-.jargon-loading{font-size:11px;color:var(--text-faint);font-style:italic}
+/* Keys: a brass bezel with a lit legend. The bezel never changes colour —
+   only the legend does. A red-framed key beside a brass one reads as two
+   different products on one panel. */
+.action-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; font-size: 13px;
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal));
+  box-shadow: inset 0 0 0 1px var(--line-hot), 0 1px 2px rgb(0 0 0 / 0.5);
+  transition: box-shadow var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.action-pill:hover {
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 10px rgb(var(--accent-rgb) / 0.3);
+}
+/* The lamp behind the legend, not the bezel around it. */
+.action-pill.active { color: var(--crit); text-shadow: 0 0 8px var(--crit); }
 
-/* Mini toggle (for jargon dictionary) */
-.mini-toggle{position:relative;display:inline-flex;align-items:center;cursor:pointer;width:34px;height:19px}
-.mini-toggle input{position:absolute;opacity:0;width:0;height:0}
-.mini-knob{position:absolute;inset:0;background:var(--border-2);border-radius:20px;transition:background 0.2s}
-.mini-knob::before{content:'';position:absolute;width:13px;height:13px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 0.2s}
-.mini-toggle input:checked ~ .mini-knob{background:var(--accent)}
-.mini-toggle input:checked ~ .mini-knob::before{transform:translateX(15px)}
+.action-link {
+  font-size: 11px; color: var(--ink-3); padding: 3px 6px;
+  transition: color var(--t-fast) var(--ease);
+}
+.action-link:hover { color: var(--accent); }
+
+/* ── JARGON ── */
+.jargon-section { margin: 6px 12px 0; padding: 8px 11px; }
+.jargon-toggle-row { display: flex; align-items: center; justify-content: space-between; }
+.jargon-label { font-size: 11px; color: var(--ink-2); }
+.jargon-results { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.jargon-item { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.jargon-item:last-child { border-bottom: none; }
+.jargon-term-text { font-size: 12px; font-weight: 700; color: var(--accent); min-width: 80px; }
+.jargon-def-text  { font-size: 12px; color: var(--ink-2); }
+.jargon-loading   { font-size: 11px; color: var(--ink-3); font-style: italic; }
+
+/* The switch: an engraved slot, a machined paddle, and one lamp. Exactly one
+   state word — labelling both ends forces the reader to work out which end the
+   paddle is nearest. The lamp is brass, never green: a green lamp turns every
+   switch on the page into a status light. */
+.mini-toggle {
+  position: relative; display: inline-flex; align-items: center;
+  cursor: pointer; width: 38px; height: 20px;
+}
+.mini-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.mini-knob {
+  position: absolute; inset: 0; background: var(--metal-lo);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.6), inset 0 0 0 1px var(--line);
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  transition: box-shadow var(--t-base) var(--ease);
+}
+.mini-knob::before {
+  content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px;
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal));
+  box-shadow: inset 0 0 0 1px var(--line-hot), 0 1px 2px rgb(0 0 0 / 0.6);
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  transition: transform var(--t-base) var(--snap);
+}
+.mini-toggle input:checked ~ .mini-knob {
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.6), inset 0 0 0 1px var(--accent),
+              0 0 10px rgb(var(--accent-rgb) / 0.3);
+}
+.mini-toggle input:checked ~ .mini-knob::before { transform: translateX(18px); }
+.mini-toggle input:focus-visible ~ .mini-knob { outline: 1px solid var(--accent); outline-offset: 2px; }
 
 /* ── RESOURCES ── */
-.resources-section{margin:6px 12px 0;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.resources-label{font-size:11px;color:var(--text-muted);white-space:nowrap}
-.resource-btns{display:flex;gap:5px;flex-wrap:wrap}
-.resource-btn{display:inline-flex;align-items:center;padding:3px 9px;font-size:11px;font-weight:600;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border-2);border-radius:20px;text-decoration:none;transition:all 0.15s;letter-spacing:0.01em}
-.resource-btn:hover{color:var(--accent);border-color:rgba(232,168,56,0.35);background:var(--accent-dim);text-decoration:none}
+.resources-section {
+  margin: 6px 12px 0; padding: 9px 11px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.resources-label { font-size: 11px; color: var(--ink-2); white-space: nowrap; }
+.resource-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+.resource-btn {
+  display: inline-flex; align-items: center; padding: 3px 10px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+  color: var(--ink-2); background: var(--metal); text-decoration: none;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.resource-btn:hover {
+  color: var(--accent); background: var(--accent-dim); text-decoration: none;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
 
 /* ── COLLAPSIBLE SECTIONS ── */
-.collapsible-section{margin:6px 12px 0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.section-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface)}
-.section-title{font-size:12px;color:var(--text-muted);font-weight:500}
+.collapsible-section { margin: 6px 12px 0; }
+.section-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 11px; }
+.section-title { font-size: 12px; color: var(--ink-2); font-weight: 500; }
 
 /* ── CUSTOM QUESTION ── */
-.custom-q-body{padding:0 10px 8px;background:var(--surface);display:flex;gap:6px}
-.custom-q-input{flex:1;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:5px 9px;color:var(--text);font-size:12px;font-family:var(--font);outline:none}
-.custom-q-input:focus{border-color:rgba(232,168,56,0.4)}
-.custom-q-input::placeholder{color:var(--text-faint)}
-.custom-q-result{padding:8px 10px;border-top:1px solid var(--border);background:var(--bg);font-size:13px;line-height:1.65;color:var(--text);white-space:pre-wrap}
+.custom-q-body { padding: 0 11px 9px; display: flex; gap: 6px; }
+.custom-q-input { flex: 1; padding: 5px 9px; }
+.custom-q-result {
+  margin: 0 11px 10px; padding: 9px 11px;
+  background: var(--metal-lo); box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 13px; line-height: 1.7; color: var(--ink); white-space: pre-wrap;
+}
 
 /* ── YOUTUBE ── */
-.yt-results{border-top:1px solid var(--border);background:var(--bg)}
-.yt-card{display:flex;gap:9px;padding:9px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s}
-.yt-card:last-child{border-bottom:none}
-.yt-card:hover{background:var(--surface)}
-.yt-thumb{flex-shrink:0;width:76px;height:44px;object-fit:cover;border-radius:var(--radius-sm);background:var(--surface-2)}
-.yt-card-info{flex:1;min-width:0}
-.yt-card-title{font-size:12px;font-weight:500;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.yt-card:hover .yt-card-title{color:var(--accent)}
-.yt-card-channel{font-size:11px;color:var(--text-faint);margin-top:2px}
-.yt-embed{border-top:1px solid var(--border);padding:7px;background:#000}
-.yt-embed iframe{width:100%;aspect-ratio:16/9;border:none;border-radius:var(--radius-sm)}
+.yt-results { border-top: 1px solid var(--line); }
+.yt-card {
+  display: flex; gap: 9px; padding: 9px 11px; cursor: pointer;
+  border-bottom: 1px solid var(--line);
+  transition: background var(--t-fast) var(--ease);
+}
+.yt-card:last-child { border-bottom: none; }
+.yt-card:hover { background: var(--accent-dim); }
+.yt-thumb { flex-shrink: 0; width: 76px; height: 44px; object-fit: cover; background: var(--metal); }
+.yt-card-info { flex: 1; min-width: 0; }
+.yt-card-title {
+  font-size: 12px; font-weight: 500; color: var(--ink); line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.yt-card:hover .yt-card-title { color: var(--accent); }
+.yt-card-channel { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+.yt-embed { border-top: 1px solid var(--line); padding: 7px; background: #000; }
+.yt-embed iframe { width: 100%; aspect-ratio: 16/9; border: none; }
 
 /* ── WEB SEARCH ── */
-.web-results{border-top:1px solid var(--border);background:var(--bg)}
-.search-card{padding:9px 10px;border-bottom:1px solid var(--border)}
-.search-card:last-child{border-bottom:none}
-.search-card-title{font-size:12px;font-weight:600;color:var(--link);margin-bottom:2px;display:block;text-decoration:none}
-.search-card-title:hover{text-decoration:underline}
-.search-card-url{font-size:10px;color:var(--text-faint);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.search-card-snippet{font-size:11px;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ddg-fallback{padding:10px;text-align:center;border-top:1px solid var(--border)}
-.ddg-fallback a{font-size:12px;color:var(--text-muted)}
-
-/* ── ERROR STATE ── */
-.error-body{display:flex;flex-direction:column;align-items:center;text-align:center;padding:48px 24px;gap:12px}
-.error-message{font-size:13px;color:var(--error);line-height:1.6;max-width:260px}
-
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:7px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;transition:background 0.15s,transform 0.1s;letter-spacing:0.01em}
-.btn:active{transform:scale(0.97)}
-.btn-primary{background:var(--accent);color:#0c0e14}
-.btn-primary:hover{background:var(--accent-hover)}
-.btn-secondary{background:var(--surface-2);color:var(--text-muted);border:1px solid var(--border-2)}
-.btn-secondary:hover{color:var(--text);border-color:var(--accent)}
-.btn-sm{padding:4px 11px;font-size:11px;border-radius:var(--radius-sm)}
-.btn[data-loading="true"]{opacity:0.6;pointer-events:none}
-
-/* ── PHASE 2 TRAY ── */
-.phase2-tray{margin:14px 12px 4px;padding:9px 11px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);opacity:0.65}
-.phase2-heading{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-faint);margin-bottom:7px}
-.phase2-items{display:flex;flex-direction:column;gap:5px}
-.phase2-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-faint)}
-.phase2-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-faint);background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:1px 6px;margin-left:auto}
-
-/* ── FOOTER ── */
-.panel-footer{margin-top:10px;padding:8px 12px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--text-faint);flex-wrap:wrap}
-.panel-footer a{color:var(--text-faint);text-decoration:none}
-.panel-footer a:hover{color:var(--accent)}
-.footer-sep{color:var(--border-2)}
-.footer-kofi:hover{color:#ff5e5b!important}
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:10px}
-
-/* ── Repeat / re-explain button ── */
-.rerun-btn {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 15px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
-  color: var(--text-faint);
-  cursor: not-allowed;
-  transition: all 0.2s;
-  line-height: 1;
+.web-results { border-top: 1px solid var(--line); }
+.search-card { padding: 9px 11px; border-bottom: 1px solid var(--line); }
+.search-card:last-child { border-bottom: none; }
+.search-card-title {
+  font-size: 12px; font-weight: 600; color: var(--accent-hi);
+  margin-bottom: 2px; display: block; text-decoration: none;
 }
-.rerun-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.search-card-title:hover { text-decoration: underline; }
+.search-card-url {
+  font-size: 10px; color: var(--ink-3); margin-bottom: 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.rerun-btn.rerun-active {
-  background: var(--accent-dim);
-  border-color: var(--accent);
+.search-card-snippet {
+  font-size: 11px; color: var(--ink-2); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ddg-fallback { padding: 10px; text-align: center; border-top: 1px solid var(--line); }
+.ddg-fallback a { font-size: 12px; color: var(--ink-2); }
+
+/* ── ERROR ── */
+.error-body {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 48px 24px; gap: 12px;
+}
+/* Status colour is never the accent: the accent means interactive. */
+.error-message { font-size: 13px; color: var(--crit); line-height: 1.6; max-width: 260px; }
+
+/* ── KEYS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 8px 18px; font-size: 13px; font-weight: 600; letter-spacing: 0.03em;
+  transition: box-shadow var(--t-fast) var(--ease), background var(--t-fast) var(--ease),
+              transform var(--t-fast) var(--ease);
+}
+.btn:active { transform: translateY(1px); }
+
+/* The bezel is always brass. Only the legend behind it lights. */
+.btn-primary {
+  background: linear-gradient(180deg, var(--accent-hi), var(--accent));
+  color: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--accent-hi), 0 0 12px rgb(var(--accent-rgb) / 0.3);
+}
+.btn-primary:hover { box-shadow: inset 0 0 0 1px var(--accent-hi), 0 0 18px rgb(var(--accent-rgb) / 0.5); }
+
+.btn-secondary {
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal));
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--line-hot), 0 1px 2px rgb(0 0 0 / 0.5);
+}
+.btn-secondary:hover {
   color: var(--accent);
-  cursor: pointer;
-  animation: rerun-pulse 1.5s ease-in-out infinite;
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 10px rgb(var(--accent-rgb) / 0.28);
 }
-.rerun-btn.rerun-active:hover {
-  background: var(--accent);
-  color: #0c0e14;
-  transform: rotate(-30deg);
+.btn-sm { padding: 4px 12px; font-size: 11px; }
+.btn[data-loading="true"] { opacity: 0.6; pointer-events: none; }
+
+/* ── RE-RUN KEY ── */
+.rerun-btn {
+  flex-shrink: 0; width: 30px; height: 30px; line-height: 1; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal));
+  box-shadow: inset 0 0 0 1px var(--line); color: var(--ink-3);
+  cursor: not-allowed;
+  transition: box-shadow var(--t-base) var(--ease), color var(--t-base) var(--ease);
 }
+.rerun-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.rerun-btn.rerun-active {
+  color: var(--accent); cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--accent);
+  animation: rerun-pulse 1.6s var(--ease) infinite;
+}
+.rerun-btn.rerun-active:hover { background: var(--accent); color: var(--bg); }
 @keyframes rerun-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(232,168,56,0); }
-  50%       { box-shadow: 0 0 0 5px rgba(232,168,56,0.25); }
+  0%, 100% { box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 0 rgb(var(--accent-rgb) / 0); }
+  50%      { box-shadow: inset 0 0 0 1px var(--accent), 0 0 10px 2px rgb(var(--accent-rgb) / 0.35); }
 }
 
-/* ── Greek text warning (shown when user selects Greek text in EN mode) ── */
+/* ── STREAM STATUS ─────────────────────────────────────────────────────────
+   Transient notices beside the translation rather than inside it: a model
+   fallback, a dropped connection, a shortened readout. */
+.stream-status {
+  margin-top: 8px; padding: 7px 10px;
+  background: var(--accent-dim);
+  box-shadow: inset 0 0 0 1px rgb(var(--accent-rgb) / 0.35);
+  font-size: 11.5px; line-height: 1.5; color: var(--accent);
+}
+
+/* ── INLINE MESSAGES ── */
+.inline-note  { padding: 10px 12px; font-size: 12px; color: var(--ink-2); }
+.inline-error { padding: 10px 12px; font-size: 12px; color: var(--crit); }
+.inline-hint  { font-size: 11px; color: var(--ink-3); }
+.inline-note a { color: var(--accent); }
+
+/* ── GREEK-INPUT WARNING ──────────────────────────────────────────────────
+   A warning is state, so it uses --crit. It does not borrow the accent. */
 .lang-warning-inline {
   padding: 12px 14px;
-  background: rgba(248, 113, 113, 0.07);
-  border: 1px solid rgba(248, 113, 113, 0.22);
-  border-left: 3px solid #f87171;
-  border-radius: var(--radius);
-  font-size: 13px;
-  color: #fca5a5;
-  line-height: 1.7;
+  background: color-mix(in srgb, var(--crit) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--crit) 35%, transparent);
+  border-left: 3px solid var(--crit);
+  font-size: 13px; line-height: 1.7;
+  color: color-mix(in srgb, var(--crit) 55%, var(--ink));
 }
-.lang-warning-inline strong { color: #fecaca; font-weight: 700; }
-.lang-warning-inline em     { font-style: italic; color: #f87171; }
+.lang-warning-inline strong { color: var(--ink); font-weight: 700; }
+.lang-warning-inline em     { font-style: italic; color: var(--crit); }
+
+/* ── PHASE 2 TRAY ── */
+.phase2-tray { margin: 14px 12px 4px; padding: 10px 12px; opacity: 0.7; }
+.phase2-heading {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--ink-3); margin-bottom: 7px;
+}
+.phase2-items { display: flex; flex-direction: column; gap: 5px; }
+.phase2-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-3); }
+/* Semantic pill, not the accent — this is a state, not a control. */
+.phase2-badge {
+  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-3); background: var(--metal);
+  box-shadow: inset 0 0 0 1px var(--line);
+  padding: 2px 7px; margin-left: auto;
+}
+
+/* ── FOOTER ── */
+.panel-footer {
+  margin-top: 10px; padding: 9px 12px 12px;
+  border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; font-size: 11px; color: var(--ink-3); flex-wrap: wrap;
+}
+.panel-footer a { color: var(--ink-3); text-decoration: none; }
+.panel-footer a:hover { color: var(--accent); }
+.footer-sep { color: var(--line-hot); }
+.footer-kofi:hover { color: var(--crit) !important; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--line-hot); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-lo); }
+
+/* Deco Noir handles reduced motion for its own animations; these are ours. */
+@media (prefers-reduced-motion: reduce) {
+  .rerun-btn.rerun-active { animation: none; }
+  .typing-cursor { animation: none; opacity: 1; }
+}

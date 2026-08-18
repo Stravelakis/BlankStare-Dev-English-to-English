@@ -1,0 +1,83 @@
+/* fonts/display.css — BlankStare display faces
+   ---------------------------------------------------------------------------
+   Deco Noir's ornamental face is Poiret One, which carries no Greek glyphs.
+   BlankStare is a full EN/EL product, so a literal application would drop every
+   Greek panel title to a system serif and the identity would vanish across half
+   the UI.
+
+   Two faces, chosen per glyph by unicode-range:
+
+     Latin  →  Poiret One   the Deco Noir signature face
+     Greek  →  GFS Didot    a Greek Didone by the Greek Font Society
+
+   GFS Didot is the pairing that actually works. Cormorant was the first
+   choice and was wrong: it ships latin, latin-ext, cyrillic and vietnamese
+   subsets and no Greek at all. GFS Didot is a high-contrast Didone with
+   hairline serifs — the same register as Poiret One — and it was designed for
+   Greek typography rather than extended into it. Both faces are single-weight,
+   so the two languages cannot drift apart in weight either.
+
+   Both are self-hosted. An extension cannot depend on a CDN at runtime; a
+   Google Fonts link would fail silently to a serif with no error, which is
+   exactly the failure this file exists to prevent. Files come from Fontsource
+   and are already subset. Licences: LICENSE-poiret-one.txt, LICENSE-gfs-didot.txt
+   (both OFL).
+   =========================================================================== */
+
+/* ── Latin — Poiret One ──────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'BlankStare Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('poiret-one-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC,
+                 U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ── Greek — GFS Didot ───────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'BlankStare Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('gfs-didot-greek-400-normal.woff2') format('woff2');
+  unicode-range: U+0370-03FF;
+}
+
+/* Polytonic Greek. Rarely needed for UI titles, but 9KB is cheaper than a
+   title that falls back mid-word on one accented character. */
+@font-face {
+  font-family: 'BlankStare Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('gfs-didot-greek-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+
+/* ---------------------------------------------------------------------------
+   The display role.
+
+   One family name covering both scripts, with unicode-range deciding which
+   file paints each glyph. That means a Greek word inside an English title —
+   or the reverse — still renders in a related face instead of dropping to the
+   system fallback mid-line, and no :lang() switching is needed anywhere.
+
+   Overriding --display-deco rather than restyling headings keeps this a token
+   change: every Deco Noir rule that reaches for the ornamental face picks it up
+   automatically.
+   --------------------------------------------------------------------------- */
+:root {
+  --display-deco: 'BlankStare Display', 'Bodoni MT', 'Didot', Georgia, serif;
+  --display-deco-weight: 400;
+  --display-deco-track: 0.06em;
+}
+
+/* GFS Didot sets slightly wider than Poiret One at the same size and its
+   counters are tighter, so Greek gets a little less tracking to keep the two
+   languages reading at the same density. */
+:root:lang(el) {
+  --display-deco-track: 0.02em;
+}

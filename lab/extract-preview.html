@@ -1,0 +1,14 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Extraction check</title></head>
+<body>
+<!-- A page shaped like a real docs site: furniture first, content late. -->
+<header><nav>Home Docs API Blog Pricing Login Sign up</nav></header>
+<div id="cookie">We value your privacy. This site uses cookies. Accept all. Manage preferences. Reject.</div>
+<aside class="sidebar">Getting started Installation Configuration Deployment Troubleshooting FAQ Changelog Migration guide Reference</aside>
+<main>
+  <h1>Handling stream errors</h1>
+  <p>When a streaming response is interrupted, the reader throws. Wrap the read loop so the partial response is preserved rather than discarded, and surface the interruption to the caller.</p>
+  <p>A dropped connection mid-stream is indistinguishable from a completed one unless you track whether the terminating sentinel arrived. Treat a missing sentinel as an error even when the socket closed cleanly.</p>
+</main>
+<footer>© 2026 Example Corp. Terms Privacy Cookies Careers Press Contact us Status Security</footer>
+<script>console.log("should not appear")</script>
+</body></html>
