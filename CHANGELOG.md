@@ -12,6 +12,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), version
   Dev / English / ELI5 reading levels, a walkthrough, and a playground that
   runs the extension's own `utils/pure.js` in the browser.
 - Share image for links to the docs site.
+- Privacy policy page on the docs site, for a Chrome Web Store listing.
 - Screenshots in Greek and of the history drawer.
 - `lab/shoot.mjs`: regenerates every panel screenshot with one command.
 - The full standard document set: INSTALL, GUIDE, DEPLOY, CONNECT-AGENTS,
@@ -21,6 +22,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), version
 - Secret scan on every commit (`githooks/pre-commit`), weekly Dependabot.
 - `minimum_chrome_version: 116`, the first version with the side-panel
   calls BlankStare makes. Older browsers are now told so at install.
+
+### Removed
+- The "Keep open" setting. It was saved but did nothing; the old saved value
+  is cleared on update.
 
 ### Fixed
 - SearXNG setup told people to set a CORS option SearXNG doesn't have.

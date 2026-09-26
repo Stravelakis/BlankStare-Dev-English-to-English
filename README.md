@@ -44,7 +44,8 @@ shortcuts (Alt+Shift+B opens the panel, Alt+Shift+E sends the selection).
 4. Select any confusing text and press the brass button.
 
 Full setup: [INSTALL.md](INSTALL.md) · Full manual: [GUIDE.md](GUIDE.md) ·
-Docs site: https://docs.stravelakis.com/BlankStare-Dev-English-to-English/
+Docs site: https://docs.stravelakis.com/BlankStare-Dev-English-to-English/ ·
+[Privacy policy](https://docs.stravelakis.com/BlankStare-Dev-English-to-English/privacy/)
 
 ## Screenshots
 
