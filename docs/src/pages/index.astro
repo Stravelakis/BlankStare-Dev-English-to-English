@@ -5,6 +5,8 @@ import FeatureCards from '../components/FeatureCards.astro';
 import Carousel from '../components/Carousel.astro';
 import Playground from '../components/Playground.astro';
 import { siteConfig } from '../../site.config.ts';
+// The version shown is the extension's own, so it can never go stale.
+import manifest from '../../../manifest.json';
 
 import { Content as Dev } from '../docs/dev.md';
 import { Content as Plain } from '../docs/plain.md';
@@ -63,7 +65,7 @@ console.log(buildSystemPrompt('el', 'newbie', ''));
 ---
 <DocsLayout title="Overview" home>
   <section class="hero reveal" id="top">
-    <span class="eyebrow">Chrome extension · English &amp; Greek · free, bring your own key</span>
+    <span class="eyebrow">v{manifest.version} · Chrome extension · English &amp; Greek · free, bring your own key</span>
     <h1 class="hero-title">{siteConfig.projectName}</h1>
     <p class="hero-sub">{siteConfig.description}</p>
     <p class="hero-sub">
