@@ -25,7 +25,6 @@ const SETTINGS_DEFAULTS = {
   // Trigger modes
   triggerFloating:  true,
   triggerRightClick:true,
-  triggerAlwaysOn:  false,
 
   // Features
   jargonDictionary: false,

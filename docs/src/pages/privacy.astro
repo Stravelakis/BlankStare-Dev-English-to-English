@@ -1,0 +1,54 @@
+---
+// Privacy policy. Required for a Chrome Web Store listing; linked from the
+// listing, the README and the front page. Keep it in step with what the code
+// actually sends (utils/api.js is the only file that talks to the network).
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { siteConfig } from '../../site.config.ts';
+---
+<DocsLayout title="Privacy policy" description="What BlankStare sends, where, and what it keeps.">
+  <section class="doc-body" id="top">
+    <h1 class="section-title">Privacy policy</h1>
+    <p><em>Last updated 26 September 2026 · applies to BlankStare 0.7.0 and later.</em></p>
+
+    <p>BlankStare has no server and no account. The author collects nothing:
+    no analytics, no tracking, no usage data.</p>
+
+    <h2>What leaves your computer, and only when you ask</h2>
+    <ul>
+      <li><b>To Groq</b> (api.groq.com), using your own key: the text you select,
+      or the readable text of the page when you ask for a full-page summary, plus
+      any context or follow-up question you type. When you press the speaker
+      button with an Orpheus voice, the English answer is sent to be read aloud.
+      Groq's own policy applies: <a href="https://groq.com/privacy-policy/">groq.com/privacy-policy</a>.</li>
+      <li><b>To YouTube</b> (googleapis.com), only if you added a YouTube key and
+      press Search: a search phrase based on your selection.</li>
+      <li><b>To your own SearXNG server</b>, only if you set one up and press
+      Search: the same search phrase. Without one, Search opens DuckDuckGo in a
+      new tab, as if you had typed it there.</li>
+    </ul>
+
+    <h2>What is stored</h2>
+    <ul>
+      <li><b>Settings and keys</b>: in Chrome's extension storage
+      (<code>chrome.storage.sync</code>). If you have Chrome sync turned on,
+      Google syncs these between your own devices, like your bookmarks.</li>
+      <li><b>Your last 20 answers</b>: in session storage, deleted when the
+      browser closes.</li>
+      <li>Nothing else. Removing the extension removes all of it.</li>
+    </ul>
+
+    <h2>Permissions</h2>
+    <ul>
+      <li><b>Read pages you visit</b>: needed so the button beside selected text
+      is already on the page. BlankStare reads only your selection, or the page
+      when you ask for a summary.</li>
+      <li><b>Side panel, context menu, storage</b>: to show the panel, the
+      right-click entry, and keep your settings.</li>
+      <li><b>Your search server's address</b>: asked for by name, once, when you
+      press Test. You can refuse.</li>
+    </ul>
+
+    <p>BlankStare does not sell or share data, and does not use it for anything
+    but answering you. Questions: <a href={`${siteConfig.repoUrl}/issues`}>open an issue</a>.</p>
+  </section>
+</DocsLayout>

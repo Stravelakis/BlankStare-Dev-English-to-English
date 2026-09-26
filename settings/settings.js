@@ -130,7 +130,6 @@ async function loadForm() {
 
   $('trigger-floating').checked   = !!s.triggerFloating;
   $('trigger-rightclick').checked = !!s.triggerRightClick;
-  $('trigger-alwayson').checked   = !!s.triggerAlwaysOn;
 
   setActiveLang(s.language || 'en');
 
@@ -171,8 +170,7 @@ async function saveForm() {
   }
 
   const anyTrigger = $('trigger-floating').checked ||
-                     $('trigger-rightclick').checked ||
-                     $('trigger-alwayson').checked;
+                     $('trigger-rightclick').checked;
   if (!anyTrigger) {
     $('trigger-floating').checked = true;
     alert('At least one trigger mode must be enabled. Floating button re-enabled.');
@@ -195,7 +193,6 @@ async function saveForm() {
     readingLevel,
     triggerFloating:  $('trigger-floating').checked,
     triggerRightClick:$('trigger-rightclick').checked,
-    triggerAlwaysOn:  $('trigger-alwayson').checked,
     excludeList,
   });
 

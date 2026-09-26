@@ -15,23 +15,22 @@ scope, hardened in v0.6.0, brought up to the shared repo standards in v0.7.0
   the real panel markup.
 - **Never done:** loading this version unpacked in a real Chrome and clicking
   through it. The SearXNG permission prompt in particular is untested by hand.
-- **Known issues:** the "Keep open" toggle in Settings → Trigger modes is saved
-  but nothing reads it; it does nothing (see Open questions).
+- **Known issues:** none open.
 - **Test suite:** yes, `npm test`.
 
 ## Next steps, in order
 
 1. Load v0.7.0 unpacked, click through GUIDE.md end to end.
 2. Tag `v0.7.0` → docs site deploys (first time: DEPLOY.md → First deploy).
-3. Decide what "Keep open" should do, or remove it.
-4. Chrome Web Store listing (needs a privacy policy page; the docs site can host it).
+3. Chrome Web Store listing. The privacy policy is at docs/src/pages/privacy.astro
+   (…/BlankStare-Dev-English-to-English/privacy/ once deployed).
 
 ## Open questions
 
-- "Keep open": remove, or make it keep the panel open across windows?
+- The author's email stays in README and LICENSE until stravelakis.com has a
+  working contact page (none live as of 2026-09-26).
 - Chrome Web Store: LICENSE says it is published there. Is it? If not, LICENSE
   should say "intended for".
-- The existing tag `v0.22` sits on the v0.5.0 commit. Rename to `v0.5.0`?
 
 ---
 
