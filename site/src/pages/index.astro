@@ -5,6 +5,8 @@ import FeatureCards from '../components/FeatureCards.astro';
 import Carousel from '../components/Carousel.astro';
 import Playground from '../components/Playground.astro';
 import { siteConfig } from '../../site.config.ts';
+// The version shown is the extension's own, so it can never go stale.
+import manifest from '../../../manifest.json';
 
 import { Content as Dev } from '../docs/dev.md';
 import { Content as Plain } from '../docs/plain.md';
@@ -29,13 +31,12 @@ const slides = [
 ---
 <DocsLayout title="Overview" home>
   <section class="hero reveal" id="top">
-    <span class="eyebrow">Docs · v1.0.2</span>
+    <span class="eyebrow">Docs · v{manifest.version}</span>
     <h1 class="hero-title">{siteConfig.projectName}</h1>
     <p class="hero-sub">{siteConfig.description}</p>
     <p class="hero-sub">
-      <a href="https://github.com/Stravelakis/image-forge/releases/latest">Download for Windows</a>
-      · <a href={siteConfig.repoUrl}>Source on GitHub</a>
-      · <a href="https://github.com/Stravelakis/image-forge/blob/master/CHANGELOG.md">What changed</a>
+      <a href={`${siteConfig.repoUrl}#-getting-started`}>Install it in Chrome (free)</a>
+      · <a href={siteConfig.repoUrl}>Source on GitHub</a>
     </p>
   </section>
 
