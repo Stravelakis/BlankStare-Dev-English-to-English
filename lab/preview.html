@@ -81,6 +81,7 @@
   </div>
 </div>
 
+<script src="../utils/lottie.min.js"></script>
 <script src="../vendor/deco-noir.js"></script>
 <script>
 /* ---------------------------------------------------------------------------
@@ -127,6 +128,15 @@ const SAMPLE = {
 
   // Deco Noir's key-rim glow, same call the panel makes.
   DecoNoir.init({ ground: 'off', grain: false, glow: true, spark: false, reveal: false });
+
+  // The animated icons, same files the panel loads (it resolves them through
+  // chrome.runtime.getURL; here they are plain relative paths).
+  [['logo-anim','icon-coding'],['welcome-anim','icon-read'],['nokey-anim','icon-apikey'],
+   ['loading-anim','icon-loading'],['error-anim','icon-empty'],['settings-anim','icon-settings']]
+    .forEach(([id, icon]) => document.getElementById(id) && lottie.loadAnimation({
+      container: document.getElementById(id), renderer: 'svg', loop: true, autoplay: true,
+      path: `../icons/lottie/${icon}.json`,
+    }));
 
   const $ = id => document.getElementById(id);
   const states = ['welcome', 'nokey', 'loading', 'result', 'error'];
