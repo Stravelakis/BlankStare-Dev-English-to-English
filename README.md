@@ -2,6 +2,8 @@
 
 > **Zero cost BYOK** — Bring Your Own (free) API Key. No subscription. No hidden fees.
 
+📘 **Guides:** [docs.stravelakis.com/BlankStare-Dev-English-to-English](https://docs.stravelakis.com/BlankStare-Dev-English-to-English/) — for developers, in plain English, and ELI5.
+
 **Translate developer documentation, error messages, READMEs, terminal output, and tech jargon into plain English — instantly, while you browse.**
 
 A Chrome sidebar extension powered by Groq's free AI API. Built first for **vibecoders** — people building real things with AI coding tools (Claude Code, Cursor, Antigravity, etc.) without a traditional dev background — and just as useful for anyone else who works alongside developers: designers, project managers, founders, marketers, and anyone who's ever got a blank stare from reading developer docs.

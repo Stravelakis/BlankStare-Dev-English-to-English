@@ -1,0 +1,102 @@
+---
+import VernacularSwitcher from './VernacularSwitcher.astro';
+import DotField from './DotField.astro';
+import SocialIcon from './SocialIcon.astro';
+import { siteConfig } from '../../site.config.ts';
+
+const nav = [
+  ...siteConfig.nav,
+  ...(siteConfig.playground.enabled ? [{ id: 'playground', label: 'Playground' }] : []),
+];
+---
+<aside class="sidebar">
+  <DotField options={siteConfig.backgrounds.sidebar} />
+
+  <div class="sidebar-inner">
+    <a href="#top" class="brand">{siteConfig.projectName}</a>
+
+    <VernacularSwitcher />
+
+    <nav class="side-nav" aria-label="Sections">
+      {nav.map((item, i) => (
+        <a href={`#${item.id}`} class="nav-link" data-section={item.id} style={`--i:${i}`}>
+          {item.label}
+        </a>
+      ))}
+      <a href={siteConfig.repoUrl} class="nav-link" style={`--i:${nav.length}`}>
+        Source <span class="arrow" aria-hidden="true">↗</span>
+      </a>
+    </nav>
+
+    <footer class="sidebar-footer">
+      <p class="sidebar-footer-label">Made by {siteConfig.author.name}</p>
+      <div class="social">
+        {siteConfig.author.links.map((link) => (
+          <a class="social-link" href={link.href} rel="me">
+            <SocialIcon kind={link.kind} />
+            <span>{link.label}</span>
+          </a>
+        ))}
+      </div>
+    </footer>
+  </div>
+</aside>
+
+<script>
+  // Highlight the menu item for the section currently in the reading band.
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('.nav-link[data-section]'));
+  const sections = links
+    .map((link) => document.getElementById(link.dataset.section ?? ''))
+    .filter((el): el is HTMLElement => el !== null);
+
+  if (sections.length) {
+    const intersecting = new Set<string>();
+    const setCurrent = (id: string) => {
+      links.forEach((link) => {
+        if (link.dataset.section === id) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    };
+
+    // Desktop scrolls inside .content; small screens scroll the whole page.
+    const pane = document.querySelector<HTMLElement>('.content');
+    const atBottom = () => {
+      const scroller = pane && pane.scrollHeight > pane.clientHeight ? pane : document.scrollingElement;
+      return !!scroller && scroller.scrollTop > 0 && scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 4;
+    };
+
+    // The last section can be too short to reach the reading band, so the
+    // bottom of the page always selects it.
+    const update = () => {
+      if (atBottom()) return setCurrent(sections[sections.length - 1].id);
+      const first = sections.find((section) => intersecting.has(section.id));
+      if (first) setCurrent(first.id);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) intersecting.add(entry.target.id);
+          else intersecting.delete(entry.target.id);
+        });
+        update();
+      },
+      { rootMargin: '-30% 0px -60% 0px' }
+    );
+
+    let queued = false;
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        update();
+      });
+    };
+
+    sections.forEach((section) => observer.observe(section));
+    pane?.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    setCurrent(sections[0].id);
+  }
+</script>

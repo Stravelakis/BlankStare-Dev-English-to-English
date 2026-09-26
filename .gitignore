@@ -46,3 +46,6 @@ yarn.lock
 dist/
 build/
 .tmp/
+
+# The docs site needs its lockfile for npm ci in CI
+!site/package-lock.json
