@@ -1,0 +1,26 @@
+BlankStare
+Copyright (c) 2025-2026 Lambros Stravelakis
+
+This product includes third-party work:
+
+- Poiret One typeface, Copyright 2011 The Poiret One Project Authors.
+  License: SIL Open Font License 1.1 (fonts/LICENSE-poiret-one.txt).
+  Used for: Latin display titles, fonts/poiret-one-latin-400-normal.woff2.
+
+- GFS Didot typeface, Copyright (c) 2001 Takis Katsoulidis and George D. Matthiopoulos (Greek Font Society).
+  License: SIL Open Font License 1.1 (fonts/LICENSE-gfs-didot.txt).
+  Used for: Greek display titles, fonts/gfs-didot-*.woff2.
+
+- Comfortaa typeface, Copyright 2011 The Comfortaa Project Authors (Johan Aakerlund).
+  License: SIL Open Font License 1.1.
+  Used for: body text, fonts/comfortaa-*.woff2.
+
+- lottie-web (https://github.com/airbnb/lottie-web), Copyright (c) Airbnb.
+  License: MIT.
+  Used for: animated icons, utils/lottie.min.js.
+
+- Deco Noir visual identity, Copyright (c) Stravelakis. Vendored in vendor/.
+
+- The docs site (docs/) is built from the shared Stravelakis docs theme; its
+  own third-party credits, including React Bits' "Dot Field" (MIT + Commons
+  Clause) and the Sora typeface (OFL 1.1), are in docs/NOTICE.

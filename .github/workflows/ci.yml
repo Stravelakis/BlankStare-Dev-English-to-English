@@ -1,0 +1,52 @@
+name: CI
+
+# Tests on every push and pull request, a check that the docs site still
+# builds, and a secret scan over the whole history.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # No install step: the extension has no dependencies.
+      - run: npm test
+      - name: manifest.json is valid and its version matches package.json
+        run: node -e "const m=require('./manifest.json'),p=require('./package.json');if(m.version!==p.version){console.error('manifest '+m.version+' != package '+p.version);process.exit(1)}"
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+      - run: npm ci
+        working-directory: docs
+      - run: npm run build
+        working-directory: docs
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # The same scan the pre-commit hook runs, over the whole history. The
+      # official image, not gitleaks-action (that needs a paid licence on orgs).
+      - run: >-
+          docker run --rm -v "$PWD:/repo"
+          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="*"
+          ghcr.io/gitleaks/gitleaks:latest git /repo --redact --verbose

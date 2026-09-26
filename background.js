@@ -8,6 +8,9 @@
 
 // ══ INSTALL ══════════════════════════════════════════════════════════════════
 chrome.runtime.onInstalled.addListener(async () => {
+  // "Keep open" was removed in v0.7.0 (it was saved but never used).
+  chrome.storage.sync.remove('triggerAlwaysOn');
+
   // Build context menu based on saved setting (default: enabled)
   const { triggerRightClick = true } = await chrome.storage.sync.get('triggerRightClick');
   if (triggerRightClick) createContextMenu();

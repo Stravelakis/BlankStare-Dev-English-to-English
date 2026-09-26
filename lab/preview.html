@@ -34,6 +34,12 @@
     border: 1px solid #3A3730; background: #0C0B09;
     max-height: calc(100vh - 90px); overflow-y: auto; resize: horizontal;
   }
+  /* ?shot=<state> — screenshot mode for lab/shoot.mjs: no harness chrome,
+     the panel alone at true width and full height. */
+  html.lab-shot .lab-bar, html.lab-shot .lab-caption { display: none; }
+  html.lab-shot body { margin: 0; }
+  html.lab-shot .lab-stage { padding: 0; }
+  html.lab-shot .lab-frame { max-height: none; overflow: visible; border: 0; resize: none; }
   .lab-caption {
     font: 10px/1.4 'Segoe UI', system-ui, sans-serif; color: #6E6858;
     text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px;
@@ -75,6 +81,7 @@
   </div>
 </div>
 
+<script src="../utils/lottie.min.js"></script>
 <script src="../vendor/deco-noir.js"></script>
 <script>
 /* ---------------------------------------------------------------------------
@@ -121,6 +128,15 @@ const SAMPLE = {
 
   // Deco Noir's key-rim glow, same call the panel makes.
   DecoNoir.init({ ground: 'off', grain: false, glow: true, spark: false, reveal: false });
+
+  // The animated icons, same files the panel loads (it resolves them through
+  // chrome.runtime.getURL; here they are plain relative paths).
+  [['logo-anim','icon-coding'],['welcome-anim','icon-read'],['nokey-anim','icon-apikey'],
+   ['loading-anim','icon-loading'],['error-anim','icon-empty'],['settings-anim','icon-settings']]
+    .forEach(([id, icon]) => document.getElementById(id) && lottie.loadAnimation({
+      container: document.getElementById(id), renderer: 'svg', loop: true, autoplay: true,
+      path: `../icons/lottie/${icon}.json`,
+    }));
 
   const $ = id => document.getElementById(id);
   const states = ['welcome', 'nokey', 'loading', 'result', 'error'];
@@ -219,14 +235,34 @@ const SAMPLE = {
     jargonToggle: '📖 Term glossary',
   };
 
-  document.querySelectorAll('.lab-bar [data-lang]').forEach(b => b.onclick = () => {
-    const t = b.dataset.lang === 'el' ? EL : EN;
-    document.documentElement.lang = b.dataset.lang;
-    document.getElementById('lang-toggle').textContent = b.dataset.lang.toUpperCase();
+  function setLang(lang) {
+    const t = lang === 'el' ? EL : EN;
+    document.documentElement.lang = lang;
+    document.getElementById('lang-toggle').textContent = lang.toUpperCase();
     document.querySelectorAll('[data-i18n]').forEach(n => {
       if (t[n.dataset.i18n]) n.textContent = t[n.dataset.i18n];
     });
-  });
+  }
+  document.querySelectorAll('.lab-bar [data-lang]').forEach(b =>
+    b.onclick = () => setLang(b.dataset.lang));
+
+  // Screenshot mode, driven by lab/shoot.mjs: ?shot=result&lang=el
+  const params = new URLSearchParams(location.search);
+  if (params.has('shot')) {
+    document.documentElement.classList.add('lab-shot');
+    showState(params.get('shot'));
+    if (params.get('lang') === 'el') {
+      setLang('el');
+      $('explanation-text').textContent =
+        'Η σελίδα προσπάθησε να φτιάξει μια λίστα από δεδομένα που δεν είχαν φτάσει ακόμα, ' +
+        'και σταμάτησε. Τα προϊόντα σου φορτώνουν ακόμα (ή απέτυχαν να φορτώσουν) τη στιγμή ' +
+        'που ζωγραφίζεται η λίστα.\n\n' +
+        'Η λύση: η λίστα να περιμένει. Δείξε κάτι προσωρινό όσο τα δεδομένα λείπουν, ' +
+        'και ζωγράφισε τα προϊόντα μόνο όταν έρθουν.';
+    }
+    if (params.has('history')) document.getElementById('history-panel')?.classList.remove('hidden');
+  }
+  document.documentElement.dataset.ready = '1';
 })();
 </script>
 </body>

@@ -295,7 +295,7 @@
                 <div class="guide-block-title">📋 How to configure</div>
                 <ol class="guide-steps">
                   <li>Enter the full URL of your SearXNG instance</li>
-                  <li>Enable CORS in <code>settings.yml</code>:<br><code>server:<br>&nbsp;&nbsp;cors_cors_allowed_origins: "*"</code></li>
+                  <li>Turn on JSON results in <code>settings.yml</code>, then restart SearXNG:<br><code>search:<br>&nbsp;&nbsp;formats:<br>&nbsp;&nbsp;&nbsp;&nbsp;- html<br>&nbsp;&nbsp;&nbsp;&nbsp;- json</code></li>
                   <li>Restart SearXNG, then click <strong>Test</strong></li>
                 </ol>
               </div>
@@ -330,10 +330,6 @@
         <div class="toggle-item">
           <div class="toggle-info"><div class="toggle-name">🖱️ Right-click menu</div><div class="toggle-desc">Right-click selected text → "Explain with BlankStare"</div></div>
           <label class="toggle-switch" for="trigger-rightclick"><input type="checkbox" id="trigger-rightclick"><span class="toggle-knob"></span></label>
-        </div>
-        <div class="toggle-item">
-          <div class="toggle-info"><div class="toggle-name">📌 Keep open</div><div class="toggle-desc">Click the toolbar icon once to open the panel — it stays open as you browse. Perfect for wide screens. Use right-click to trigger explanations while the panel is open.</div></div>
-          <label class="toggle-switch" for="trigger-alwayson"><input type="checkbox" id="trigger-alwayson"><span class="toggle-knob"></span></label>
         </div>
       </div>
       <div class="shortcut-note">

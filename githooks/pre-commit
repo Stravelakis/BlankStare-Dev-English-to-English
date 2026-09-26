@@ -1,0 +1,12 @@
+#!/bin/sh
+# Blocks commits that contain secrets.
+# Turn on once per clone:  git config core.hooksPath githooks
+# On macOS/Linux also:     chmod +x githooks/pre-commit
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks isn't installed, so this commit can't be checked for secrets." >&2
+  echo "Install it (https://github.com/gitleaks/gitleaks#installing), then commit again." >&2
+  exit 1
+fi
+
+exec gitleaks git --pre-commit --redact --staged --verbose
