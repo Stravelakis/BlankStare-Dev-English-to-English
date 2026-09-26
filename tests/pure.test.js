@@ -241,3 +241,11 @@ test('buildSystemPrompt: reader context is included when given, absent when not'
 test('buildSystemPrompt: vibecoder level names the concepts the reader already has', () => {
   assert.match(buildSystemPrompt('en', 'vibecoder', ''), /ALREADY KNOW/);
 });
+
+test('buildSystemPrompt never ends the reader description with a double full stop', () => {
+  const { VALID_LEVELS } = require('../utils/pure.js');
+  for (const level of VALID_LEVELS) for (const lang of ['en', 'el']) {
+    const readerLine = buildSystemPrompt(lang, level, '').split('\n')[0];
+    assert.ok(!readerLine.includes('..'), `${lang}/${level}`);
+  }
+});

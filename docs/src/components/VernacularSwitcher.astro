@@ -1,0 +1,84 @@
+---
+// Sits under the project name. The panels it switches live in the main content
+// (VernacularPanels.astro); which one shows is driven by <html data-vern>, set
+// before first paint by DocsLayout so a saved choice never flashes.
+import { siteConfig } from '../../site.config.ts';
+---
+<div class="vern-switch" role="tablist" aria-label="Reading level">
+  {siteConfig.vernaculars.map((v, i) => (
+    <button
+      type="button"
+      class="vern-btn"
+      id={`vern-tab-${v.id}`}
+      data-vern={v.id}
+      role="tab"
+      aria-selected={i === 0 ? 'true' : 'false'}
+      aria-controls={`vern-panel-${v.id}`}
+      tabindex={i === 0 ? 0 : -1}
+    >
+      {v.label}
+    </button>
+  ))}
+  <span class="vern-indicator" aria-hidden="true"></span>
+</div>
+
+<script>
+  const STORAGE_KEY = 'docs-vernacular';
+  const root = document.querySelector<HTMLElement>('.vern-switch');
+
+  if (root) {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('.vern-btn'));
+    const indicator = root.querySelector<HTMLElement>('.vern-indicator');
+    const ids = tabs.map((tab) => tab.dataset.vern ?? '');
+
+    const place = (tab: HTMLButtonElement) => {
+      if (!indicator) return;
+      indicator.style.width = `${tab.offsetWidth}px`;
+      indicator.style.transform = `translateX(${tab.offsetLeft}px)`;
+    };
+
+    const select = (id: string, { focus = false, persist = true } = {}) => {
+      const next = ids.includes(id) ? id : ids[0];
+      document.documentElement.dataset.vern = next;
+      tabs.forEach((tab) => {
+        const on = tab.dataset.vern === next;
+        tab.setAttribute('aria-selected', String(on));
+        tab.tabIndex = on ? 0 : -1;
+        if (on) {
+          place(tab);
+          if (focus) tab.focus();
+        }
+      });
+      if (persist) {
+        try {
+          localStorage.setItem(STORAGE_KEY, next);
+        } catch {}
+      }
+    };
+
+    tabs.forEach((tab) => tab.addEventListener('click', () => select(tab.dataset.vern ?? '')));
+
+    root.addEventListener('keydown', (e) => {
+      const current = ids.indexOf(document.documentElement.dataset.vern ?? ids[0]);
+      const target =
+        e.key === 'ArrowRight' ? (current + 1) % ids.length
+        : e.key === 'ArrowLeft' ? (current - 1 + ids.length) % ids.length
+        : e.key === 'Home' ? 0
+        : e.key === 'End' ? ids.length - 1
+        : -1;
+      if (target < 0) return;
+      e.preventDefault();
+      select(ids[target], { focus: true });
+    });
+
+    const replace = () => {
+      const active = tabs.find((tab) => tab.getAttribute('aria-selected') === 'true');
+      if (active) place(active);
+    };
+
+    select(document.documentElement.dataset.vern ?? ids[0], { persist: false });
+    new ResizeObserver(replace).observe(root);
+    document.fonts?.ready.then(replace);
+    requestAnimationFrame(() => root.classList.add('ready'));
+  }
+</script>

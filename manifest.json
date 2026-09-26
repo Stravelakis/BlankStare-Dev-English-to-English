@@ -2,7 +2,8 @@
   "manifest_version": 3,
   "name": "BlankStare: Dev English to English",
   "short_name": "BlankStare",
-  "version": "0.6.0",
+  "version": "0.7.0",
+  "minimum_chrome_version": "116",
   "description": "Zero cost BYOK \u2014 Translate developer docs, error messages, READMEs, and tech jargon into plain English, instantly, while you browse. Bring your own free Groq API key.",
   "permissions": [
     "storage",

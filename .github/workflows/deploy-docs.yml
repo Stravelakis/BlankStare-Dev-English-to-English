@@ -1,0 +1,51 @@
+name: Deploy docs site
+
+# Builds on every version tag, or by hand from the Actions tab.
+# If the theme lives in a subfolder (e.g. /docs), move this file to the repo's
+# root .github/workflows/ and set DOCS_DIR below to that folder.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  DOCS_DIR: docs
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ env.DOCS_DIR }}/package-lock.json
+      - run: npm ci
+        working-directory: ${{ env.DOCS_DIR }}
+      - run: npm run build
+        working-directory: ${{ env.DOCS_DIR }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.DOCS_DIR }}/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

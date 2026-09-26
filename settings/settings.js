@@ -340,7 +340,7 @@ async function runTest(field) {
 
       const res = await fetch(`${url.replace(/\/$/, '')}/search?q=test&format=json`, { headers: { Accept: 'application/json' } });
       ok = res.ok;
-      msg = ok ? '✅ SearXNG is reachable and responding! It will now be used for searches first — DuckDuckGo only as a fallback.' : `❌ Error ${res.status} — check URL and that CORS is enabled`;
+      msg = ok ? '✅ SearXNG is reachable and responding! It will now be used for searches first — DuckDuckGo only as a fallback.' : `❌ Error ${res.status} — check the URL, and that JSON is listed under search → formats in settings.yml`;
       updateSearchActiveUI({ forceActive: ok });
     }
 

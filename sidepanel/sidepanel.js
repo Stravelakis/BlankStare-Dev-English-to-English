@@ -394,7 +394,9 @@ async function toggleVoice() {
   const key   = settings.groqApiKey;
   const voice = settings.orpheusVoice || 'tara';
 
-  if (mode === 'orpheus' && key) {
+  // Orpheus is English-only: handed Greek text it reads it with English
+  // phonetics. Greek always goes to the system's Greek voice.
+  if (mode === 'orpheus' && key && currentLang !== 'el') {
     try {
       setVoiceActive(true);
       const { url, truncated } = await speakWithOrpheus(currentExplain, key, voice);

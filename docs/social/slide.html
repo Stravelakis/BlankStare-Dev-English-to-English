@@ -1,0 +1,25 @@
+<!doctype html>
+<!-- A 1600x700 carousel slide (the theme's 16:7 frame) wrapping one tall panel
+     screenshot. ?img=<file in docs/public/screenshots>&title=<text>. Rendered by
+     docs/social/render.mjs. -->
+<html><head><meta charset="utf-8">
+<style>
+  @font-face { font-family: 'Poiret One'; src: url('../../fonts/poiret-one-latin-400-normal.woff2') format('woff2'); }
+  html, body { margin: 0; width: 1600px; height: 700px; overflow: hidden; }
+  .slide { position: relative; width: 1600px; height: 700px;
+    background: radial-gradient(ellipse at 70% 40%, #2a2114 0%, #0d0b08 70%); }
+  h2 { position: absolute; left: 90px; top: 50%; transform: translateY(-50%); width: 620px; margin: 0;
+    font: 400 64px/1.15 'Poiret One', Georgia, serif; letter-spacing: .06em; color: #e2c47f; text-transform: uppercase; }
+  .shot { position: absolute; left: 820px; top: 50px; width: 460px; height: 650px; overflow: hidden;
+    clip-path: polygon(20px 0, 100% 0, 100% 100%, 0 100%, 0 20px); box-shadow: 0 0 0 2px #b8914a; }
+  .shot img { width: 100%; display: block; }
+  .fade { position: absolute; left: 0; right: 0; bottom: 0; height: 120px;
+    background: linear-gradient(transparent, #0d0b08); }
+</style></head>
+<body><div class="slide"><h2 id="t"></h2>
+  <div class="shot"><img id="i" alt=""></div><div class="fade"></div></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  document.getElementById('t').textContent = q.get('title');
+  document.getElementById('i').src = '../public/screenshots/' + q.get('img');
+</script></body></html>

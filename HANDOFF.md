@@ -1,4 +1,43 @@
-# BlankStare — Developer Handover Document
+# Handoff: BlankStare
+
+_Last updated: 2026-09-26 · by: Claude Code · version: v0.7.0_
+
+## In one paragraph
+
+A Chrome side-panel extension that rewrites developer text into plain English
+or Greek, on the user's own free Groq key. Feature-complete for its current
+scope, hardened in v0.6.0, brought up to the shared repo standards in v0.7.0
+(full doc set, CI, docs site). Not on the Chrome Web Store yet.
+
+## Current state
+
+- **Works:** everything in GUIDE.md. Checked by 39 tests and by screenshots of
+  the real panel markup.
+- **Never done:** loading this version unpacked in a real Chrome and clicking
+  through it. The SearXNG permission prompt in particular is untested by hand.
+- **Known issues:** the "Keep open" toggle in Settings → Trigger modes is saved
+  but nothing reads it; it does nothing (see Open questions).
+- **Test suite:** yes, `npm test`.
+
+## Next steps, in order
+
+1. Load v0.7.0 unpacked, click through GUIDE.md end to end.
+2. Tag `v0.7.0` → docs site deploys (first time: DEPLOY.md → First deploy).
+3. Decide what "Keep open" should do, or remove it.
+4. Chrome Web Store listing (needs a privacy policy page; the docs site can host it).
+
+## Open questions
+
+- "Keep open": remove, or make it keep the panel open across windows?
+- Chrome Web Store: LICENSE says it is published there. Is it? If not, LICENSE
+  should say "intended for".
+- The existing tag `v0.22` sits on the v0.5.0 commit. Rename to `v0.5.0`?
+
+---
+
+# Reference (the full developer notes)
+
+## BlankStare — developer notes
 _Updated end of v0.6.0 session. Use this to brief a new Claude instance._
 
 ---
@@ -66,7 +105,7 @@ devtranslate/
 ├── .github/ISSUE_TEMPLATE/
 ├── LICENSE
 ├── README.md
-└── HANDOVER.md             ← This file
+└── HANDOFF.md              ← This file
 ```
 
 ---
@@ -204,15 +243,12 @@ NotebookLM). Could be BlankStare v2.0 or a separate extension.
 
 ---
 
-## 12. How to push to GitHub (for Lambros)
+## 12. How changes get in
 
-```powershell
-git add .
-git commit -m "describe what changed"
-git push
-```
-If prompted: username = `Stravelakis`, password = Personal Access Token (ghp_...)
-Get token: GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → New token → tick `repo` → Generate
+Branch → commit → push → pull request → merge (`gh pr merge`). Never a direct
+push to `main`, never the GitHub web editor. Run `git config core.hooksPath
+githooks` once per clone: the pre-commit hook blocks any commit that contains a
+secret. Log in to git with `gh auth login`; no personal access tokens in notes.
 
 ---
 
@@ -265,7 +301,7 @@ version comes from `chrome.runtime.getManifest().version`.
 
 `utils/pure.js` holds the side-effect-free logic and ends with a guarded
 `module.exports`, so it loads as a plain `<script>` in the extension and as a
-CommonJS module under `node --test`. `npm test` runs 32 cases. Anyone without
+CommonJS module under `node --test`. `npm test` runs the cases (39 as of v0.7.0). Anyone without
 Node still loads unpacked exactly as before.
 
 **Nothing in `utils/pure.js` may touch `chrome`, `document`, `window` or
@@ -290,7 +326,7 @@ rules and a list of ideas already tried and rejected.
   `vendor/deco-noir.css`.** The remaining overlaps (`.btn`, `.btn-sm`, `.tab`)
   are the intended conversions.
 - **Typography is per-language.** Poiret One carries no Greek glyphs, so
-  `fonts/display.css` pairs it with Cormorant for Greek and lets
+  `fonts/display.css` pairs it with GFS Didot for Greek and lets
   `unicode-range` pick per glyph. Both must be self-hosted — a CDN link in an
   extension fails silently to a serif.
 - **The floating button gets none of this.** It is injected into every site on
@@ -379,3 +415,25 @@ the browser tool's `resize_window` and measure `scrollWidth` instead.
 Two things worth knowing: the visual defects found this way were invisible to
 token probes, and two of the four "bugs" spotted by eye turned out to be
 rendering artefacts. Measure before fixing what a screenshot appears to show.
+
+## 15. v0.7.0 — repo standards
+
+- **Doc set** per the shared standards: INSTALL, GUIDE, DEPLOY, STANDARDS,
+  CONNECT-AGENTS, NOTICE, SECURITY, CODE_OF_CONDUCT, CHANGELOG. This file was
+  renamed from HANDOVER.md.
+- **CI** (`.github/workflows/ci.yml`): tests, manifest/package version match,
+  docs build, gitleaks over full history.
+- **Docs site** in `docs/`, the shared theme unchanged except the content
+  files. The playground imports `utils/pure.js` with `?raw` and runs it as-is,
+  which is only possible because of the no-browser-globals rule in §14b.
+- **Screenshots:** `node lab/shoot.mjs` serves the repo on a random port,
+  drives headless Chrome at `lab/preview.html?shot=<state>[&lang=el][&history]`,
+  and closes the server. It must use async `execFile`: a synchronous call
+  blocks the script's own server and Chrome waits forever (happened once).
+  `node docs/social/render.mjs` then builds the share card and the 16:7
+  carousel slides from them.
+- **Fixed:** Greek read-aloud went to the English-only Orpheus model; the
+  SearXNG setup text named a CORS option SearXNG doesn't have (the real need is
+  `search.formats: [html, json]`, and CORS doesn't apply to an extension that
+  holds host permission); a doubled full stop in the system prompt.
+- `minimum_chrome_version` is 116 (the side-panel calls used).

@@ -1,48 +1,32 @@
-# ─────────────────────────────────────────
-# DevTranslate — .gitignore
-# ─────────────────────────────────────────
-
-# OS files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-Thumbs.db
-ehthumbs.db
-desktop.ini
-
-# Editor / IDE files
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-*.swp
-*.swo
-*~
-
-# ⚠️  NEVER commit API keys or secrets
+# Secrets — BlankStare has no .env; keys live in the user's browser storage.
 .env
-*.env
-*.env.local
-config.local.js
-secrets.js
-
-# Node (not used in this project, but good to have just in case)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-package-lock.json
-yarn.lock
-
-# Chrome extension distribution files
-# (we build these for the Web Store, but don't track them in git)
-*.zip
-*.crx
+.env.*
+!.env.example
 *.pem
+*.key
+secrets/
+SECRETS/
+config.local.js
 
-# Build / temp output
+# Dependencies and build output
+# (package-lock.json IS tracked: the docs-site deploy runs `npm ci`.)
+node_modules/
 dist/
 build/
+.astro/
 .tmp/
+npm-debug.log*
+
+# Chrome Web Store upload packages — built per release, never tracked
+*.zip
+*.crx
+
+# OS and editors
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~

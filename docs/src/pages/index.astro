@@ -1,0 +1,100 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import VernacularPanels from '../components/VernacularPanels.astro';
+import FeatureCards from '../components/FeatureCards.astro';
+import Carousel from '../components/Carousel.astro';
+import Playground from '../components/Playground.astro';
+import { siteConfig } from '../../site.config.ts';
+
+import { Content as Dev } from '../docs/dev.md';
+import { Content as Plain } from '../docs/plain.md';
+import { Content as Eli5 } from '../docs/eli5.md';
+
+// The extension's own tested logic, loaded unchanged so the playground runs
+// the real thing rather than a copy that could drift.
+import pureSource from '../../../utils/pure.js?raw';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const shot = (file: string) => `${base}/screenshots/${file}`;
+
+const features = [
+  { icon: '🔁', title: 'Translates, not explains', text: 'Select a paragraph of docs or an error and read a plain rewrite of it instead. No "this means…".' },
+  { icon: '🍼', title: 'Four reading levels', text: 'ELI5, Newbie, Standard or Vibecoder. Switch and re-run in one click.' },
+  { icon: '🇬🇷', title: 'English or Greek', text: 'The whole panel, the answers and the read-aloud voice, in either language.' },
+  { icon: '📖', title: 'Jargon list', text: 'Every technical term on the selection, each with a two-to-ten word definition.' },
+  { icon: '💸', title: 'Free, your own key', text: 'Runs on Groq\'s free tier with your key. Nine models, and it hops to the next when one is busy.' },
+  { icon: '🔒', title: 'Asks for little', text: 'Talks to Groq and, if you want, YouTube. Your private search server is asked for by name, only when you test it.' },
+];
+
+const slides = [
+  { title: 'A TypeError, in plain English', caption: 'Select the error on any page and the panel rewrites it as you watch.', image: shot('slide-result.png') },
+  { title: 'The same, in Greek', caption: 'Panel, answers and read-aloud voice switch to Greek with one button.', image: shot('slide-greek.png') },
+  { title: 'Your last 20 answers', caption: 'Open any earlier answer again without asking twice.', image: shot('slide-history.png') },
+  { title: 'Ready when you are', caption: 'The panel waits in the side of the browser. Select text, or press Alt+Shift+E.', image: shot('slide-welcome.png') },
+  { title: 'Settings', caption: 'One free key, a test button, and everything else folded away until you need it.', image: shot('slide-settings.png') },
+];
+
+const playgroundCode = `// Scroll to the bottom and press Run (or Ctrl + Enter).
+// Everything above the demo is BlankStare's utils/pure.js, unchanged:
+// the same code the extension runs and the test suite checks.
+
+${pureSource.trim()}
+
+// ── Try it ──────────────────────────────────────────────────────────────
+// 1. A reply streamed in pieces that split a message in half. The parser
+//    keeps the half until the rest arrives, so no word goes missing.
+const parser = createSSEParser();
+const words = [
+  ...parser.push('data: {"choices":[{"delta":{"content":"Your code "}}]}\\n\\ndata: {"choi'),
+  ...parser.push('ces":[{"delta":{"content":"tried to use something that is not there."}}]}\\n\\n'),
+  ...parser.flush(),
+];
+console.log(words.join(''));
+
+// 2. Is this Greek? Decides which language to answer in.
+console.log(isLikelyGreek('Το αρχείο δεν βρέθηκε'), isLikelyGreek('File not found'));
+
+// 3. Only http(s) links from search results are allowed to become links.
+console.log(safeUrl('https://developer.mozilla.org/'), JSON.stringify(safeUrl('javascript:alert(1)')));
+
+// 4. The instructions sent to the AI for Greek, beginner level.
+console.log(buildSystemPrompt('el', 'newbie', ''));
+`;
+---
+<DocsLayout title="Overview" home>
+  <section class="hero reveal" id="top">
+    <span class="eyebrow">Chrome extension · English &amp; Greek · free, bring your own key</span>
+    <h1 class="hero-title">{siteConfig.projectName}</h1>
+    <p class="hero-sub">{siteConfig.description}</p>
+    <p class="hero-sub">
+      <a href={`${siteConfig.repoUrl}/blob/main/INSTALL.md`}>Install</a> ·
+      <a href={`${siteConfig.repoUrl}/blob/main/GUIDE.md`}>Full guide</a> ·
+      <a href={siteConfig.repoUrl}>Source</a>
+    </p>
+  </section>
+
+  <FeatureCards features={features} title="What it does" />
+  <Carousel slides={slides} label="Showcase" />
+
+  <section class="doc-body reveal" id="docs" aria-label="Documentation">
+    <VernacularPanels>
+      <Dev slot="dev" />
+      <Plain slot="plain" />
+      <Eli5 slot="eli5" />
+    </VernacularPanels>
+  </section>
+
+  <section class="doc-body reveal" id="walkthrough" aria-labelledby="walkthrough-title">
+    <h2 class="section-title" id="walkthrough-title">Walkthrough: your first translation</h2>
+    <ol>
+      <li><b>Install.</b> Download the code, open <code>chrome://extensions</code>, switch on <b>Developer mode</b>, press <b>Load unpacked</b> and pick the folder. Settings opens by itself.</li>
+      <li><b>Get a free key.</b> Sign in at <a href="https://console.groq.com">console.groq.com</a>, make an API key, paste it into <b>AI Engine</b> and press <b>Test</b>, then <b>Save</b>.</li>
+      <li><b>Open the panel.</b> Click the toolbar icon, or press <kbd>Alt+Shift+B</kbd>.</li>
+      <li><b>Select something confusing</b> on any page: an error, a README paragraph, a line of terminal output. Press the small brass button that appears, or right-click → <b>Explain with BlankStare</b>.</li>
+      <li><b>Read the translation</b> as it streams in. Too hard? Change the level and press <b>Re-explain</b>. Want more? <b>Go deeper</b>.</li>
+      <li><b>Optional:</b> add a YouTube key for videos on the topic, or your own SearXNG server for search. Chrome asks you to allow that one server when you press <b>Test</b>.</li>
+    </ol>
+  </section>
+
+  {siteConfig.playground.enabled && <Playground code={playgroundCode} title="Playground: the extension's own logic" />}
+</DocsLayout>

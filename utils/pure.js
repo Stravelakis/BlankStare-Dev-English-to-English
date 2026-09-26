@@ -179,7 +179,7 @@ function buildSystemPrompt(lang, level, userContext) {
 
   const ctx = userContext ? `\nReader context: "${userContext}"` : '';
 
-  return `You are a translator from Dev English (technical developer jargon) into plain language. Your reader is: ${who}.${ctx}
+  return `You are a translator from Dev English (technical developer jargon) into plain language. Your reader is: ${who.replace(/\.$/, '')}.${ctx}
 
 TRANSLATION RULES — follow these exactly:
 1. REWRITE the content in plain language so the reader can fully understand it WITHOUT ever seeing the original. Write a TRANSLATION, not a footnote or a dictionary entry.

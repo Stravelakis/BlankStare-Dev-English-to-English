@@ -1,0 +1,14 @@
+docs-theme
+Copyright (c) 2026 Stravelakis
+
+This product includes third-party work:
+
+- "Dot Field" background from React Bits (https://reactbits.dev,
+  https://github.com/DavidHDev/react-bits), Copyright (c) 2026 David Haz.
+  License: MIT + Commons Clause License Condition v1.0.
+  Ported to plain TypeScript in src/scripts/dot-field.ts.
+  The Commons Clause allows use in any project, including commercial ones,
+  but forbids selling, sublicensing or redistributing the component itself.
+
+- Sora typeface, SIL Open Font License 1.1, self-hosted through the
+  @fontsource-variable/sora package (no requests to Google Fonts).
