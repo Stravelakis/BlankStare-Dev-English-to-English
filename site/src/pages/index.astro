@@ -1,0 +1,54 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import VernacularPanels from '../components/VernacularPanels.astro';
+import FeatureCards from '../components/FeatureCards.astro';
+import Carousel from '../components/Carousel.astro';
+import Playground from '../components/Playground.astro';
+import { siteConfig } from '../../site.config.ts';
+
+import { Content as Dev } from '../docs/dev.md';
+import { Content as Plain } from '../docs/plain.md';
+import { Content as Eli5 } from '../docs/eli5.md';
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+
+const features = [
+  { icon: "🧠", title: "Plain English, streamed", text: "Select confusing text, get an explanation word by word — at four reading levels, from ELI5 to vibecoder." },
+  { icon: "🆓", title: "Free with your own key", text: "Runs on Groq's free API. No subscription, no account with us. Nine free models, with automatic fallback on rate limits." },
+  { icon: "📖", title: "Jargon, defined", text: "Every technical term in the text gets a short definition, so the next page makes more sense too." },
+  { icon: "🌐", title: "Greek and English", text: "Interface, explanations and voice readout in both languages." },
+  { icon: "🎙️", title: "Read it aloud", text: "Expressive voices, or your browser's own free voice." },
+  { icon: "🔒", title: "Asks only for what it needs", text: "Access to Groq and YouTube only. Silence it on any site with the exclude list." },
+];
+
+const slides = [
+  { title: "Mid-explanation", caption: "A TypeError, explained in plain English in the side panel.", image: `${base}screens/sidepanel-result.png`, alt: "The BlankStare side panel explaining a JavaScript TypeError." },
+  { title: "Welcome", caption: "Select text on any page, or ask a question.", image: `${base}screens/sidepanel-welcome.png`, alt: "The BlankStare side panel before anything is selected." },
+  { title: "Settings", caption: "Your key, reading level, language, voice and triggers.", image: `${base}screens/settings.png`, alt: "BlankStare settings page." },
+];
+---
+<DocsLayout title="Overview" home>
+  <section class="hero reveal" id="top">
+    <span class="eyebrow">Docs · v1.0.2</span>
+    <h1 class="hero-title">{siteConfig.projectName}</h1>
+    <p class="hero-sub">{siteConfig.description}</p>
+    <p class="hero-sub">
+      <a href="https://github.com/Stravelakis/image-forge/releases/latest">Download for Windows</a>
+      · <a href={siteConfig.repoUrl}>Source on GitHub</a>
+      · <a href="https://github.com/Stravelakis/image-forge/blob/master/CHANGELOG.md">What changed</a>
+    </p>
+  </section>
+
+  <FeatureCards features={features} title="What it does" />
+  <Carousel slides={slides} label="Screenshots" />
+
+  <section class="doc-body reveal" id="docs" aria-label="Documentation">
+    <VernacularPanels>
+      <Dev slot="dev" />
+      <Plain slot="plain" />
+      <Eli5 slot="eli5" />
+    </VernacularPanels>
+  </section>
+
+  {siteConfig.playground.enabled && <Playground />}
+</DocsLayout>

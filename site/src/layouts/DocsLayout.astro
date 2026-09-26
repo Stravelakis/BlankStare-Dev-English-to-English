@@ -1,0 +1,86 @@
+---
+import '@fontsource-variable/sora';
+import '../styles/theme.css';
+import Sidebar from '../components/Sidebar.astro';
+import DotField from '../components/DotField.astro';
+import { siteConfig } from '../../site.config.ts';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** The front page: use the full SEO title rather than "Overview · Name". */
+  home?: boolean;
+}
+
+const { title, description = siteConfig.description, home = false } = Astro.props;
+const vernIds = siteConfig.vernaculars.map((v) => v.id);
+const pageTitle = home && siteConfig.seoTitle ? siteConfig.seoTitle : `${title} · ${siteConfig.projectName}`;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+// Social cards need an absolute URL; a relative og:image is ignored.
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const socialImage =
+  Astro.site && siteConfig.socialImage ? new URL(base + siteConfig.socialImage, Astro.site).href : undefined;
+---
+<!doctype html>
+<html lang="en" data-vern={vernIds[0]}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#070a1b" />
+    <meta name="color-scheme" content="dark" />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={siteConfig.projectName} />
+    {siteConfig.locale && <meta property="og:locale" content={siteConfig.locale} />}
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {socialImage && <meta property="og:image" content={socialImage} />}
+    {socialImage && <meta property="og:image:type" content="image/png" />}
+    {socialImage && <meta property="og:image:width" content="1200" />}
+    {socialImage && <meta property="og:image:height" content="630" />}
+    {socialImage && <meta property="og:image:alt" content={siteConfig.socialImageAlt} />}
+    <meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    {socialImage && <meta name="twitter:image" content={socialImage} />}
+    {socialImage && <meta name="twitter:image:alt" content={siteConfig.socialImageAlt} />}
+    {siteConfig.faviconHref && <link rel="icon" href={siteConfig.faviconHref} />}
+    <script is:inline define:vars={{ vernIds }}>
+      document.documentElement.classList.add('js');
+      try {
+        var saved = localStorage.getItem('docs-vernacular');
+        if (vernIds.indexOf(saved) !== -1) document.documentElement.dataset.vern = saved;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <DotField class="page-field" options={siteConfig.backgrounds.page} />
+
+    <div class="layout">
+      <Sidebar />
+      <main class="content" id="main" tabindex="-1">
+        <div class="content-inner">
+          <slot />
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const revealObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('in-view');
+            revealObserver.unobserve(entry.target);
+          });
+        },
+        { threshold: 0.12 }
+      );
+      document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+    </script>
+  </body>
+</html>

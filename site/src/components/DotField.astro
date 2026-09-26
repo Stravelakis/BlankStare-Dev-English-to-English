@@ -1,0 +1,21 @@
+---
+import type { DotFieldOptions } from '../scripts/dot-field';
+
+interface Props {
+  options?: DotFieldOptions;
+  class?: string;
+}
+
+const { options = {}, class: className } = Astro.props;
+---
+<div class:list={['dot-field', className]} data-dot-field={JSON.stringify(options)} aria-hidden="true"></div>
+
+<script>
+  import { mountDotField } from '../scripts/dot-field';
+
+  document.querySelectorAll<HTMLElement>('[data-dot-field]').forEach((el) => {
+    if (el.dataset.mounted) return;
+    el.dataset.mounted = 'true';
+    mountDotField(el, JSON.parse(el.dataset.dotField || '{}'));
+  });
+</script>

@@ -1,0 +1,13 @@
+---
+// Content only. The switch lives in the sidebar; visibility comes from
+// <html data-vern> (see theme.css), so this works before any JS runs.
+---
+<div class="tab-panel" data-panel="dev" id="vern-panel-dev" role="tabpanel" aria-labelledby="vern-tab-dev" tabindex="0">
+  <slot name="dev" />
+</div>
+<div class="tab-panel" data-panel="plain" id="vern-panel-plain" role="tabpanel" aria-labelledby="vern-tab-plain" tabindex="0">
+  <slot name="plain" />
+</div>
+<div class="tab-panel" data-panel="eli5" id="vern-panel-eli5" role="tabpanel" aria-labelledby="vern-tab-eli5" tabindex="0">
+  <slot name="eli5" />
+</div>

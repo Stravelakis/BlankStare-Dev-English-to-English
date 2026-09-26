@@ -1,0 +1,83 @@
+---
+// Runs code in a sandboxed iframe with no same-origin access. Code is passed in
+// by postMessage, never pasted into HTML, so any input is safe to run. Only use
+// on JS/web projects (STANDARDS.md §7: never fake a "run" button).
+import { siteConfig } from '../../site.config.ts';
+
+interface Props {
+  code?: string;
+  title?: string;
+  id?: string;
+}
+
+const { code = siteConfig.playground.starterCode, title = 'Playground', id = 'playground' } = Astro.props;
+---
+<section class="playground reveal" id={id} data-playground aria-labelledby={`${id}-label`}>
+  <div class="playground-header">
+    <span class="playground-title" id={`${id}-label`}>{title}</span>
+    <kbd class="playground-hint">Ctrl + Enter</kbd>
+    <button class="playground-run" type="button">Run</button>
+  </div>
+  <textarea
+    class="playground-code"
+    spellcheck="false"
+    autocapitalize="off"
+    autocomplete="off"
+    aria-labelledby={`${id}-label`}
+  >{code}</textarea>
+  <iframe class="playground-output" sandbox="allow-scripts" title={`${title} output`}></iframe>
+</section>
+
+<script>
+  const RUNNER = `<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;padding:10px 14px;font:13px/1.55 ui-monospace,Consolas,monospace;color:#e8ecf8;background:#050716;white-space:pre-wrap;word-break:break-word}
+.warn{color:#ffd479}.error{color:#ff8fa3}.muted{opacity:.5}
+</style></head><body><script>
+(function(){
+  var out=document.body;
+  function fmt(v){if(typeof v==='string')return v;if(v instanceof Error)return v.name+': '+v.message;try{var s=JSON.stringify(v);return s===undefined?String(v):s}catch(e){return String(v)}}
+  function line(cls,args){var d=document.createElement('div');if(cls)d.className=cls;d.textContent=Array.prototype.map.call(args,fmt).join(' ');out.appendChild(d)}
+  console.log=console.info=console.debug=function(){line('',arguments)};
+  console.warn=function(){line('warn',arguments)};
+  console.error=function(){line('error',arguments)};
+  window.addEventListener('error',function(e){line('error',[e.error||e.message])});
+  window.addEventListener('unhandledrejection',function(e){line('error',['Unhandled rejection:',e.reason])});
+  window.addEventListener('message',function(e){
+    if(e.source!==parent||typeof e.data!=='string')return;
+    try{(0,eval)(e.data)}catch(err){line('error',[err])}
+    setTimeout(function(){if(!out.childElementCount)line('muted',['(no output)'])},250);
+  },{once:true});
+  parent.postMessage({type:'playground-ready'},'*');
+})();
+<\/script></body></html>`;
+
+  document.querySelectorAll<HTMLElement>('[data-playground]').forEach((root) => {
+    const code = root.querySelector<HTMLTextAreaElement>('.playground-code');
+    const frame = root.querySelector<HTMLIFrameElement>('.playground-output');
+    const button = root.querySelector<HTMLButtonElement>('.playground-run');
+    if (!code || !frame || !button) return;
+
+    let pending: string | null = null;
+
+    const run = () => {
+      pending = code.value;
+      frame.srcdoc = RUNNER; // fresh global scope every run
+    };
+
+    window.addEventListener('message', (e) => {
+      if (e.source !== frame.contentWindow || e.data?.type !== 'playground-ready' || pending === null) return;
+      frame.contentWindow?.postMessage(pending, '*');
+      pending = null;
+    });
+
+    button.addEventListener('click', run);
+    code.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        run();
+      }
+    });
+
+    run();
+  });
+</script>

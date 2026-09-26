@@ -1,0 +1,67 @@
+---
+export interface Feature {
+  icon: string;
+  title: string;
+  text: string;
+}
+
+interface Props {
+  features?: Feature[];
+  title?: string;
+}
+
+const defaultFeatures: Feature[] = [
+  { icon: '⚡', title: 'Static and fast', text: 'Plain HTML out of the box. JavaScript only ships for the parts that move.' },
+  { icon: '🌓', title: 'Three reading levels', text: 'Dev, English and ELI5, generated together at release time so they never drift apart.' },
+  { icon: '🧪', title: 'Honest playground', text: 'Real code running in your browser for JS/web projects. Never a fake "run" button.' },
+];
+
+const { features = defaultFeatures, title = 'What this theme gives every repo' } = Astro.props;
+---
+<section class="features" id="features" aria-labelledby="features-title">
+  <h2 class="section-title reveal" id="features-title">{title}</h2>
+  <div class="cards">
+    {features.map((feature, i) => (
+      <div class="reveal" style={`--delay:${i * 90}ms`}>
+        <article class="card">
+          <span class="card-icon" aria-hidden="true">{feature.icon}</span>
+          <h3>{feature.title}</h3>
+          <p>{feature.text}</p>
+        </article>
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  document.querySelectorAll<HTMLElement>('.card').forEach((card) => {
+    let frame = 0;
+    let last: PointerEvent | null = null;
+
+    card.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse' || reduced.matches) return;
+      last = e;
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        if (!last) return;
+        const r = card.getBoundingClientRect();
+        const x = (last.clientX - r.left) / r.width - 0.5;
+        const y = (last.clientY - r.top) / r.height - 0.5;
+        card.style.setProperty('--rx', `${(-y * 8).toFixed(2)}deg`);
+        card.style.setProperty('--ry', `${(x * 8).toFixed(2)}deg`);
+        card.style.setProperty('--mx', `${((x + 0.5) * 100).toFixed(1)}%`);
+        card.style.setProperty('--my', `${((y + 0.5) * 100).toFixed(1)}%`);
+      });
+    });
+
+    card.addEventListener('pointerleave', () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      card.style.setProperty('--rx', '0deg');
+      card.style.setProperty('--ry', '0deg');
+    });
+  });
+</script>
