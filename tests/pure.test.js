@@ -398,3 +398,9 @@ test('buildSystemPrompt never ends the reader description with a double full sto
     assert.ok(!readerLine.includes('..'), `${lang}/${level}`);
   }
 });
+
+test('renderMarkdown keeps step numbers across a code box', () => {
+  const html = renderMarkdown('1. Open the terminal\n2. Run this:\n```\nnpm i\n```\n3. Run claude');
+  assert.match(html, /<ol start="3" style="counter-reset:step 2"><li>Run claude<\/li><\/ol>/);
+  assert.match(html, /^<ol><li>Open the terminal/);
+});

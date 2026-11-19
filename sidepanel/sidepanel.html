@@ -168,9 +168,12 @@
       <div class="section-row">
         <span class="section-title" data-i18n="customQ">💬 Ask your own question</span>
       </div>
+      <div id="q-chips" class="q-chips"></div>
       <div class="custom-q-body">
-        <input id="custom-q-input" type="text" class="custom-q-input" data-i18n-placeholder="customQPlaceholder" placeholder="Ask anything about the selected text…">
-        <button id="custom-q-btn" class="btn btn-secondary btn-sm" data-i18n="ask">Ask</button>
+        <div class="pb-box">
+          <textarea id="custom-q-input" rows="1" class="pb-input" data-i18n-placeholder="customQPlaceholder" placeholder="Ask anything about the selected text…"></textarea>
+          <button id="custom-q-btn" class="pb-send" aria-label="Ask" title="Ask">➜</button>
+        </div>
       </div>
       <div id="custom-q-result" class="custom-q-result hidden" aria-live="polite"></div>
     </div>
@@ -209,6 +212,7 @@
 <script src="../vendor/deco-noir.js"></script>
 <script src="deco-init.js"></script>
 <script src="../utils/lottie.min.js"></script>
+<script src="../utils/fx.js"></script>
 <script src="../utils/pure.js"></script>
 <script src="../utils/storage.js"></script>
 <script src="../utils/api.js"></script>

@@ -29,6 +29,7 @@ const I18N = {
     ask:'Ask', search:'Search', tryAgain:'Try again',
     greekWarning:'This looks like Greek text. BlankStare translates <strong>English developer content</strong> into plain English. Select an English error message, README, or code snippet. To receive the translation <em>in Greek</em>, use the EN→EL toggle above — but keep selecting English dev text.',
     voiceShortened:'Read aloud was shortened to fit the voice limit.',
+    chips:['Is this safe to do?', 'Where do I type this?', 'What could go wrong?', 'Explain it like I’m five'],
   },
   el: {
     welcomeTitle:'Επίλεξε οποιοδήποτε dev κείμενο',
@@ -54,6 +55,7 @@ const I18N = {
     ask:'Ρώτα', search:'Αναζήτηση', tryAgain:'Δοκίμασε ξανά',
     greekWarning:'Αυτό μοιάζει με ελληνικό κείμενο. Το BlankStare μεταφράζει <strong>αγγλικό developer περιεχόμενο</strong> σε απλά λόγια. Επίλεξε αγγλικό μήνυμα σφάλματος, κώδικα ή τεκμηρίωση.',
     voiceShortened:'Η ανάγνωση συντομεύτηκε για να χωρέσει στο όριο της φωνής.',
+    chips:['Είναι ασφαλές;', 'Πού το πληκτρολογώ;', 'Τι μπορεί να πάει στραβά;', 'Εξήγησέ το σαν να είμαι πέντε'],
   },
 };
 
@@ -168,6 +170,40 @@ function setStatus(msg) {
 function setStreaming(on) {
   el.explanationCursor?.classList.toggle('hidden', !on);
   el.explanationText?.setAttribute('aria-busy', String(on));
+  el.explanationText?.closest('.explanation-box')?.classList.toggle('live', on);
+  if (!on) stopWaiting();
+}
+
+// ══ WAITING: symbols resolving into words ════════════════════════════════════
+// Before the first word arrives, the answer box shows "Dev English" symbols
+// settling into a plain label. It is the product in one picture, and it stops
+// the moment real text arrives.
+let waiting = null;
+function startWaiting(label) {
+  stopWaiting();
+  const box = document.createElement('div');
+  box.className = 'decoding';
+  box.innerHTML = '<div class="decoding-label"></div><div class="decoding-noise" aria-hidden="true"></div>';
+  el.explanationText.replaceChildren(box);
+  const lab = box.firstChild, noise = box.lastChild;
+  const w = { alive: true, timer: 0 };
+  waiting = w;
+  const S = BSFX.SYMBOLS;
+  const scramble = n => Array.from({ length: n }, () => S[(Math.random() * S.length) | 0]).join('');
+  if (BSFX.REDUCED) { lab.textContent = label; noise.textContent = scramble(34); return; }
+  w.timer = setInterval(() => { noise.textContent = scramble(34); }, 90);
+  (async () => {
+    while (w.alive) {
+      await BSFX.decode(lab, label, { duration: 900 });
+      await new Promise(r => setTimeout(r, 1300));
+    }
+  })();
+}
+function stopWaiting() {
+  if (!waiting) return;
+  waiting.alive = false;
+  clearInterval(waiting.timer);
+  waiting = null;
 }
 
 // ══ i18n ══════════════════════════════════════════════════════════════════════
@@ -185,6 +221,7 @@ function applyI18n(lang) {
   });
   el.langToggle.textContent = lang.toUpperCase();
   document.documentElement.lang = lang;
+  if (typeof renderChips === 'function') renderChips();
 }
 
 // ══ LOTTIE ════════════════════════════════════════════════════════════════════
@@ -282,14 +319,32 @@ async function checkForPendingText() {
 
 // ══ EXPLAIN — TRANSLATION MODE ════════════════════════════════════════════════
 // Repainting markdown on every token is wasteful; once per frame is plenty.
-let paintPending = null;
+//
+// Each new block (paragraph, list item, code box) fades in once. The whole
+// answer is re-rendered every frame, so each block remembers when it first
+// appeared and its animation resumes where it was instead of restarting.
+const paintPending = new Map();
+const FADE_MS = 420;
 function paint(node, text) {
-  if (paintPending) cancelAnimationFrame(paintPending);
-  paintPending = requestAnimationFrame(() => {
-    paintPending = null;
+  const prev = paintPending.get(node);
+  if (prev) cancelAnimationFrame(prev);
+  paintPending.set(node, requestAnimationFrame(() => {
+    paintPending.delete(node);
+    if (node === el.explanationText) stopWaiting();
     node.innerHTML = renderMarkdown(text);   // renderMarkdown escapes everything first
-  });
+    if (BSFX.REDUCED) return;
+    const born = node._born || (node._born = []);
+    const now = performance.now();
+    const blocks = node.querySelectorAll(':scope > *, :scope > ol > li, :scope > ul > li');
+    blocks.forEach((b, i) => {
+      if (born[i] === undefined) born[i] = now;
+      const age = now - born[i];
+      if (age < FADE_MS) { b.classList.add('fresh'); b.style.animationDelay = `-${Math.round(age)}ms`; }
+    });
+    born.length = Math.min(born.length, blocks.length);
+  }));
 }
+function resetPaint(node) { node._born = []; }
 
 function showModel(entry) {
   if (!el.modelLine) return;
@@ -331,9 +386,10 @@ async function explainText(text, mode = 'normal', image = null) {
   el.selectedText.textContent = image ? '📸' : truncate(text, 200);
   el.pastedImage?.classList.toggle('hidden', !image);
   if (image && el.pastedImage) el.pastedImage.src = image.dataUrl;
-  showState('loading');
-  el.explanationText.textContent = '';
+  showState('result');
+  resetPaint(el.explanationText);
   setStreaming(true);
+  startWaiting(image ? I18N[currentLang].imageReading : I18N[currentLang].translating);
   setStatus('');
   showModel(null);
   el.explanationActions.classList.add('hidden');
@@ -373,6 +429,7 @@ async function explainText(text, mode = 'normal', image = null) {
       paint(el.explanationText, full);
       setStreaming(false);
       el.explanationActions.classList.remove('hidden');
+      if (el.modelLine?.textContent) BSFX.decode(el.modelLine, el.modelLine.textContent, { duration: 700 });
       clearRerunPending();
       if (el.jargonCb?.checked && !image) runGlossary(full);
       sessionHistory = await pushHistory({
@@ -665,8 +722,12 @@ async function handleCustomQuestion() {
   customQController = new AbortController();
 
   setLoading(el.customQBtn, true);
+  sparkFrom(el.customQBtn);
+  el.customQInput.value = '';
+  sizeAsk();
   el.customQResult.classList.add('hidden');
   el.customQResult.textContent = '';
+  resetPaint(el.customQResult);
 
   const level = el.readingLevel?.value || settings.readingLevel || 'standard';
 
@@ -842,7 +903,30 @@ el.jargonCb?.addEventListener('change', () => {
 
 el.ytSearchBtn?.addEventListener('click', handleYouTubeSearch);
 el.customQBtn?.addEventListener('click', handleCustomQuestion);
-el.customQInput?.addEventListener('keydown', e => { if (e.key === 'Enter') handleCustomQuestion(); });
+el.customQInput?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCustomQuestion(); }
+});
+el.customQInput?.addEventListener('input', sizeAsk);
+
+function sizeAsk() {
+  const ta = el.customQInput; if (!ta) return;
+  ta.style.height = 'auto';
+  ta.style.height = `${Math.min(110, ta.scrollHeight)}px`;
+}
+function sparkFrom(btn) {
+  const host = btn.closest('.collapsible-section') || document.body;
+  const r = btn.getBoundingClientRect(), h = host.getBoundingClientRect();
+  BSFX.sparks(host, r.left - h.left + r.width / 2, r.top - h.top + r.height / 2, { color: '#F2DCA0', count: 24, boost: 1.3 });
+}
+function renderChips() {
+  const box = $('q-chips'); if (!box) return;
+  box.replaceChildren(...(I18N[currentLang] || I18N.en).chips.map(c => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'q-chip'; b.textContent = c;
+    b.addEventListener('click', () => { el.customQInput.value = c; sizeAsk(); handleCustomQuestion(); });
+    return b;
+  }));
+}
 
 el.readingLevel?.addEventListener('change', () => {
   saveSettings({ readingLevel: el.readingLevel.value }).catch(() => {});

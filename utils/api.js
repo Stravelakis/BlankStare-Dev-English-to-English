@@ -255,7 +255,7 @@ async function runModel(args) {
 
 function _isAbort(err) { return err?.name === 'AbortError'; }
 
-async function runHttpStream({ entry, key, systemPrompt, userPrompt, image, maxTokens, temperature, signal, onChunk }) {
+async function runHttpStream({ entry, key, systemPrompt, userPrompt, image, maxTokens, temperature, signal, onChunk, firstWordMs: firstWordOverride }) {
   const { provider, model } = entry;
   const url = PROVIDERS[provider].chatUrl(model);
   let body;
@@ -284,7 +284,7 @@ async function runHttpStream({ entry, key, systemPrompt, userPrompt, image, maxT
   // instead of refusing when it is over its limit (a first answer once took
   // 68s), so if no word has arrived in time, give the next model a turn.
   // The reader's own abort still wins: it is checked first.
-  const firstWordMs = PROVIDERS[provider].needsKey ? 60000 : 20000;
+  const firstWordMs = firstWordOverride || (PROVIDERS[provider].needsKey ? 60000 : 20000);
   const stall = new AbortController();
   const onOuterAbort = () => stall.abort();
   signal?.addEventListener('abort', onOuterAbort);
@@ -440,17 +440,28 @@ async function testProvider(provider, key) {
     .filter(r => r.transport !== 'live');
   if (!items.length) return { ok: false, message: 'The key works, but no free translation model is available on it today.' };
 
-  for (const entry of items.slice(0, 4)) {
-    const r = await runHttpStream({
-      entry, key, systemPrompt: 'Reply with the single word OK.', userPrompt: 'OK?',
-      maxTokens: 512, temperature: 0, onChunk: () => {},
-    });
-    if (r.ok) return { ok: true, model: entry.model, count: items.length + (cat.ids.some(id => /-live$/.test(id)) ? 1 : 0) };
-    if (r.status === 401 || r.status === 403) {
-      return { ok: false, message: /free tier is not available|billing/i.test(r.error || '')
-        ? 'This key belongs to a Google project without the free tier. Make a new key in a project with no billing set up.'
-        : 'That key was refused. Copy it again and paste it here.' };
-    }
+  // Ask up to three models at once and take the first answer: a key test
+  // should take seconds, and one slow model (Gemma thinks before it answers)
+  // once made it take over a minute.
+  const tries = items.slice(0, 3).map(entry => runHttpStream({
+    entry, key, systemPrompt: 'Reply with the single word OK.', userPrompt: 'OK?',
+    maxTokens: 512, temperature: 0, onChunk: () => {}, firstWordMs: 25000,
+  }).then(r => ({ ...r, entry }), err => ({ ok: false, error: err.message, entry })));
+  const results = [];
+  const first = await new Promise(resolve => {
+    let left = tries.length;
+    tries.forEach(t => t.then(r => {
+      results.push(r);
+      if (r.ok) resolve(r);
+      else if (--left === 0) resolve(null);
+    }));
+  });
+  if (first) return { ok: true, model: first.entry.model, count: items.length + (cat.ids.some(id => /-live$/.test(id)) ? 1 : 0) };
+  const refused = results.find(r => r.status === 401 || r.status === 403);
+  if (refused) {
+    return { ok: false, message: /free tier is not available|billing/i.test(refused.error || '')
+      ? 'This key belongs to a Google project without the free tier. Make a new key in a project with no billing set up.'
+      : 'That key was refused. Copy it again and paste it here.' };
   }
   return { ok: false, message: 'The key works, but every free model is busy. Try again in a minute.' };
 }

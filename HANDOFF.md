@@ -14,29 +14,39 @@ Plan and sources: PLAN-v0.8.md. Not on the Chrome Web Store yet.
 ## Current state (v0.8 branch)
 
 - **Done and tested in a real Chromium with the extension loaded** (Playwright
-  script, 19/11): no key → OVH Qwen3.8 (11s); free Gemini key → gemini-3.8-live
-  (21s, with voice); Groq key → qwen3.8 (2.4s); a made-up dead model is skipped
-  and benched for the day; checklist / prerequisites / rephrase modes. 59 unit
-  tests pass.
-- **Waiting on Ak:** pick a look in `lab/looks.html` (serve repo root, open
-  /lab/looks.html). Effects live in `utils/fx.js`, shared by preview and app.
-- **Not done yet:** settings page rebuild (still the v0.7 page — its Groq test
-  and SearXNG section are stale), side-panel motion, privacy policy + store
-  answers for the new network calls, docs/GUIDE/README, screenshots.
+  scripts in the session scratchpad, 19/11):
+  - Engine: no key → OVH Qwen3.8 (11s); free Gemini key → gemini-3.8-live
+    (21–33s, with voice); Groq key → qwen3.8 (2.4s); a made-up dead model is
+    skipped and benched for the day; checklist / prerequisites / rephrase.
+  - Settings (look A "Gradient Blinds", Ak's pick 19/11): first-run 5-step
+    setup, Gemini key test 6.4s (asks 3 models at once), auto-save, segmented
+    choices, today's model list (17 models with a Gemini key), "Try first"
+    pin, last trigger cannot be switched off. No console errors.
+  - Side panel (motion 1+2, brass): glowing edge while streaming, symbol
+    decode until the first word, blocks fade in once, prompt bar with chips
+    and sparks, styled copy boxes / numbered steps / checklists.
+  - 60 unit tests pass (`npm test`).
+- **Google keys come in two shapes** (`AIza…` and `AQ.…`); only length is
+  checked, the real test is asking Google.
+- **Gemini free tier:** Google may use prompts to improve products and human
+  reviewers may read them (ai.google.dev/gemini-api/terms). Stated in the
+  privacy page and on the Gemini card.
 - **Known issues:** OVH's no-key lane slows down instead of refusing under
   heavy use from one internet address; a slow-but-steady answer can take ~90s.
   Mitigated by rotating models and a 20s first-word timeout; a free key avoids it.
 - **Keys for testing:** only free keys from Blacksmith's list (`crews.py`
   PROVIDERS). `BLACKSMITH_THE_NEIN_GEMINI_KEY` is proven free tier. Never
   `AK1_GEMINI_API_KEY` / `GEMINI_API_KEY` (paid / no free tier).
-- **Test suite:** `npm test`.
+- `lab/looks.html` is the design comparison page (A/B/C, 1/2/3); effects live
+  in `utils/fx.js`, shared by the lab and the app.
 
 ## Next steps, in order
 
-1. Ak picks settings look (A/B/C) and side-panel motion (1/2/3).
-2. Build the settings page (first-run wizard + normal settings) on the pick.
-3. Side-panel motion, then privacy policy, docs, screenshots, tag v0.8.0.
-4. Chrome Web Store listing.
+1. Ak reviews the new settings page and panel in a real Chrome (load unpacked).
+2. New store screenshots (`lab/shoot.mjs` predates v0.8 — check it still works).
+3. Merge `v0.8-providers`, tag v0.8.0, deploy docs (privacy page changed).
+4. Chrome Web Store listing: privacy answers must list OVHcloud, Google,
+   Groq and The Nein as the places data goes.
 
 ## Open questions
 

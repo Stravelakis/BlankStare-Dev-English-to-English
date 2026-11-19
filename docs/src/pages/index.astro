@@ -24,8 +24,8 @@ const features = [
   { icon: '🍼', title: 'Four reading levels', text: 'ELI5, Newbie, Standard or Vibecoder. Switch and re-run in one click.' },
   { icon: '🇬🇷', title: 'English or Greek', text: 'The whole panel, the answers and the read-aloud voice, in either language.' },
   { icon: '📖', title: 'Jargon list', text: 'Every technical term on the selection, each with a two-to-ten word definition.' },
-  { icon: '💸', title: 'Free, your own key', text: 'Runs on Groq\'s free tier with your key. Nine models, and it hops to the next when one is busy.' },
-  { icon: '🔒', title: 'Asks for little', text: 'Talks to Groq and, if you want, YouTube. Your private search server is asked for by name, only when you test it.' },
+  { icon: '💸', title: 'Free, no key needed', text: 'Works out of the box. Add a free Gemini or Groq key for better or faster answers. A daily check drops models that are gone.' },
+  { icon: '🔒', title: 'Asks for little', text: 'Your selection goes only to the AI that answers (OVHcloud, Google or Groq). Keys stay in Chrome\'s sync storage.' },
 ];
 
 const slides = [
@@ -33,7 +33,7 @@ const slides = [
   { title: 'The same, in Greek', caption: 'Panel, answers and read-aloud voice switch to Greek with one button.', image: shot('slide-greek.png') },
   { title: 'Your last 20 answers', caption: 'Open any earlier answer again without asking twice.', image: shot('slide-history.png') },
   { title: 'Ready when you are', caption: 'The panel waits in the side of the browser. Select text, or press Alt+Shift+E.', image: shot('slide-welcome.png') },
-  { title: 'Settings', caption: 'One free key, a test button, and everything else folded away until you need it.', image: shot('slide-settings.png') },
+  { title: 'Settings', caption: 'A 5-step setup, a free key if you want one, and everything saves by itself.', image: shot('slide-settings.png') },
 ];
 
 const playgroundCode = `// Scroll to the bottom and press Run (or Ctrl + Enter).
@@ -65,7 +65,7 @@ console.log(buildSystemPrompt('el', 'newbie', ''));
 ---
 <DocsLayout title="Overview" home>
   <section class="hero reveal" id="top">
-    <span class="eyebrow">v{manifest.version} · Chrome extension · English &amp; Greek · free, bring your own key</span>
+    <span class="eyebrow">v{manifest.version} · Chrome extension · English &amp; Greek · free, works with no key</span>
     <h1 class="hero-title">{siteConfig.projectName}</h1>
     <p class="hero-sub">{siteConfig.description}</p>
     <p class="hero-sub">
@@ -91,11 +91,11 @@ console.log(buildSystemPrompt('el', 'newbie', ''));
     <h2 class="section-title" id="walkthrough-title">Walkthrough: your first translation</h2>
     <ol>
       <li><b>Install.</b> Download the code, open <code>chrome://extensions</code>, switch on <b>Developer mode</b>, press <b>Load unpacked</b> and pick the folder. Settings opens by itself.</li>
-      <li><b>Get a free key.</b> Sign in at <a href="https://console.groq.com">console.groq.com</a>, make an API key, paste it into <b>AI Engine</b> and press <b>Test</b>, then <b>Save</b>.</li>
+      <li><b>Pick your AI.</b> Settings opens with 5 short steps. Choose <b>Try it now</b>: no key needed. Or paste a free key from <a href="https://aistudio.google.com/apikey">Google Gemini</a> or <a href="https://console.groq.com/keys">Groq</a>. Settings save by themselves.</li>
       <li><b>Open the panel.</b> Click the toolbar icon, or press <kbd>Alt+Shift+B</kbd>.</li>
       <li><b>Select something confusing</b> on any page: an error, a README paragraph, a line of terminal output. Press the small brass button that appears, or right-click → <b>Explain with BlankStare</b>.</li>
       <li><b>Read the translation</b> as it streams in. Too hard? Change the level and press <b>Re-explain</b>. Want more? <b>Go deeper</b>.</li>
-      <li><b>Optional:</b> add a YouTube key for videos on the topic, or your own SearXNG server for search. Chrome asks you to allow that one server when you press <b>Test</b>.</li>
+      <li><b>Optional:</b> paste a screenshot with <kbd>Ctrl+V</kbd> to have it explained, press <b>Do it with me</b> for a checklist, or add a YouTube key for videos on the topic.</li>
     </ol>
   </section>
 

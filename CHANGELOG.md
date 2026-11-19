@@ -5,6 +5,43 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), version
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-19
+
+### Added
+- Works with no key: OVHcloud's free, account-free AI is the default.
+- Optional free Google Gemini key (Gemini 3.8 Live, Gemma 4), with answers
+  read aloud in Gemini's own voice. Groq stays as the fastest option.
+- Self-correcting model list: on the first use each day BlankStare reads The
+  Nein and each provider's own model list. Gone models are skipped for the
+  day, busy ones rest a minute, a refused key sets its provider aside.
+- First-run setup in Settings: five steps, with a real key test that takes
+  seconds. Can be run again from Settings.
+- New Settings page: animated brass blinds behind frosted cards, settings
+  save by themselves, today's model list with an optional "Try first" pin.
+- Side panel: a brass light runs around the answer while it is written,
+  symbols settle into "Translating…" until the first word, new paragraphs
+  fade in once, a follow-up box with suggestion chips and sparks.
+- Paste a screenshot (Ctrl+V) to have it explained.
+- "What do I need first?" and "Do it with me" (a checklist you tick off).
+- Commands in copy boxes, numbered steps that keep their numbers, the model
+  that answered shown under each answer, today's count on the welcome screen.
+
+### Changed
+- Prompts rewritten for accuracy: exact commands kept, numbers and warnings
+  kept, the AI says when it is unsure, page text cannot give it instructions.
+  Follow-up questions use general knowledge when the page does not say.
+- Privacy policy covers OVHcloud, Google (including its free-tier review
+  rule), Groq and The Nein.
+
+### Removed
+- SearXNG support. Web search is a DuckDuckGo link.
+- The hardcoded Groq model list, the model dropdown and "Auto-fallback".
+
+### Fixed
+- The Groq key test and translations failed because Groq shut down the
+  models v0.7 relied on.
+- Google keys in the newer `AQ.` format were not accepted.
+
 ## [0.7.0] - 2026-09-26
 
 ### Added

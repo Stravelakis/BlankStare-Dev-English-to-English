@@ -98,7 +98,7 @@ const PROVIDERS = {
   google_gemini: {
     label:    'Google Gemini',
     needsKey: 'geminiApiKey',
-    keyHint:  /^AIza[\w-]{30,}$/,
+    keyHint:  /^(AIza[\w-]{30,}|AQ\.[\w.-]{20,})$/,   // both shapes Google issues
     chatUrl:  model => `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,
     listUrl:  'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',
     liveUrl:  'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent',
@@ -296,7 +296,7 @@ function renderMarkdown(src) {
     for (const raw of part.split('\n')) {
       const line = raw.trimEnd();
       const check = line.match(/^\s*[-*]\s+\[( |x|X)\]\s+(.*)$/);
-      const ol    = line.match(/^\s*\d+[.)]\s+(.*)$/);
+      const ol    = line.match(/^\s*(\d+)[.)]\s+(.*)$/);
       const ul    = line.match(/^\s*[-*•]\s+(.*)$/);
       const head  = line.match(/^\s*#{1,6}\s+(.*)$/);
 
@@ -305,8 +305,10 @@ function renderMarkdown(src) {
         const id = `chk-${i}-${checkN++}`;
         out.push(`<li><input type="checkbox" id="${id}"${check[1] !== ' ' ? ' checked' : ''}><label for="${id}">${inlineMd(escHtml(check[2]))}</label></li>`);
       } else if (ol) {
-        if (list !== 'ol') { close(); out.push('<ol>'); list = 'ol'; }
-        out.push(`<li>${inlineMd(escHtml(ol[1]))}</li>`);
+        // A code box between steps splits the list; keep the model's own
+        // numbering so step 3 is not shown as a second step 1.
+        if (list !== 'ol') { close(); const n = +ol[1]; out.push(n > 1 ? `<ol start="${n}" style="counter-reset:step ${n - 1}">` : '<ol>'); list = 'ol'; }
+        out.push(`<li>${inlineMd(escHtml(ol[2]))}</li>`);
       } else if (ul) {
         if (list !== 'ul') { close(); out.push('<ul>'); list = 'ul'; }
         out.push(`<li>${inlineMd(escHtml(ul[1]))}</li>`);
@@ -468,7 +470,7 @@ function buildUserPrompt(mode, text, previous = '', question = '') {
     case 'fullpage':
       return `This is the readable text of a whole web page (menus already removed). Give: one sentence on what the page is for; then the 3-6 things the reader needs to understand or do, in order; then any warnings. Keep exact commands.\n\n${dev}`;
     case 'followup':
-      return `Answer the reader's question about this text in plain language. Use the original as the source of truth. If the answer is not in the text and you are not sure, say so.\n\n${dev}${prev}\n\n<reader_question>\n${question}\n</reader_question>`;
+      return `Answer the reader's question about this text in plain language. For what the text says, the original is the source of truth. For questions it does not cover (is this safe, where do I type it, what could go wrong), answer from general knowledge, give the practical answer first, and say how sure you are. Only say you do not know if you truly cannot tell.\n\n${dev}${prev}\n\n<reader_question>\n${question}\n</reader_question>`;
     case 'prereq':
       return `Before the reader tries this, what do they need to know or have? List 3-5 things (accounts, installed apps, ideas), each with one plain line and how to get it. Say which ones most people already have. Do not translate the text itself.\n\n${dev}`;
     case 'checklist':
