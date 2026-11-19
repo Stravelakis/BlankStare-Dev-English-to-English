@@ -1,29 +1,42 @@
 # Handoff: BlankStare
 
-_Last updated: 2026-09-26 · by: Claude Code · version: v0.7.0_
+_Last updated: 2026-11-19 · by: Claude Code · version: v0.8.0 (in progress, branch `v0.8-providers`)_
 
 ## In one paragraph
 
 A Chrome side-panel extension that rewrites developer text into plain English
-or Greek, on the user's own free Groq key. Feature-complete for its current
-scope, hardened in v0.6.0, brought up to the shared repo standards in v0.7.0
-(full doc set, CI, docs site). Not on the Chrome Web Store yet.
+or Greek. v0.8 (in progress) replaces the fixed Groq model list — 7 of its 9
+models were shut down by Groq, which broke the extension for everyone — with a
+self-correcting list rebuilt daily from The Nein and each provider's own
+catalogue. Works with no key (OVHcloud), better with a free Gemini or Groq key.
+Plan and sources: PLAN-v0.8.md. Not on the Chrome Web Store yet.
 
-## Current state
+## Current state (v0.8 branch)
 
-- **Works:** everything in GUIDE.md. Checked by 39 tests and by screenshots of
-  the real panel markup.
-- **Never done:** loading this version unpacked in a real Chrome and clicking
-  through it. The SearXNG permission prompt in particular is untested by hand.
-- **Known issues:** none open.
-- **Test suite:** yes, `npm test`.
+- **Done and tested in a real Chromium with the extension loaded** (Playwright
+  script, 19/11): no key → OVH Qwen3.8 (11s); free Gemini key → gemini-3.8-live
+  (21s, with voice); Groq key → qwen3.8 (2.4s); a made-up dead model is skipped
+  and benched for the day; checklist / prerequisites / rephrase modes. 59 unit
+  tests pass.
+- **Waiting on Ak:** pick a look in `lab/looks.html` (serve repo root, open
+  /lab/looks.html). Effects live in `utils/fx.js`, shared by preview and app.
+- **Not done yet:** settings page rebuild (still the v0.7 page — its Groq test
+  and SearXNG section are stale), side-panel motion, privacy policy + store
+  answers for the new network calls, docs/GUIDE/README, screenshots.
+- **Known issues:** OVH's no-key lane slows down instead of refusing under
+  heavy use from one internet address; a slow-but-steady answer can take ~90s.
+  Mitigated by rotating models and a 20s first-word timeout; a free key avoids it.
+- **Keys for testing:** only free keys from Blacksmith's list (`crews.py`
+  PROVIDERS). `BLACKSMITH_THE_NEIN_GEMINI_KEY` is proven free tier. Never
+  `AK1_GEMINI_API_KEY` / `GEMINI_API_KEY` (paid / no free tier).
+- **Test suite:** `npm test`.
 
 ## Next steps, in order
 
-1. Load v0.7.0 unpacked, click through GUIDE.md end to end.
-2. Tag `v0.7.0` → docs site deploys (first time: DEPLOY.md → First deploy).
-3. Chrome Web Store listing. The privacy policy is at docs/src/pages/privacy.astro
-   (…/BlankStare-Dev-English-to-English/privacy/ once deployed).
+1. Ak picks settings look (A/B/C) and side-panel motion (1/2/3).
+2. Build the settings page (first-run wizard + normal settings) on the pick.
+3. Side-panel motion, then privacy policy, docs, screenshots, tag v0.8.0.
+4. Chrome Web Store listing.
 
 ## Open questions
 
