@@ -148,7 +148,7 @@ npx http-server . -p 8123 -c-1
 
 Open `http://localhost:8123/lab/preview.html` for the panel in every state,
 colourway and language, and `lab/button-preview.html` for the floating button
-on a deliberately hostile page. `node lab/shoot.mjs` regenerates every
+on a deliberately hostile page. `node lab/shoot/shoot.mjs` (after `npm install` in `lab/shoot`) regenerates every
 screenshot.
 
 ## FAQ

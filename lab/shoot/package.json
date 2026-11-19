@@ -1,0 +1,12 @@
+{
+  "name": "blankstare-shoot",
+  "private": true,
+  "description": "Screenshot tool for BlankStare. Kept apart so the extension itself stays dependency-free.",
+  "type": "module",
+  "scripts": {
+    "shoot": "node shoot.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.57.0"
+  }
+}

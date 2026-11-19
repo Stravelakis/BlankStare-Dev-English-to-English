@@ -404,3 +404,9 @@ test('renderMarkdown keeps step numbers across a code box', () => {
   assert.match(html, /<ol start="3" style="counter-reset:step 2"><li>Run claude<\/li><\/ol>/);
   assert.match(html, /^<ol><li>Open the terminal/);
 });
+
+test('renderMarkdown turns quote lines into one blockquote, escaped', () => {
+  const html = renderMarkdown('Tell them:\n> "The <list> is empty"\n> on line 42');
+  assert.match(html, /<blockquote><p>&quot;The &lt;list&gt; is empty&quot;<\/p><p>on line 42<\/p><\/blockquote>/);
+  assert.doesNotMatch(html, /&gt; &quot;/);
+});

@@ -29,6 +29,7 @@ const I18N = {
     ask:'Ask', search:'Search', tryAgain:'Try again',
     greekWarning:'This looks like Greek text. BlankStare translates <strong>English developer content</strong> into plain English. Select an English error message, README, or code snippet. To receive the translation <em>in Greek</em>, use the EN→EL toggle above — but keep selecting English dev text.',
     voiceShortened:'Read aloud was shortened to fit the voice limit.',
+    recent:'Recent explanations',
     chips:['Is this safe to do?', 'Where do I type this?', 'What could go wrong?', 'Explain it like I’m five'],
   },
   el: {
@@ -55,6 +56,7 @@ const I18N = {
     ask:'Ρώτα', search:'Αναζήτηση', tryAgain:'Δοκίμασε ξανά',
     greekWarning:'Αυτό μοιάζει με ελληνικό κείμενο. Το BlankStare μεταφράζει <strong>αγγλικό developer περιεχόμενο</strong> σε απλά λόγια. Επίλεξε αγγλικό μήνυμα σφάλματος, κώδικα ή τεκμηρίωση.',
     voiceShortened:'Η ανάγνωση συντομεύτηκε για να χωρέσει στο όριο της φωνής.',
+    recent:'Πρόσφατες εξηγήσεις',
     chips:['Είναι ασφαλές;', 'Πού το πληκτρολογώ;', 'Τι μπορεί να πάει στραβά;', 'Εξήγησέ το σαν να είμαι πέντε'],
   },
 };

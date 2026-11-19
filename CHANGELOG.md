@@ -23,8 +23,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), version
   fade in once, a follow-up box with suggestion chips and sparks.
 - Paste a screenshot (Ctrl+V) to have it explained.
 - "What do I need first?" and "Do it with me" (a checklist you tick off).
-- Commands in copy boxes, numbered steps that keep their numbers, the model
-  that answered shown under each answer, today's count on the welcome screen.
+- Commands in copy boxes, numbered steps that keep their numbers, quoted
+  messages shown as quotes, the model that answered shown under each answer,
+  today's count on the welcome screen.
+- New screenshots, carousel slides and five 1280×800 Chrome Web Store images,
+  all from the real extension with real answers (`lab/shoot/shoot.mjs`,
+  which replaces `lab/shoot.mjs`).
 
 ### Changed
 - Prompts rewritten for accuracy: exact commands kept, numbers and warnings

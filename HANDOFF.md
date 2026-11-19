@@ -43,7 +43,8 @@ Plan and sources: PLAN-v0.8.md. Not on the Chrome Web Store yet.
 ## Next steps, in order
 
 1. Ak reviews the new settings page and panel in a real Chrome (load unpacked).
-2. New store screenshots (`lab/shoot.mjs` predates v0.8 — check it still works).
+2. Store screenshots are done: `store/1-result.png` … `5-settings.png` (1280×800),
+   from the real extension with real no-key answers (19/11).
 3. Merge `v0.8-providers`, tag v0.8.0, deploy docs (privacy page changed).
 4. Chrome Web Store listing: privacy answers must list OVHcloud, Google,
    Groq and The Nein as the places data goes.
@@ -448,12 +449,14 @@ rendering artefacts. Measure before fixing what a screenshot appears to show.
 - **Docs site** in `docs/`, the shared theme unchanged except the content
   files. The playground imports `utils/pure.js` with `?raw` and runs it as-is,
   which is only possible because of the no-browser-globals rule in §14b.
-- **Screenshots:** `node lab/shoot.mjs` serves the repo on a random port,
-  drives headless Chrome at `lab/preview.html?shot=<state>[&lang=el][&history]`,
-  and closes the server. It must use async `execFile`: a synchronous call
-  blocks the script's own server and Chrome waits forever (happened once).
-  `node docs/social/render.mjs` then builds the share card and the 16:7
-  carousel slides from them.
+- **Screenshots (v0.8):** `cd lab/shoot && npm install && node shoot.mjs`
+  loads the real extension in Playwright's Chromium (branded Chrome no longer
+  loads unpacked extensions from the command line), asks the free no-key AI
+  for real answers, and writes `screenshots/`, `docs/public/screenshots/`
+  (incl. the carousel `slide-*.png`) and `store/` (1280×800). About 5 min,
+  most of it waiting on OVH. `node shoot.mjs settings` redoes Settings and the
+  frames only. `lab/shoot/` has its own package.json so the extension stays
+  dependency-free. `node docs/social/render.mjs` builds only the share card.
 - **Fixed:** Greek read-aloud went to the English-only Orpheus model; the
   SearXNG setup text named a CORS option SearXNG doesn't have (the real need is
   `search.formats: [html, json]`, and CORS doesn't apply to an extension that

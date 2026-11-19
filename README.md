@@ -81,7 +81,7 @@ nothing loads from Google.
 
 No build step: load the folder and it runs. `npm test` runs the test suite
 with Node's own runner, no install needed. `lab/preview.html` shows the panel
-without loading the extension, and `node lab/shoot.mjs` regenerates every
+without loading the extension, and `cd lab/shoot && npm install && node shoot.mjs` regenerates every
 screenshot. Architecture and decisions: [HANDOFF.md](HANDOFF.md). Agents:
 [CONNECT-AGENTS.md](CONNECT-AGENTS.md).
 

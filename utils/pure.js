@@ -289,9 +289,9 @@ function renderMarkdown(src) {
       return;
     }
 
-    let list = null;   // 'ol' | 'ul' | 'check'
+    let list = null;   // 'ol' | 'ul' | 'check' | 'quote'
     let checkN = 0;
-    const close = () => { if (list) out.push(list === 'ol' ? '</ol>' : '</ul>'); list = null; };
+    const close = () => { if (list) out.push(list === 'ol' ? '</ol>' : list === 'quote' ? '</blockquote>' : '</ul>'); list = null; };
 
     for (const raw of part.split('\n')) {
       const line = raw.trimEnd();
@@ -299,8 +299,13 @@ function renderMarkdown(src) {
       const ol    = line.match(/^\s*(\d+)[.)]\s+(.*)$/);
       const ul    = line.match(/^\s*[-*•]\s+(.*)$/);
       const head  = line.match(/^\s*#{1,6}\s+(.*)$/);
+      const quote = line.match(/^\s*>\s?(.*)$/);
 
-      if (check) {
+      if (quote) {
+        // "What to tell your developer" answers quote a message to send on.
+        if (list !== 'quote') { close(); out.push('<blockquote>'); list = 'quote'; }
+        if (quote[1].trim()) out.push(`<p>${inlineMd(escHtml(quote[1]))}</p>`);
+      } else if (check) {
         if (list !== 'check') { close(); out.push('<ul class="md-checklist">'); list = 'check'; }
         const id = `chk-${i}-${checkN++}`;
         out.push(`<li><input type="checkbox" id="${id}"${check[1] !== ' ' ? ' checked' : ''}><label for="${id}">${inlineMd(escHtml(check[2]))}</label></li>`);
