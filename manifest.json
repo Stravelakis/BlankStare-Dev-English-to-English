@@ -2,9 +2,9 @@
   "manifest_version": 3,
   "name": "BlankStare: Dev English to English",
   "short_name": "BlankStare",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "minimum_chrome_version": "116",
-  "description": "Zero cost BYOK \u2014 Translate developer docs, error messages, READMEs, and tech jargon into plain English, instantly, while you browse. Bring your own free Groq API key.",
+  "description": "Turns developer docs, error messages and tech jargon into plain English or Greek you can act on. Free, works with no key.",
   "permissions": [
     "storage",
     "contextMenus",
@@ -13,12 +13,11 @@
     "tabs"
   ],
   "host_permissions": [
+    "https://oai.endpoints.kepler.ai.cloud.ovh.net/*",
+    "https://generativelanguage.googleapis.com/*",
     "https://api.groq.com/*",
-    "https://www.googleapis.com/*"
-  ],
-  "optional_host_permissions": [
-    "http://*/*",
-    "https://*/*"
+    "https://www.googleapis.com/*",
+    "https://stravelakis.com/wp-json/nein/*"
   ],
   "commands": {
     "_execute_action": {
