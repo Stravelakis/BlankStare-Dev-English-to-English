@@ -14,7 +14,9 @@ permissions:
 
 jobs:
   smoke:
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.57 cannot install Chromium on ubuntu-latest (26.04)
+    # yet ("does not support chromium on ubuntu26.04-x64", 20 Nov 2026).
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: tests/smoke
