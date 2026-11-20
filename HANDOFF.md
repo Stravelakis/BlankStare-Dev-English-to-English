@@ -1,6 +1,6 @@
 # Handoff: BlankStare
 
-_Last updated: 2026-11-19 · by: Claude Code · version: v0.8.0 (in progress, branch `v0.8-providers`)_
+_Last updated: 2026-11-20 · by: Claude Code · version: v0.8.0 (release PR from branch `v0.8-providers`)_
 
 ## In one paragraph
 
@@ -43,6 +43,7 @@ Plan and sources: PLAN-v0.8.md. Not on the Chrome Web Store yet.
 ## Next steps, in order
 
 1. Ak reviews the new settings page and panel in a real Chrome (load unpacked).
+   Docs pages reviewed and stamped v0.8.0 by Ak, 20 Nov 2026.
 2. Store screenshots are done: `store/1-result.png` … `5-settings.png` (1280×800),
    from the real extension with real no-key answers (19/11).
 3. Merge `v0.8-providers`, tag v0.8.0, deploy docs (privacy page changed).

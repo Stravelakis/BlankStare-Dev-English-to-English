@@ -66,7 +66,7 @@ Docs site: https://docs.stravelakis.com/BlankStare-Dev-English-to-English/ ·
 |---|---|---|
 | ![The panel in Greek](screenshots/sidepanel-greek.png) | ![The last 20 answers](screenshots/sidepanel-history.png) | ![Settings](screenshots/settings.png) |
 
-The look is **Deco Noir**, an art-deco identity: a chamfer on two opposing
+The look is **brass on black**: cards with a chamfer on two opposing
 corners, brass on near-black. Greek titles are set in GFS Didot and Latin ones
 in Poiret One, chosen letter by letter. All fonts ship inside the extension;
 nothing loads from Google.

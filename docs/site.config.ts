@@ -23,7 +23,7 @@ export const siteConfig = {
   // show a bare, easily-ignored link. Always set both before publishing.
   seoTitle: 'BlankStare: developer docs and error messages in plain English (free Chrome extension)',
   socialImage: 'og-image.png',
-  socialImageAlt: 'BlankStare: an art-deco side panel turning a TypeError into plain English, with the tagline "Developer docs, in plain English."',
+  socialImageAlt: 'BlankStare: a brass-on-black side panel turning a TypeError into plain English, with the tagline "Developer docs, in plain English."',
   locale: 'en_GB',
 
   // Sidebar menu. Each id must match an element id on the page.

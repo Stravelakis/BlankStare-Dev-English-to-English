@@ -1,3 +1,8 @@
+---
+checkedAgainst: v0.8.0
+checkedOn: 2026-11-20
+---
+
 ## In plain English
 
 BlankStare is a free add-on for Google Chrome. It opens a panel at the side of your browser. When you read something written for programmers, like an error message, a setup guide or a page of documentation, you select it, and the panel rewrites it in plain English or Greek.

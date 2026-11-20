@@ -1,3 +1,8 @@
+---
+checkedAgainst: v0.8.0
+checkedOn: 2026-11-20
+---
+
 ## Dev
 
 BlankStare is a Manifest V3 Chrome extension with **no build step**. Load the folder unpacked and it runs; `npm test` exists only for the Node test suite.
@@ -38,7 +43,7 @@ BlankStare is a Manifest V3 Chrome extension with **no build step**. Load the fo
 
 ### Look
 
-Brass on black. The panel still uses the vendored `vendor/deco-noir.css` silhouette (chamfered cards) with v0.8 motion on top; Settings has its own stylesheet over the WebGL blinds. Display face per glyph via `unicode-range`: Poiret One (Latin) and GFS Didot (Greek), all self-hosted in `fonts/`.
+Brass on black. The panel's chamfered cards come from the stylesheet vendored in `vendor/`, with v0.8 motion on top; Settings has its own stylesheet over the WebGL blinds. Display face per glyph via `unicode-range`: Poiret One (Latin) and GFS Didot (Greek), all self-hosted in `fonts/`.
 
 ### Test and preview
 

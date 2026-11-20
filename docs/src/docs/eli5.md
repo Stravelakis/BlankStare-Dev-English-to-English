@@ -1,3 +1,8 @@
+---
+checkedAgainst: v0.8.0
+checkedOn: 2026-11-20
+---
+
 ## Like I'm five
 
 Some grown-ups write in a secret language full of strange words. Programmers do this a lot.
