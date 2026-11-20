@@ -1,54 +1,61 @@
 # Handoff: BlankStare
 
-_Last updated: 2026-11-20 · by: Claude Code · version: v0.8.0 (release PR from branch `v0.8-providers`)_
+_Last updated: 2026-11-20 · by: Claude Code · version: v0.8.0 (released 20 Nov 2026)_
 
 ## In one paragraph
 
 A Chrome side-panel extension that rewrites developer text into plain English
-or Greek. v0.8 (in progress) replaces the fixed Groq model list — 7 of its 9
-models were shut down by Groq, which broke the extension for everyone — with a
-self-correcting list rebuilt daily from The Nein and each provider's own
-catalogue. Works with no key (OVHcloud), better with a free Gemini or Groq key.
-Plan and sources: PLAN-v0.8.md. Not on the Chrome Web Store yet.
+or Greek. v0.8.0 replaced the fixed Groq model list (Groq shut down 7 of its 9
+models, which broke the extension for everyone) with a self-correcting list
+rebuilt daily from The Nein and each provider's own catalogue. Works with no
+key (OVHcloud), better with a free Gemini or Groq key. Released on GitHub;
+not on the Chrome Web Store yet. Plan and sources: PLAN-v0.8.md.
 
-## Current state (v0.8 branch)
+## Current state (v0.8.0)
 
-- **Done and tested in a real Chromium with the extension loaded** (Playwright
-  scripts in the session scratchpad, 19/11):
-  - Engine: no key → OVH Qwen3.8 (11s); free Gemini key → gemini-3.8-live
-    (21–33s, with voice); Groq key → qwen3.8 (2.4s); a made-up dead model is
-    skipped and benched for the day; checklist / prerequisites / rephrase.
-  - Settings (look A "Gradient Blinds", Ak's pick 19/11): first-run 5-step
-    setup, Gemini key test 6.4s (asks 3 models at once), auto-save, segmented
-    choices, today's model list (17 models with a Gemini key), "Try first"
-    pin, last trigger cannot be switched off. No console errors.
-  - Side panel (motion 1+2, brass): glowing edge while streaming, symbol
-    decode until the first word, blocks fade in once, prompt bar with chips
-    and sparks, styled copy boxes / numbered steps / checklists.
-  - 60 unit tests pass (`npm test`).
+- **Released:** PR #7 merged, tag `v0.8.0`, GitHub Release with the
+  English / Devenglish table (`docs/release-notes/v0.8.0.md`).
+- **Release gate (STANDARDS §2):** all 8 passed. Full-repo audit (32 findings,
+  all fixed), history secret scan clean, docs on the current theme with review
+  stamps (Ak reviewed 20/11), Lighthouse locally 89–99 / 100 / 100 / 100,
+  smoke test green on GitHub (real no-key answer in 4s), fresh screenshots.
+- **Checks on GitHub:** `CI` (tests, version match, docs build, gitleaks),
+  `smoke` (pinned to ubuntu-24.04: Playwright 1.57 cannot install Chromium
+  on 26.04), `lighthouse` after every docs deploy, `Deploy docs site` on tags.
+- **Tested in a real Chromium with the extension loaded:** no key → OVH;
+  free Gemini key → gemini-3.8-live with voice; Groq key → qwen3.8 (2.4s); a
+  dead model is skipped for the day; checklist / prerequisites / rephrase;
+  first-run setup and key test (6.4s). `npm test`: 61 pass.
+- **Not driven by any test:** the right-click menu and Alt+Shift+E after the
+  `tabs` / `activeTab` permissions were removed. Try both in Chrome once.
+- **Look:** "brass on black" (Ak, 20/11; the Deco Noir name is retired; the
+  vendored stylesheet in `vendor/` keeps its file name). Settings = gradient
+  blinds; panel = glowing edge, decode, sparks. Phase 2 teaser removed.
 - **Google keys come in two shapes** (`AIza…` and `AQ.…`); only length is
   checked, the real test is asking Google.
 - **Gemini free tier:** Google may use prompts to improve products and human
   reviewers may read them (ai.google.dev/gemini-api/terms). Stated in the
   privacy page and on the Gemini card.
-- **Known issues:** OVH's no-key lane slows down instead of refusing under
-  heavy use from one internet address; a slow-but-steady answer can take ~90s.
-  Mitigated by rotating models and a 20s first-word timeout; a free key avoids it.
+- **Known issue:** OVH's no-key lane slows down instead of refusing under
+  heavy use from one internet address; an answer can take 90–170s. Rotating
+  models and a 20s first-word timeout soften it; a free key avoids it.
 - **Keys for testing:** only free keys from Blacksmith's list (`crews.py`
   PROVIDERS). `BLACKSMITH_THE_NEIN_GEMINI_KEY` is proven free tier. Never
   `AK1_GEMINI_API_KEY` / `GEMINI_API_KEY` (paid / no free tier).
-- `lab/looks.html` is the design comparison page (A/B/C, 1/2/3); effects live
-  in `utils/fx.js`, shared by the lab and the app.
+- **Tools:** `lab/shoot/shoot.mjs` (every screenshot, real extension),
+  `tests/smoke/smoke.mjs`, `lab/looks.html` (design comparison), effects in
+  `utils/fx.js`.
+- **Docs theme drift:** this repo's `docs/src/components/DotField.astro` starts
+  the dot background on first move (speed 75 → 89–99). The shared
+  `repo standards/docs-theme` does not have that yet.
 
 ## Next steps, in order
 
-1. Ak reviews the new settings page and panel in a real Chrome (load unpacked).
-   Docs pages reviewed and stamped v0.8.0 by Ak, 20 Nov 2026.
-2. Store screenshots are done: `store/1-result.png` … `5-settings.png` (1280×800),
-   from the real extension with real no-key answers (19/11).
-3. Merge `v0.8-providers`, tag v0.8.0, deploy docs (privacy page changed).
-4. Chrome Web Store listing: privacy answers must list OVHcloud, Google,
-   Groq and The Nein as the places data goes.
+1. Ak tries the right-click menu and Alt+Shift+E in a real Chrome.
+2. Chrome Web Store listing: images in `store/`; privacy answers must list
+   OVHcloud, Google (free-tier review rule), Groq and The Nein; zip with the
+   `git archive` line in DEPLOY.md.
+3. Copy the DotField speed fix into the shared docs theme.
 
 ## Open questions
 
