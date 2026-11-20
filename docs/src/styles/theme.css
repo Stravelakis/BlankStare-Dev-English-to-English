@@ -876,3 +876,58 @@ html[data-vern="eli5"] .lvl-eli5, html[data-vern="plain"] .lvl-plain, html[data-
 /* BlankStare: Shiki's github-dark comment colour (#6A737D) fails contrast on
    this background (Lighthouse, 20 Nov 2026). Lift it to a readable grey. */
 .astro-code span[style*="#6A737D" i] { color: #9DA7B3 !important; }
+/* ---------- Pairing bar: link back to stravelakis.com and the docs index ---------- */
+
+:root {
+  --bar-h: 44px;
+}
+
+.pairing-bar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: var(--bar-h);
+  padding: 0 16px;
+  background: #080b19;
+  border-bottom: 1px solid #1d2554;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+.pairing-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 14px;
+  border: 1px solid #1d2554;
+  border-radius: 999px;
+  background: #121834;
+  color: #eef1fa;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.pairing-link:hover,
+.pairing-link:focus-visible {
+  border-color: #82d8b7;
+  color: #82d8b7;
+  background: #1d2554;
+}
+
+.pairing-link:focus-visible {
+  outline: 2px solid #82d8b7;
+  outline-offset: 2px;
+}
+
+@media (min-width: 861px) {
+  .layout,
+  .content,
+  .sidebar {
+    height: calc(100vh - var(--bar-h));
+    height: calc(100dvh - var(--bar-h));
+  }
+}

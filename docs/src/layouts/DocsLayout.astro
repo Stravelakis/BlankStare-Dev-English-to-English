@@ -3,6 +3,7 @@ import '@fontsource-variable/sora';
 import '../styles/theme.css';
 import Sidebar from '../components/Sidebar.astro';
 import DotField from '../components/DotField.astro';
+import PairingBar from '../components/PairingBar.astro';
 import { siteConfig } from '../../site.config.ts';
 
 interface Props {
@@ -61,6 +62,7 @@ const socialImage =
     <a class="skip-link" href="#main">Skip to content</a>
     <DotField class="page-field" options={siteConfig.backgrounds.page} />
 
+    <PairingBar />
     <div class="layout">
       <Sidebar />
       <main class="content" id="main" tabindex="-1">
