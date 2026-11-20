@@ -3,6 +3,7 @@
 // (VernacularPanels.astro); which one shows is driven by <html data-vern>, set
 // before first paint by DocsLayout so a saved choice never flashes.
 import { siteConfig } from '../../site.config.ts';
+const def = siteConfig.defaultVernacular;
 ---
 <div class="vern-switch" role="tablist" aria-label="Reading level">
   {siteConfig.vernaculars.map((v, i) => (
@@ -12,9 +13,9 @@ import { siteConfig } from '../../site.config.ts';
       id={`vern-tab-${v.id}`}
       data-vern={v.id}
       role="tab"
-      aria-selected={i === 0 ? 'true' : 'false'}
+      aria-selected={v.id === def ? 'true' : 'false'}
       aria-controls={`vern-panel-${v.id}`}
-      tabindex={i === 0 ? 0 : -1}
+      tabindex={v.id === def ? 0 : -1}
     >
       {v.label}
     </button>
@@ -38,7 +39,7 @@ import { siteConfig } from '../../site.config.ts';
     };
 
     const select = (id: string, { focus = false, persist = true } = {}) => {
-      const next = ids.includes(id) ? id : ids[0];
+      const next = ids.includes(id) ? id : (document.documentElement.dataset.vern ?? ids[0]);
       document.documentElement.dataset.vern = next;
       tabs.forEach((tab) => {
         const on = tab.dataset.vern === next;

@@ -1,370 +1,453 @@
-// settings.js — BlankStare
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-
-// ── Version ───────────────────────────────────────────────────────────────────
-// Single source of truth. The string used to be maintained by hand in five
-// places, which is four too many.
-const versionEl = $('about-version');
-if (versionEl) versionEl.textContent = `v${chrome.runtime.getManifest().version}`;
-
-// ── Lottie loader ─────────────────────────────────────────────────────────────
-// Extension pages can load local files via chrome.runtime.getURL().
+// settings.js — BlankStare v0.8
 //
-// Eight of these loop on this page. Under prefers-reduced-motion they hold on
-// their first frame: the icon still reads and nothing moves. The test-button
-// animations are exempt — they are the only feedback that a test is running, so
-// suppressing them entirely would remove information rather than motion.
-const REDUCED_MOTION = (() => {
-  try { return matchMedia('(prefers-reduced-motion: reduce)').matches; }
-  catch (_) { return false; }
-})();
+// One page, two modes:
+//   - first run (settings.onboarded false): a five-step setup over the blinds
+//   - after that: normal settings, saved the moment something changes
+//
+// Needs, loaded before it: lottie, fx.js (BSFX), pure.js, storage.js, api.js.
 
-function loadLottie(containerId, iconName, { loop = true, autoplay = true, decorative = true } = {}) {
-  const container = $(containerId);
-  if (!container || typeof lottie === 'undefined') return null;
+const $  = id => document.getElementById(id);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
-  const still = REDUCED_MOTION && decorative;
+const BRASS = { colors: ['#0d0c0a', '#C9A227'], light: '#ffe4c4', spark: '#F2DCA0' };
+const KEY_FIELD = { google_gemini: 'geminiApiKey', groq: 'groqApiKey', youtube: 'youtubeKey' };
+// Google now issues two key shapes (AIza… and AQ.…), so Google keys are only
+// checked for length; the real test is asking Google.
+const KEY_PREFIX = { google_gemini: /^[\w.-]{20,}$/, groq: /^gsk_/, youtube: /^[\w.-]{20,}$/ };
 
-  try {
-    const anim = lottie.loadAnimation({
-      container,
-      renderer: 'svg',
-      loop:     still ? false : loop,
-      autoplay: still ? false : autoplay,
-      path:     chrome.runtime.getURL(`icons/lottie/${iconName}`),
-    });
-    if (still) anim.addEventListener('DOMLoaded', () => anim.goToAndStop(0, true));
-    return anim;
-  } catch (e) {
-    console.warn('[BlankStare] Lottie failed for', iconName, e);
-    return null;
-  }
-}
+let settings = {};
+let bg = null;
 
-// ── Init Lottie animations for the settings page ──────────────────────────────
-function initLottie() {
-  // Header / page logo
-  loadLottie('lottie-header',   'icon-settings.json',  { loop: true });
+$('about-version').textContent = `v${chrome.runtime.getManifest().version}`;
 
-  // Section icons
-  loadLottie('lottie-lang',     'icon-eyes.json',       { loop: true });
-  loadLottie('lottie-groq',     'icon-apikey.json',     { loop: true });
-  loadLottie('lottie-youtube',  'icon-video.json',      { loop: true });
-  loadLottie('lottie-search',   'icon-read.json',       { loop: true });
-  loadLottie('lottie-trigger',  'icon-assign.json',     { loop: true });
-  loadLottie('lottie-exclude',  'icon-hide.json',       { loop: true });
+// ══ Background ═══════════════════════════════════════════════════════════════
+bg = BSFX.blinds($('bg'), { colors: BRASS.colors, light: BRASS.light });
 
-  // About hero (plays once, then loops softly)
-  loadLottie('lottie-about',    'icon-coding.json',     { loop: true });
-}
-
-// ── Test-button Lottie: testing → success or failure ──────────────────────────
-const _testAnims = {};
-
-function testAnimStart(field) {
-  const label = $(`test-${field}`)?.querySelector('.test-btn-label');
-  const anim  = $(`test-anim-${field}`);
-  if (label) label.classList.add('hidden');
-  if (anim)  anim.classList.remove('hidden');
-
-  if (_testAnims[field]) { _testAnims[field].destroy(); }
-  // decorative:false — this spinner is the only signal that a test is in
-  // flight, so it keeps moving even under reduced motion. Removing it would
-  // remove information, not decoration.
-  _testAnims[field] = loadLottie(`test-anim-${field}`, 'icon-test.json', { loop: true, decorative: false });
-}
-
-function testAnimResult(field, success) {
-  if (_testAnims[field]) { _testAnims[field].destroy(); }
-  _testAnims[field] = loadLottie(
-    `test-anim-${field}`,
-    success ? 'icon-success.json' : 'icon-empty.json',
-    { loop: false, autoplay: true, decorative: false }
-  );
-  // After animation plays, show "Test" label again
-  setTimeout(() => {
-    const label = $(`test-${field}`)?.querySelector('.test-btn-label');
-    const anim  = $(`test-anim-${field}`);
-    if (label) label.classList.remove('hidden');
-    if (anim)  anim.classList.add('hidden');
-    if (_testAnims[field]) { _testAnims[field].destroy(); delete _testAnims[field]; }
-  }, 2000);
-}
-
-// ── Tab switching ─────────────────────────────────────────────────────────────
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => {
-      t.classList.remove('active');
-      t.setAttribute('aria-selected', 'false');
-    });
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-    tab.classList.add('active');
-    tab.setAttribute('aria-selected', 'true');
-    $(`tab-${tab.dataset.tab}`)?.classList.remove('hidden');
-    sessionStorage.setItem('bs-active-tab', tab.dataset.tab);
-  });
+// Cards pick up a soft brass light where the pointer is.
+document.addEventListener('pointermove', e => {
+  const card = e.target.closest?.('.card');
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+  card.style.setProperty('--my', `${e.clientY - r.top}px`);
 });
 
-// Restore last active tab
-const lastTab = sessionStorage.getItem('bs-active-tab');
-if (lastTab) document.querySelector(`.tab[data-tab="${lastTab}"]`)?.click();
-
-// ── Load saved settings ───────────────────────────────────────────────────────
-async function loadForm() {
-  const s = await getSettings();
-
-  $('groq-key').value    = s.groqApiKey || '';
-  $('youtube-key').value = s.youtubeKey  || '';
-  $('searxng-url').value = s.searxngUrl  || '';
-
-  const modelSelect = $('model-select');
-  if (modelSelect) modelSelect.value = s.model || 'llama-3.1-8b-instant';
-
-  $('auto-fallback').checked = s.autoFallback !== false;
-
-  setActiveTTS(s.ttsMode || 'browser');
-  $('orpheus-voice').value = s.orpheusVoice || 'zoe';
-
-  $('trigger-floating').checked   = !!s.triggerFloating;
-  $('trigger-rightclick').checked = !!s.triggerRightClick;
-
-  setActiveLang(s.language || 'en');
-
-  // Default reading level
-  const rl = $('default-reading-level');
-  // Map any removed levels (business/design/legal) to 'standard'
-  const validLevels = ['eli5', 'newbie', 'standard', 'vibecoder'];
-  const savedLevel = validLevels.includes(s.readingLevel) ? s.readingLevel : 'standard';
-  if (rl) rl.value = savedLevel;
-
-  // Exclude list
-  $('exclude-list').value = (s.excludeList || []).join('\n');
-
-  // Open the "what you get for free" accordion automatically when no key is set yet
-  if (!s.groqApiKey) {
-    $('groq-info-accordion')?.setAttribute('open', '');
-  }
-
-  // Reflect which search provider is actually active right now
-  updateSearchActiveUI({ assumeSavedUrlWorks: true });
+// ══ Lottie ═══════════════════════════════════════════════════════════════════
+function lottieIn(id, file, { loop = true } = {}) {
+  const el = $(id);
+  if (!el || typeof lottie === 'undefined') return null;
+  try {
+    const a = lottie.loadAnimation({ container: el, renderer: 'svg', loop, autoplay: !BSFX.REDUCED, path: chrome.runtime.getURL(`icons/lottie/${file}`) });
+    if (BSFX.REDUCED) a.addEventListener('DOMLoaded', () => a.goToAndStop(0, true));
+    return a;
+  } catch (_) { return null; }
+}
+function initLottie() {
+  lottieIn('lottie-header', 'icon-settings.json');
+  lottieIn('lottie-wiz', 'icon-settings.json');
+  lottieIn('lottie-lang', 'icon-eyes.json');
+  lottieIn('lottie-ai', 'icon-apikey.json');
+  lottieIn('lottie-voice', 'icon-read.json');
+  lottieIn('lottie-trigger', 'icon-assign.json');
+  lottieIn('lottie-youtube', 'icon-video.json');
+  lottieIn('lottie-about', 'icon-coding.json');
 }
 
-// ── Save ─────────────────────────────────────────────────────────────────────
-async function saveForm() {
-  const groqKey    = $('groq-key').value.trim();
-  const youtubeKey = $('youtube-key').value.trim();
-  const searxngUrl = $('searxng-url').value.trim();
-  const model      = $('model-select')?.value || 'llama-3.1-8b-instant';
-  const autoFallback = $('auto-fallback').checked;
-  const ttsMode     = document.querySelector('.tts-btn.active')?.dataset.tts || 'browser';
-  const orpheusVoice = $('orpheus-voice')?.value || 'tara';
-  const lang       = document.querySelector('.lang-btn.active')?.dataset.lang || 'en';
-  const readingLevel = $('default-reading-level')?.value || 'standard';
+// ══ Entrance ═════════════════════════════════════════════════════════════════
+const revealer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const i = $$('.reveal').indexOf(e.target);
+    setTimeout(() => e.target.classList.add('seen'), Math.min(i, 6) * 80);
+    revealer.unobserve(e.target);
+  });
+}, { threshold: 0.08 });
+function startReveal() {
+  $$('.reveal').forEach(el => revealer.observe(el));
+  // Never leave a card invisible: whatever has not scrolled in by now shows anyway.
+  setTimeout(() => $$('.reveal:not(.seen)').forEach(el => el.classList.add('seen')), 2500);
+}
 
-  if (groqKey && !groqKey.startsWith('gsk_')) {
-    showError($('groq-key'), 'Groq keys start with "gsk_". Please check your key.');
+// ══ Saving ═══════════════════════════════════════════════════════════════════
+let toastTimer = 0;
+function toast(msg, bad = false) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.toggle('bad', bad);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+let saveTimer = 0, pending = {};
+function save(partial, { quiet = false, now = false } = {}) {
+  Object.assign(settings, partial);
+  Object.assign(pending, partial);
+  clearTimeout(saveTimer);
+  const flush = async () => {
+    const batch = pending; pending = {};
+    await saveSettings(batch);
+    chrome.runtime.sendMessage({ type: 'SETTINGS_CHANGED' }).catch(() => {});
+    if (!quiet) toast('Saved ✓');
+  };
+  if (now) return flush();
+  saveTimer = setTimeout(flush, 450);
+}
+
+// ══ Segmented choices (settings page) ═══════════════════════════════════════
+function placeThumb(seg) {
+  const sel = seg.querySelector('.seg-btn.sel');
+  let thumb = seg.querySelector('.seg-thumb');
+  if (!thumb) { thumb = document.createElement('span'); thumb.className = 'seg-thumb'; seg.prepend(thumb); }
+  if (!sel) { thumb.style.width = '0'; return; }
+  thumb.style.left = `${sel.offsetLeft}px`; thumb.style.top = `${sel.offsetTop}px`;
+  thumb.style.width = `${sel.offsetWidth}px`; thumb.style.height = `${sel.offsetHeight}px`;
+}
+function setSeg(group, value) {
+  $$(`.seg[data-group="${group}"]`).forEach(seg => {
+    seg.querySelectorAll('.seg-btn').forEach(b => {
+      b.classList.toggle('sel', b.dataset.value === value);
+      b.setAttribute('aria-pressed', String(b.dataset.value === value));
+    });
+    placeThumb(seg);
+  });
+}
+$$('.seg').forEach(seg => seg.addEventListener('click', e => {
+  const b = e.target.closest('.seg-btn'); if (!b) return;
+  const group = seg.dataset.group;
+  setSeg(group, b.dataset.value);
+  save({ [group]: b.dataset.value });
+  if (group === 'ttsMode') voiceNote();
+}));
+addEventListener('resize', () => $$('.seg').forEach(placeThumb));
+
+// ══ Tabs ═════════════════════════════════════════════════════════════════════
+function moveInk() {
+  const a = document.querySelector('.tab.active'), ink = document.querySelector('.tab-ink');
+  if (!a || !ink) return;
+  ink.style.left = `${a.offsetLeft}px`; ink.style.width = `${a.offsetWidth}px`;
+}
+$$('.tab').forEach(tab => tab.addEventListener('click', () => {
+  $$('.tab').forEach(t => { t.classList.toggle('active', t === tab); t.setAttribute('aria-selected', String(t === tab)); });
+  $$('.tab-content').forEach(c => c.classList.add('hidden'));
+  const panel = $(`tab-${tab.dataset.tab}`);
+  panel.classList.remove('hidden', 'entering'); void panel.offsetWidth; panel.classList.add('entering');
+  $$('.reveal', panel).forEach(el => el.classList.add('seen'));
+  moveInk();
+  requestAnimationFrame(() => $$('.seg', panel).forEach(placeThumb));
+  try { sessionStorage.setItem('bs-tab', tab.dataset.tab); } catch (_) {}
+}));
+addEventListener('resize', moveInk);
+
+// ══ Keys ═════════════════════════════════════════════════════════════════════
+$$('.eye').forEach(b => b.addEventListener('click', () => {
+  const i = $(b.dataset.target);
+  i.type = i.type === 'password' ? 'text' : 'password';
+  b.textContent = i.type === 'password' ? '👁' : '🙈';
+}));
+
+function setBadge(provider, state) {
+  const badge = $(`badge-${provider}`);
+  const card = document.querySelector(`.provider[data-provider="${provider}"]`);
+  if (!badge) return;
+  const map = { none: ['No key', ''], saved: ['Key saved', 'wait'], ok: ['Working', 'on'], bad: ['Refused', 'bad'] };
+  const [text, cls] = map[state] || map.none;
+  badge.textContent = text; badge.className = `badge ${cls}`;
+  card?.classList.toggle('live', state === 'ok');
+}
+
+function sparkAt(el) {
+  const host = el.closest('.card, .wiz-card') || document.body;
+  const r = el.getBoundingClientRect(), h = host.getBoundingClientRect();
+  BSFX.sparks(host, r.left - h.left + r.width / 2, r.top - h.top + r.height / 2, { color: BRASS.spark, count: 26, boost: 1.4 });
+}
+
+// Runs a real check: the provider's model list plus one tiny answer.
+async function checkKey(provider, key, out, btn) {
+  out.className = 'result';
+  if (provider !== 'ovh') {
+    if (!key) { out.classList.add('bad'); out.textContent = 'Paste a key first.'; return false; }
+    if (!KEY_PREFIX[provider].test(key)) {
+      out.classList.add('bad');
+      out.textContent = provider === 'groq' ? 'Groq keys start with gsk_. Copy it again.' : 'That does not look like a whole key. Copy it again.';
+      return false;
+    }
+  }
+  btn.classList.add('busy'); btn.disabled = true;
+  BSFX.decode(out, provider === 'ovh' ? 'Asking OVHcloud for an answer…' : 'Checking the key… finding today’s free models…', { duration: 700 });
+  try {
+    if (provider === 'youtube') {
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=test&maxResults=1&key=${encodeURIComponent(key)}`);
+      if (res.ok) { out.classList.add('ok'); await BSFX.decode(out, '✓ YouTube key works.', { duration: 600 }); sparkAt(btn); return true; }
+      out.classList.add('bad');
+      await BSFX.decode(out, res.status === 403 ? 'Refused. Check that YouTube Data API v3 is enabled for this key.' : `YouTube answered with error ${res.status}.`, { duration: 600 });
+      return false;
+    }
+    const r = await testProvider(provider, key);
+    if (r.ok) {
+      out.classList.add('ok');
+      const lines = [`✓ ${provider === 'ovh' ? 'OVHcloud answered' : 'Key works'}.`, `✓ ${r.count} free model${r.count === 1 ? '' : 's'} ready, answered by ${r.model.split('/').pop()}`];
+      if (provider === 'google_gemini' && r.count > 1) lines.push('✓ Answers can come with a voice, too');
+      await BSFX.decode(out, lines.join('\n'), { duration: 1100 });
+      sparkAt(btn);
+      return true;
+    }
+    out.classList.add('bad');
+    await BSFX.decode(out, r.message, { duration: 600 });
+    return false;
+  } catch (err) {
+    out.classList.add('bad');
+    out.textContent = `Could not check: ${err.message}`;
+    return false;
+  } finally {
+    btn.classList.remove('busy'); btn.disabled = false;
+  }
+}
+
+['google_gemini', 'groq', 'youtube'].forEach(p => {
+  const input = $(`key-${p}`);
+  input.addEventListener('input', () => {
+    const v = input.value.trim();
+    save({ [KEY_FIELD[p]]: v }, { quiet: true });
+    if (p !== 'youtube') setBadge(p, v ? 'saved' : 'none');
+  });
+  input.addEventListener('change', () => toast('Saved ✓'));
+});
+$$('[data-test]').forEach(btn => btn.addEventListener('click', async () => {
+  const p = btn.dataset.test;
+  const key = $(`key-${p}`).value.trim();
+  await save({ [KEY_FIELD[p]]: key }, { quiet: true, now: true });
+  const ok = await checkKey(p, key, $(`result-${p}`), btn);
+  if (p !== 'youtube') { setBadge(p, ok ? 'ok' : key ? 'bad' : 'none'); loadRoster(true); }
+}));
+
+// ══ Today's models ═══════════════════════════════════════════════════════════
+function status(text, cls) {
+  const pill = $('status-pill');
+  pill.className = `status-pill ${cls || ''}`;
+  pill.querySelector('span').textContent = text;
+}
+
+async function loadRoster(force = false) {
+  status('Checking today’s free AI…', 'busy');
+  const btn = $('roster-refresh'); btn.classList.add('busy'); btn.disabled = true;
+  try {
+    const roster = await getRoster(settings, { force });
+    const resting = await getResting();
+    const now = Date.now();
+    const items = roster.items || [];
+    const list = $('roster-list');
+    list.innerHTML = '';
+    items.forEach((it, i) => {
+      const li = document.createElement('li');
+      const rest = (resting[`${it.provider}:${it.model}`] || 0) > now || (resting[`${it.provider}:*`] || 0) > now;
+      li.classList.toggle('resting', rest);
+      li.style.animationDelay = `${Math.min(i, 12) * 30}ms`;
+      li.append(document.createTextNode(it.model.split('/').pop()));
+      if (it.transport === 'live') { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'voice'; li.append(t); }
+      const who = document.createElement('span'); who.className = 'who';
+      who.textContent = (PROVIDERS[it.provider]?.label || it.provider).replace(/ \(.*\)$/, '') + (rest ? ' · resting' : '');
+      li.append(who);
+      list.append(li);
+    });
+    $('model-count').textContent = `(${items.length})`;
+
+    const sel = $('pinned-model');
+    sel.length = 1;
+    items.forEach(it => sel.add(new Option(`${it.model.split('/').pop()} · ${(PROVIDERS[it.provider]?.label || it.provider).replace(/ \(.*\)$/, '')}`, `${it.provider}:${it.model}`)));
+    sel.value = items.some(it => `${it.provider}:${it.model}` === settings.pinnedModel) ? settings.pinnedModel : '';
+
+    const when = new Date(roster.checkedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const failed = Object.entries(roster.checks || {}).filter(([, v]) => v !== 'ok').map(([p]) => PROVIDERS[p]?.label.replace(/ \(.*\)$/, '') || p);
+    $('roster-note').textContent = `Checked today at ${when}. ${roster.neinOk ? 'Free status from The Nein.' : 'The Nein was not reachable, so the built-in ranking is used.'}${failed.length ? ` Could not reach: ${failed.join(', ')}.` : ''}`;
+
+    if (items.length) status(`Ready · ${items.length} free model${items.length === 1 ? '' : 's'} today`, 'ok');
+    else status('No free model reachable right now', 'warn');
+  } catch (err) {
+    status('Could not check the AI right now', 'warn');
+    $('roster-note').textContent = `Could not check: ${err.message}`;
+  } finally {
+    btn.classList.remove('busy'); btn.disabled = false;
+  }
+}
+$('roster-refresh').addEventListener('click', () => loadRoster(true));
+$('pinned-model').addEventListener('change', async e => {
+  await save({ pinnedModel: e.target.value }, { now: true });
+  loadRoster(false);
+});
+
+// ══ Voice ════════════════════════════════════════════════════════════════════
+function voiceNote() {
+  const mode = settings.ttsMode || 'auto';
+  const hasGroq = !!(settings.groqApiKey || '').trim();
+  const notes = {
+    auto: 'Uses Gemini’s own voice when the answer came from Gemini Live, otherwise Orpheus (with a Groq key) or your browser’s voice.',
+    orpheus: hasGroq ? 'Expressive English voice from Groq, about 100 a day free. Falls back to the browser voice.' : 'Orpheus needs a free Groq key (above). Until then, the browser voice is used.',
+    browser: 'Your computer’s built-in voice. Free and unlimited, works in Greek too.',
+  };
+  $('tts-note').textContent = notes[mode];
+  $('orpheus-row').classList.toggle('hidden', mode === 'browser');
+}
+$('orpheus-voice').addEventListener('change', e => save({ orpheusVoice: e.target.value }));
+
+// ══ Toggles, text fields ════════════════════════════════════════════════════
+const TRIGGERS = ['trigger-rightclick', 'trigger-floating'];
+TRIGGERS.forEach(id => $(id).addEventListener('change', e => {
+  if (!TRIGGERS.some(t => $(t).checked)) {
+    e.target.checked = true;
+    toast('Keep at least one way to open BlankStare.', true);
     return;
   }
-
-  const anyTrigger = $('trigger-floating').checked ||
-                     $('trigger-rightclick').checked;
-  if (!anyTrigger) {
-    $('trigger-floating').checked = true;
-    alert('At least one trigger mode must be enabled. Floating button re-enabled.');
-  }
-
-  const excludeList = ($('exclude-list').value || '')
-    .split('\n')
+  save({ triggerRightClick: $('trigger-rightclick').checked, triggerFloating: $('trigger-floating').checked });
+}));
+$('jargon-dictionary').addEventListener('change', e => save({ jargonDictionary: e.target.checked }));
+$('user-context').addEventListener('input', e => save({ userContext: e.target.value.trim() }, { quiet: true }));
+$('user-context').addEventListener('change', () => toast('Saved ✓'));
+$('exclude-list').addEventListener('change', e => {
+  const list = e.target.value.split('\n')
     .map(s => s.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, ''))
     .filter(Boolean);
-
-  await saveSettings({
-    groqApiKey:       groqKey,
-    youtubeKey,
-    searxngUrl,
-    model:            model || 'llama-3.1-8b-instant',
-    autoFallback,
-    ttsMode,
-    orpheusVoice,
-    language:         lang,
-    readingLevel,
-    triggerFloating:  $('trigger-floating').checked,
-    triggerRightClick:$('trigger-rightclick').checked,
-    excludeList,
-  });
-
-  chrome.runtime.sendMessage({ type: 'SETTINGS_CHANGED' }).catch(() => {});
-
-  const fb = $('save-feedback');
-  fb.classList.remove('hidden');
-  setTimeout(() => fb.classList.add('hidden'), 3000);
-}
-
-function showError(inputEl, msg) {
-  inputEl.focus();
-  inputEl.setCustomValidity(msg);
-  inputEl.reportValidity();
-  inputEl.addEventListener('input', () => inputEl.setCustomValidity(''), { once: true });
-}
-
-// ── Language toggle ───────────────────────────────────────────────────────────
-function setActiveLang(lang) {
-  document.querySelectorAll('.lang-btn').forEach(btn =>
-    btn.classList.toggle('active', btn.dataset.lang === lang));
-}
-document.querySelectorAll('.lang-btn').forEach(btn =>
-  btn.addEventListener('click', () => setActiveLang(btn.dataset.lang)));
-
-// ── TTS mode toggle ────────────────────────────────────────────────────────────
-function setActiveTTS(mode) {
-  document.querySelectorAll('.tts-btn').forEach(btn =>
-    btn.classList.toggle('active', btn.dataset.tts === mode));
-  $('orpheus-voice-row')?.classList.toggle('hidden', mode !== 'orpheus');
-}
-document.querySelectorAll('.tts-btn').forEach(btn =>
-  btn.addEventListener('click', () => setActiveTTS(btn.dataset.tts)));
-
-// ── Search provider active-state indicator ────────────────────────────────────
-// DDG is active by default. Once a SearXNG URL has been successfully tested
-// (or was already saved from a previous session), the badge/border move to
-// SearXNG and DDG is relabeled "Fallback only". Typing a new untested URL does
-// NOT switch the badge yet — only a successful Test (or a saved working URL on
-// load) does, per the actual fallback behavior in utils/api.js searchWeb().
-function updateSearchActiveUI({ forceActive, assumeSavedUrlWorks = false } = {}) {
-  const url        = $('searxng-url')?.value.trim();
-  const ddgCard     = $('search-card-ddg');
-  const sxCard      = $('search-card-searxng');
-  const ddgBadge    = $('search-badge-ddg');
-  const sxBadge     = $('search-badge-searxng');
-  const activeNote  = $('searxng-active-note');
-
-  let active = forceActive;
-  if (active === undefined) {
-    active = !!url && assumeSavedUrlWorks;
-  }
-  if (!url) active = false; // empty field can never be "active"
-
-  ddgCard?.classList.toggle('is-active', !active);
-  sxCard?.classList.toggle('is-active', active);
-
-  if (ddgBadge) {
-    ddgBadge.textContent = active ? 'Fallback only' : 'Active by default';
-    ddgBadge.className = `badge ${active ? 'badge-optional' : 'badge-active'}`;
-  }
-  if (sxBadge) {
-    sxBadge.textContent = active ? 'Active' : 'Free self-hosted';
-    sxBadge.className = `badge ${active ? 'badge-active' : 'badge-optional'}`;
-  }
-  activeNote?.classList.toggle('hidden', !active);
-}
-
-// Typing/clearing the URL shouldn't claim "Active" until it's actually tested —
-// but clearing it back to empty should immediately drop back to DDG.
-$('searxng-url')?.addEventListener('input', () => {
-  if (!$('searxng-url').value.trim()) updateSearchActiveUI({ forceActive: false });
+  e.target.value = list.join('\n');
+  save({ excludeList: list });
 });
-
-// ── Show / hide API key ───────────────────────────────────────────────────────
-document.querySelectorAll('.visibility-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const input = $(btn.dataset.target);
-    if (!input) return;
-    input.type = input.type === 'password' ? 'text' : 'password';
-    btn.textContent = input.type === 'password' ? '👁' : '🙈';
-  });
-});
-
-// ── API Test buttons ──────────────────────────────────────────────────────────
-async function runTest(field) {
-  const btn    = $(`test-${field}`);
-  const result = $(`test-result-${field}`);
-  if (!btn || !result) return;
-
-  btn.disabled = true;
-  result.className = 'test-result testing';
-  result.textContent = 'Testing…';
-  testAnimStart(field);
-
-  try {
-    let ok = false, msg = '';
-
-    if (field === 'groq') {
-      const key = $('groq-key').value.trim();
-      if (!key) { result.textContent = '⚠ Enter a key first'; result.className = 'test-result warn'; testAnimResult(field, false); btn.disabled = false; return; }
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'user', content: 'Reply: OK' }], max_tokens: 5 }),
-      });
-      ok = res.ok;
-      msg = ok ? '✅ Groq key is working!' : `❌ ${res.status}: ${await res.json().then(d => d.error?.message || 'Check your key').catch(() => 'Check your key')}`;
-    }
-
-    else if (field === 'youtube') {
-      const key = $('youtube-key').value.trim();
-      if (!key) { result.textContent = '⚠ Enter a key first'; result.className = 'test-result warn'; testAnimResult(field, false); btn.disabled = false; return; }
-      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=test&maxResults=1&key=${key}`);
-      ok = res.ok;
-      msg = ok ? '✅ YouTube key is working!' : `❌ Error ${res.status}${res.status === 403 ? ': Key invalid or YouTube API not enabled' : ''}`;
-    }
-
-    else if (field === 'searxng') {
-      const url = $('searxng-url').value.trim();
-      if (!url) { result.textContent = '⚠ Enter a URL first'; result.className = 'test-result warn'; testAnimResult(field, false); btn.disabled = false; return; }
-
-      // The instance is self-hosted, so its origin is not in the manifest.
-      // Ask for just this one origin, now, while the click is still a user
-      // gesture — chrome.permissions.request requires one.
-      const origin = searxngOriginPattern(url);
-      if (!origin) {
-        result.textContent = '❌ That is not a valid http:// or https:// URL';
-        result.className = 'test-result error';
-        testAnimResult(field, false); btn.disabled = false; return;
-      }
-
-      const granted = await chrome.permissions.request({ origins: [origin] });
-      if (!granted) {
-        result.textContent = `⚠ Permission declined for ${origin} — BlankStare cannot reach that instance without it. DuckDuckGo will be used instead.`;
-        result.className = 'test-result warn';
-        testAnimResult(field, false);
-        updateSearchActiveUI({ forceActive: false });
-        btn.disabled = false;
-        return;
-      }
-
-      const res = await fetch(`${url.replace(/\/$/, '')}/search?q=test&format=json`, { headers: { Accept: 'application/json' } });
-      ok = res.ok;
-      msg = ok ? '✅ SearXNG is reachable and responding! It will now be used for searches first — DuckDuckGo only as a fallback.' : `❌ Error ${res.status} — check the URL, and that JSON is listed under search → formats in settings.yml`;
-      updateSearchActiveUI({ forceActive: ok });
-    }
-
-    result.textContent = msg;
-    result.className = `test-result ${ok ? 'success' : 'error'}`;
-    testAnimResult(field, ok);
-
-  } catch (err) {
-    result.textContent = `❌ ${err.message}`;
-    result.className = 'test-result error';
-    testAnimResult(field, false);
-  } finally {
-    // Re-enable after animation plays (2s)
-    setTimeout(() => { btn.disabled = false; }, 2100);
-  }
-}
-
-document.querySelectorAll('.test-btn').forEach(btn =>
-  btn.addEventListener('click', () => runTest(btn.dataset.field)));
-
-// ── Save button & Ctrl+S ──────────────────────────────────────────────────────
-$('save-btn')?.addEventListener('click', saveForm);
 document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveForm(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); toast('Everything saves by itself ✓'); }
 });
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-loadForm();
-// Small delay so the DOM is settled before loading Lottie (avoids zero-size containers)
-setTimeout(initLottie, 80);
+// ══ Fill the form ═══════════════════════════════════════════════════════════
+function fillForm() {
+  setSeg('language', settings.language || 'en');
+  setSeg('readingLevel', VALID_LEVELS.includes(settings.readingLevel) ? settings.readingLevel : 'standard');
+  setSeg('ttsMode', settings.ttsMode || 'auto');
+  $('user-context').value = settings.userContext || '';
+  $('key-google_gemini').value = settings.geminiApiKey || '';
+  $('key-groq').value = settings.groqApiKey || '';
+  $('key-youtube').value = settings.youtubeKey || '';
+  setBadge('google_gemini', settings.geminiApiKey ? 'saved' : 'none');
+  setBadge('groq', settings.groqApiKey ? 'saved' : 'none');
+  $('orpheus-voice').value = settings.orpheusVoice || 'zoe';
+  $('trigger-rightclick').checked = settings.triggerRightClick !== false;
+  $('trigger-floating').checked = settings.triggerFloating !== false;
+  $('jargon-dictionary').checked = !!settings.jargonDictionary;
+  $('exclude-list').value = (settings.excludeList || []).join('\n');
+  voiceNote();
+}
+
+// ══ First-run setup ═════════════════════════════════════════════════════════
+const wiz = {
+  step: 0,
+  last: 4,
+  picks: { language: 'en', readingLevel: 'standard', provider: 'ovh' },
+};
+
+function buildSteps() {
+  const host = $('wiz-steps');
+  host.innerHTML = '';
+  for (let i = 0; i <= wiz.last; i++) {
+    const d = document.createElement('div'); d.className = 'dot'; d.textContent = i + 1; host.append(d);
+    if (i < wiz.last) { const b = document.createElement('div'); b.className = 'bar'; b.append(document.createElement('i')); host.append(b); }
+  }
+}
+
+function wizGo(n) {
+  n = Math.max(0, Math.min(wiz.last, n));
+  wiz.step = n;
+  $$('#wiz-stage .pane').forEach((p, i) => { p.classList.toggle('in', i === n); p.classList.toggle('out', i < n); });
+  $$('#wiz-steps .dot').forEach((d, i) => { d.classList.toggle('on', i === n); d.classList.toggle('done', i < n); });
+  $$('#wiz-steps .bar').forEach((b, i) => b.classList.toggle('fill', i < n));
+  $('wiz-back').hidden = n === 0;
+  $('wiz-next').textContent = n === wiz.last ? 'Start using BlankStare' : 'Next';
+  if (n === 3) $$('[data-for]').forEach(el => el.classList.toggle('show', el.dataset.for === wiz.picks.provider));
+  const focus = $$('#wiz-stage .pane')[n].querySelector('.choice.sel, input, .btn');
+  setTimeout(() => focus?.focus({ preventScroll: true }), 350);
+}
+
+$$('#wizard .choices').forEach(g => {
+  const group = g.dataset.group;
+  g.addEventListener('click', e => {
+    const b = e.target.closest('.choice'); if (!b) return;
+    g.querySelectorAll('.choice').forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+    wiz.picks[group] = b.dataset.value;
+  });
+  g.addEventListener('dblclick', e => { if (e.target.closest('.choice')) wizGo(wiz.step + 1); });
+});
+
+function wizSelectDefaults() {
+  for (const [group, value] of Object.entries(wiz.picks)) {
+    $$(`#wizard .choices[data-group="${group}"] .choice`).forEach(b => { b.classList.toggle('sel', b.dataset.value === value); b.setAttribute('aria-pressed', String(b.dataset.value === value)); });
+  }
+}
+
+$('wiz-test-ovh').addEventListener('click', e => checkKey('ovh', '', $('wiz-result-ovh'), e.currentTarget));
+$$('[data-wiz-test]').forEach(btn => btn.addEventListener('click', async () => {
+  const p = btn.dataset.wizTest;
+  const key = $(`wiz-key-${p}`).value.trim();
+  if (key && KEY_PREFIX[p].test(key)) await save({ [KEY_FIELD[p]]: key }, { quiet: true, now: true });
+  const ok = await checkKey(p, key, $(`wiz-result-${p}`), btn);
+  if (ok) setTimeout(() => { if (wiz.step === 3) wizGo(4); }, 1400);
+}));
+
+$('wiz-back').addEventListener('click', () => wizGo(wiz.step - 1));
+$('wiz-next').addEventListener('click', () => {
+  if (wiz.step === 0 || wiz.step === 1) save({ [wiz.step === 0 ? 'language' : 'readingLevel']: wiz.picks[wiz.step === 0 ? 'language' : 'readingLevel'] }, { quiet: true });
+  if (wiz.step === 3 && wiz.picks.provider !== 'ovh') {
+    const key = $(`wiz-key-${wiz.picks.provider}`).value.trim();
+    if (key && KEY_PREFIX[wiz.picks.provider].test(key)) save({ [KEY_FIELD[wiz.picks.provider]]: key }, { quiet: true });
+  }
+  if (wiz.step < wiz.last) { wizGo(wiz.step + 1); return; }
+  finishWizard();
+});
+$('wiz-skip').addEventListener('click', () => finishWizard());
+document.addEventListener('keydown', e => {
+  if ($('wizard').classList.contains('hidden')) return;
+  if (e.key === 'Enter' && !e.target.closest('input, button, a, textarea')) { e.preventDefault(); $('wiz-next').click(); }
+  if (e.key === 'Escape') finishWizard();
+});
+
+function openWizard() {
+  wiz.picks.language = settings.language || 'en';
+  wiz.picks.readingLevel = VALID_LEVELS.includes(settings.readingLevel) ? settings.readingLevel : 'standard';
+  wiz.picks.provider = settings.geminiApiKey ? 'google_gemini' : settings.groqApiKey ? 'groq' : 'ovh';
+  $('wiz-key-google_gemini').value = settings.geminiApiKey || '';
+  $('wiz-key-groq').value = settings.groqApiKey || '';
+  $$('#wizard .result').forEach(r => { r.textContent = ''; r.className = 'result'; });
+  wizSelectDefaults();
+  buildSteps();
+  $('wizard').classList.remove('hidden', 'leaving');
+  document.body.classList.add('wiz-open');
+  wizGo(0);
+}
+
+async function finishWizard() {
+  await save({
+    language: wiz.picks.language,
+    readingLevel: wiz.picks.readingLevel,
+    onboarded: true,
+  }, { quiet: true, now: true });
+  $('wizard').classList.add('leaving');
+  document.body.classList.remove('wiz-open');
+  setTimeout(() => $('wizard').classList.add('hidden'), 700);
+  fillForm();
+  startReveal();
+  requestAnimationFrame(() => { $$('.seg').forEach(placeThumb); moveInk(); });
+  loadRoster(false);
+  toast('All set ✓');
+}
+$('rerun-setup').addEventListener('click', openWizard);
+
+// ══ Start ═══════════════════════════════════════════════════════════════════
+(async () => {
+  settings = await getSettings();
+  fillForm();
+  setTimeout(initLottie, 60);
+  let tab = 'settings';
+  try { tab = sessionStorage.getItem('bs-tab') || 'settings'; } catch (_) {}
+  if (!settings.onboarded) {
+    openWizard();
+  } else {
+    document.querySelector(`.tab[data-tab="${tab}"]`)?.click();
+    startReveal();
+    requestAnimationFrame(() => { $$('.seg').forEach(placeThumb); moveInk(); });
+    loadRoster(false);
+  }
+})();

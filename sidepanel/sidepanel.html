@@ -43,7 +43,7 @@
       <button id="rerun-btn" class="rerun-btn" title="Re-explain with current settings" aria-label="Re-explain" disabled>↻</button>
     </div>
     <div id="context-input-area" class="context-input-area hidden">
-      <input id="user-context" type="text" class="context-input"
+      <input id="user-context" type="text" aria-label="Context about you" class="context-input"
              placeholder="I'm reading this because… (e.g. reviewing a dev's PR as a designer)">
     </div>
   </div>
@@ -51,8 +51,8 @@
   <!-- ══ HISTORY PANEL (in-session, slide in/out) ══ -->
   <div id="history-panel" class="history-panel hidden" aria-label="Explanation history">
     <div class="history-header">
-      <span>Recent explanations</span>
-      <button id="history-close" class="icon-btn-sm">✕</button>
+      <span data-i18n="recent">Recent explanations</span>
+      <button id="history-close" class="icon-btn-sm" aria-label="Close history">✕</button>
     </div>
     <div id="history-list" class="history-list"></div>
     <div id="history-empty" class="history-empty">No explanations yet this session.</div>
@@ -69,18 +69,9 @@
       <div class="hint-chips">
         <span class="hint-chip">⚡ Select → Explain</span>
         <span class="hint-chip">⌨ Alt+Shift+E</span>
+        <span class="hint-chip" data-i18n="pasteHint">📸 Paste a screenshot (Ctrl+V)</span>
       </div>
-    </div>
-  </section>
-
-  <!-- No API key -->
-  <section id="state-nokey" class="panel-state hidden">
-    <div class="nokey-body">
-      <div id="nokey-anim" class="icon-anim-lg" aria-hidden="true"></div>
-      <h2 class="nokey-title" data-i18n="nokeyTitle">API key needed</h2>
-      <p class="nokey-desc" data-i18n="nokeyDesc">BlankStare uses Groq's free AI API. You need a free key to get started — takes about 2 minutes.</p>
-      <button id="goto-settings-btn" class="btn btn-primary" data-i18n="openSettings">Open Settings →</button>
-      <a class="nokey-link" href="https://console.groq.com" target="_blank" rel="noopener">Get a free Groq key ↗</a>
+      <p id="welcome-usage" class="welcome-usage"></p>
     </div>
   </section>
 
@@ -112,6 +103,8 @@
       <div id="explanation-text" class="explanation-text"
            aria-live="polite" aria-atomic="true" aria-busy="false"></div>
       <div id="explanation-cursor" class="typing-cursor" aria-hidden="true"></div>
+      <img id="pasted-image" class="pasted-image hidden" alt="Your screenshot">
+      <div id="model-line" class="model-line" aria-live="off"></div>
 
       <!-- Transient notices (e.g. hopping to another model on a rate limit).
            Previously written into the translation itself, where the next token
@@ -125,6 +118,8 @@
         <button id="deeper-btn"  class="action-link" data-i18n="goDeeper">↓ Go deeper</button>
         <button id="rephrase-btn" class="action-link" data-i18n="rephrase">↺ Different wording</button>
         <button id="fullpage-btn" class="action-link" data-i18n="fullPage">📄 Full page</button>
+        <button id="prereq-btn"   class="action-link" data-i18n="prereq">🧭 What do I need first?</button>
+        <button id="checklist-btn" class="action-link" data-i18n="checklist">✅ Do it with me</button>
       </div>
     </div>
 
@@ -133,7 +128,7 @@
       <div class="jargon-toggle-row">
         <span class="jargon-label" data-i18n="jargonToggle">📖 Jargon dictionary</span>
         <label class="mini-toggle" for="jargon-toggle-cb">
-          <input type="checkbox" id="jargon-toggle-cb">
+          <input type="checkbox" id="jargon-toggle-cb" aria-label="Term glossary">
           <span class="mini-knob"></span>
         </label>
       </div>
@@ -164,9 +159,8 @@
     <div class="collapsible-section">
       <div class="section-row">
         <span class="section-title" data-i18n="webSearch">🔍 Web search</span>
-        <button id="web-search-btn" class="btn btn-secondary btn-sm" data-i18n="search">Search</button>
+        <a id="web-search-link" class="btn btn-secondary btn-sm" href="#" target="_blank" rel="noopener" data-i18n="search">Search</a>
       </div>
-      <div id="web-results" class="web-results hidden" aria-live="polite"></div>
     </div>
 
     <!-- Custom question -->
@@ -174,9 +168,12 @@
       <div class="section-row">
         <span class="section-title" data-i18n="customQ">💬 Ask your own question</span>
       </div>
+      <div id="q-chips" class="q-chips"></div>
       <div class="custom-q-body">
-        <input id="custom-q-input" type="text" class="custom-q-input" data-i18n-placeholder="customQPlaceholder" placeholder="Ask anything about the selected text…">
-        <button id="custom-q-btn" class="btn btn-secondary btn-sm" data-i18n="ask">Ask</button>
+        <div class="pb-box">
+          <textarea id="custom-q-input" rows="1" aria-label="Ask a follow-up" class="pb-input" data-i18n-placeholder="customQPlaceholder" placeholder="Ask anything about the selected text…"></textarea>
+          <button id="custom-q-btn" class="pb-send" aria-label="Ask" title="Ask">➜</button>
+        </div>
       </div>
       <div id="custom-q-result" class="custom-q-result hidden" aria-live="polite"></div>
     </div>
@@ -192,15 +189,6 @@
     </div>
   </section>
 
-  <!-- ══ PHASE 2 ══ -->
-  <aside class="phase2-tray">
-    <div class="phase2-heading">Coming in Phase 2</div>
-    <div class="phase2-items">
-      <div class="phase2-item"><span>📖</span><span>Wiki (BookStack)</span><span class="phase2-badge">Soon</span></div>
-      <div class="phase2-item"><span>🏆</span><span>Community contributions</span><span class="phase2-badge">Soon</span></div>
-    </div>
-  </aside>
-
   <!-- ══ FOOTER ══ -->
   <footer class="panel-footer">
     <a href="https://skilitsa.com" target="_blank" rel="noopener" class="footer-brand">skilitsa.com</a>
@@ -215,6 +203,7 @@
 <script src="../vendor/deco-noir.js"></script>
 <script src="deco-init.js"></script>
 <script src="../utils/lottie.min.js"></script>
+<script src="../utils/fx.js"></script>
 <script src="../utils/pure.js"></script>
 <script src="../utils/storage.js"></script>
 <script src="../utils/api.js"></script>

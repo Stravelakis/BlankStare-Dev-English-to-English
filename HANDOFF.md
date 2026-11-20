@@ -1,29 +1,54 @@
 # Handoff: BlankStare
 
-_Last updated: 2026-09-26 · by: Claude Code · version: v0.7.0_
+_Last updated: 2026-11-20 · by: Claude Code · version: v0.8.0 (release PR from branch `v0.8-providers`)_
 
 ## In one paragraph
 
 A Chrome side-panel extension that rewrites developer text into plain English
-or Greek, on the user's own free Groq key. Feature-complete for its current
-scope, hardened in v0.6.0, brought up to the shared repo standards in v0.7.0
-(full doc set, CI, docs site). Not on the Chrome Web Store yet.
+or Greek. v0.8 (in progress) replaces the fixed Groq model list — 7 of its 9
+models were shut down by Groq, which broke the extension for everyone — with a
+self-correcting list rebuilt daily from The Nein and each provider's own
+catalogue. Works with no key (OVHcloud), better with a free Gemini or Groq key.
+Plan and sources: PLAN-v0.8.md. Not on the Chrome Web Store yet.
 
-## Current state
+## Current state (v0.8 branch)
 
-- **Works:** everything in GUIDE.md. Checked by 39 tests and by screenshots of
-  the real panel markup.
-- **Never done:** loading this version unpacked in a real Chrome and clicking
-  through it. The SearXNG permission prompt in particular is untested by hand.
-- **Known issues:** none open.
-- **Test suite:** yes, `npm test`.
+- **Done and tested in a real Chromium with the extension loaded** (Playwright
+  scripts in the session scratchpad, 19/11):
+  - Engine: no key → OVH Qwen3.8 (11s); free Gemini key → gemini-3.8-live
+    (21–33s, with voice); Groq key → qwen3.8 (2.4s); a made-up dead model is
+    skipped and benched for the day; checklist / prerequisites / rephrase.
+  - Settings (look A "Gradient Blinds", Ak's pick 19/11): first-run 5-step
+    setup, Gemini key test 6.4s (asks 3 models at once), auto-save, segmented
+    choices, today's model list (17 models with a Gemini key), "Try first"
+    pin, last trigger cannot be switched off. No console errors.
+  - Side panel (motion 1+2, brass): glowing edge while streaming, symbol
+    decode until the first word, blocks fade in once, prompt bar with chips
+    and sparks, styled copy boxes / numbered steps / checklists.
+  - 60 unit tests pass (`npm test`).
+- **Google keys come in two shapes** (`AIza…` and `AQ.…`); only length is
+  checked, the real test is asking Google.
+- **Gemini free tier:** Google may use prompts to improve products and human
+  reviewers may read them (ai.google.dev/gemini-api/terms). Stated in the
+  privacy page and on the Gemini card.
+- **Known issues:** OVH's no-key lane slows down instead of refusing under
+  heavy use from one internet address; a slow-but-steady answer can take ~90s.
+  Mitigated by rotating models and a 20s first-word timeout; a free key avoids it.
+- **Keys for testing:** only free keys from Blacksmith's list (`crews.py`
+  PROVIDERS). `BLACKSMITH_THE_NEIN_GEMINI_KEY` is proven free tier. Never
+  `AK1_GEMINI_API_KEY` / `GEMINI_API_KEY` (paid / no free tier).
+- `lab/looks.html` is the design comparison page (A/B/C, 1/2/3); effects live
+  in `utils/fx.js`, shared by the lab and the app.
 
 ## Next steps, in order
 
-1. Load v0.7.0 unpacked, click through GUIDE.md end to end.
-2. Tag `v0.7.0` → docs site deploys (first time: DEPLOY.md → First deploy).
-3. Chrome Web Store listing. The privacy policy is at docs/src/pages/privacy.astro
-   (…/BlankStare-Dev-English-to-English/privacy/ once deployed).
+1. Ak reviews the new settings page and panel in a real Chrome (load unpacked).
+   Docs pages reviewed and stamped v0.8.0 by Ak, 20 Nov 2026.
+2. Store screenshots are done: `store/1-result.png` … `5-settings.png` (1280×800),
+   from the real extension with real no-key answers (19/11).
+3. Merge `v0.8-providers`, tag v0.8.0, deploy docs (privacy page changed).
+4. Chrome Web Store listing: privacy answers must list OVHcloud, Google,
+   Groq and The Nein as the places data goes.
 
 ## Open questions
 
@@ -36,8 +61,23 @@ scope, hardened in v0.6.0, brought up to the shared repo standards in v0.7.0
 
 # Reference (the full developer notes)
 
+> **HISTORIC (v0.5 to v0.7). Superseded by v0.8 wherever it conflicts.** Everything
+> below was written for the Groq-only, bring-your-own-key extension. The "Current
+> state" section at the top of this file, `manifest.json` and the code are the
+> truth. Known out-of-date items below are struck through (~~like this~~) or
+> marked "v0.8:". Kept as history, not as a description of the code.
+>
+> What v0.8 changed in short: works with no key (OVHcloud anonymous AI first,
+> optional free Gemini and Groq keys); a daily model roster built from The Nein
+> plus each provider's own model list (`utils/api.js`, `modelRoster` in
+> `chrome.storage.local`), so there is no fixed 9-model list or default model;
+> no SearXNG (web search is a DuckDuckGo link); no `content.css`, no
+> `optional_host_permissions`, no `chrome.permissions` calls; Settings rebuilt as
+> a 5-step setup plus cards (You, Your free AI, Voice, How you open it, Extras);
+> voice default is "Best available" (`ttsMode: 'auto'`).
+
 ## BlankStare — developer notes
-_Updated end of v0.6.0 session. Use this to brief a new Claude instance._
+_Updated end of v0.6.0 session. Use this to brief a new Claude instance. HISTORIC, see the note above._
 
 ---
 
@@ -52,7 +92,7 @@ so a non-developer can read the translation *instead of* the original.
 - **Creator**: Lambros Stravelakis — lambros@stravelakis.com — https://stravelakis.com
 - **Ko-fi**: https://ko-fi.com/stravelakis
 - **Built with**: Claude Code + Hermes agent
-- **Business model**: Zero cost BYOK (Bring Your Own Key). Users supply their own free Groq API key. Optional support via Ko-fi. No subscription, never.
+- **Business model**: Zero cost. ~~BYOK: users supply their own free Groq API key.~~ v0.8: works with no key; free Gemini or Groq keys are optional. Optional support via Ko-fi. No subscription, never.
 - **Target audience**: Vibecoders first and foremost (people building real things with AI coding tools without a traditional dev background), and secondarily anyone else who works alongside developers — designers, PMs, founders, marketers.
 
 ---
@@ -62,10 +102,10 @@ so a non-developer can read the translation *instead of* the original.
 | Layer | Technology |
 |---|---|
 | Runtime | Chrome MV3, native `chrome.sidePanel` API |
-| AI | Groq API (streaming chat completions), 9-model registry with auto-fallback |
-| TTS | Canopylabs Orpheus-v1-english via Groq audio/speech (default), browser Web Speech API fallback |
+| AI | ~~Groq API, 9-model registry~~ v0.8: OVHcloud (no key), Google Gemini and Groq (optional free keys); a daily ranked model roster with fallback |
+| TTS | v0.8: Best available (Gemini Live voice, Orpheus via Groq for English, or the browser voice). Was: Orpheus via Groq by default |
 | Video | YouTube Data API v3 (optional) |
-| Search | SearXNG self-hosted (optional, becomes primary once tested working) + DuckDuckGo fallback |
+| Search | ~~SearXNG self-hosted + DuckDuckGo fallback~~ v0.8: no SearXNG; "Search" opens DuckDuckGo in a new tab |
 | Font | Comfortaa (Greek + Latin, bundled locally as woff2) |
 | Icons | 12 Lottie JSON animations (bundled, colors baked in for lottie_light.min.js) |
 | Build | No build step. Pure HTML/CSS/JS. No npm, no webpack. |
@@ -76,15 +116,16 @@ so a non-developer can read the translation *instead of* the original.
 
 ```
 devtranslate/
-├── manifest.json          ← MV3 config, v0.5.0
+├── manifest.json          ← MV3 config (version: see manifest.json)
 ├── background.js          ← Service worker (gesture-safe sidePanel coordinator)
 ├── content.js              ← Injected into pages (floating button, text selection)
-├── content.css
+├── ~~content.css~~          ← does not exist (v0.8); content.js styles its own button
 │
 ├── sidepanel/
 │   ├── sidepanel.html
 │   ├── sidepanel.js
-│   └── sidepanel.css
+│   ├── sidepanel.css
+│   └── deco-init.js        ← v0.8
 │
 ├── settings/
 │   ├── settings.html      ← Accordion-based layout (see §5)
@@ -92,8 +133,9 @@ devtranslate/
 │   └── settings.css
 │
 ├── utils/
-│   ├── api.js              ← Groq text+TTS, YouTube, SearXNG/DDG, model registry
+│   ├── api.js              ← v0.8: OVH/Gemini/Groq text, voices, YouTube, model roster (no SearXNG)
 │   ├── storage.js          ← chrome.storage helpers + SETTINGS_DEFAULTS
+│   ├── pure.js, fx.js      ← v0.8: tested pure logic; effects
 │   └── lottie.min.js
 │
 ├── fonts/
@@ -141,7 +183,9 @@ verify `c.k` is always a 4-value color array, never a bare number.
 
 ---
 
-## 5. Settings page layout (v0.5.0 restructure)
+## 5. Settings page layout (v0.5.0 restructure) — SUPERSEDED
+
+> v0.8 Settings sections are: **You** (Language, How simple, About you), **Your free AI** (OVHcloud / Google Gemini / Groq cards, Today's models, Try first), **Voice** (Best available / Orpheus / Browser voice), **How you open it** (Right-click menu, Floating button, Jargon list under each answer), **Extras** (YouTube key, Stay quiet on these sites) and **Run the setup again**. The accordion layout, Web Search cards, "Trigger modes" and "Exclude list" below no longer exist.
 
 The settings page was reorganized into accordions to cut down on scroll length.
 Naming convention: top-of-section content stays visible; secondary/setup
@@ -161,7 +205,7 @@ CSS additions: `.section-accordion` / `.section-accordion-body` (nested accordio
 
 ---
 
-## 6. Search provider active-state indicator (new in v0.5.0)
+## 6. Search provider active-state indicator (new in v0.5.0) — REMOVED in v0.8 (no SearXNG)
 
 Previously the DDG card always showed "Active by default" with a hardcoded
 green border, even after a working SearXNG URL was saved — confusing, since
@@ -178,10 +222,12 @@ IDs to know: `search-card-ddg`, `search-card-searxng`, `search-badge-ddg`, `sear
 
 ---
 
-## 7. Model registry (in utils/api.js) — unchanged from v0.4.0
+## 7. Model registry (in utils/api.js) — HISTORIC, replaced in v0.8
+
+> v0.8 has no fixed list and no `llama-3.1-8b-instant` default. `utils/api.js` builds a ranked roster each day from The Nein, each provider's own model list and the optional "Try first" pin; failed models are benched for the day. The list below is the v0.4 to v0.7 Groq registry.
 
 ```
-llama-3.1-8b-instant   → 14,400/day (default, highest quota)
+llama-3.1-8b-instant   → 14,400/day (v0.4-v0.7 default; not a default in v0.8)
 llama-4-scout-17b      → 1,000/day  (good speed + 30K TPM)
 qwen/qwen3-32b         → 1,000/day  (60 RPM fastest)
 llama-3.3-70b          → 1,000/day  (best balance)
@@ -211,7 +257,7 @@ compound                → 250/day    (no token limit)
 
 ## 9. Known tradeoffs / things to watch
 
-- **Orpheus-by-default** burns the 100/day TTS quota faster than the old Browser default. This was an explicit request, but worth flagging to users who hit the limit and don't know why — consider a one-time toast or note if it becomes a support issue.
+- ~~**Orpheus-by-default**~~ (v0.8 default is "Best available")  burns the 100/day TTS quota faster than the old Browser default. This was an explicit request, but worth flagging to users who hit the limit and don't know why — consider a one-time toast or note if it becomes a support issue.
 - Model dropdown option labels are long (include rate limits inline) — verify they don't clip on narrow viewports/zoom levels.
 
 ---
@@ -378,12 +424,11 @@ npx http-server . -p 8123 -c-1
   load-bearing `--accent-2`. What remains unverified is purely visual judgement
   — whether it actually looks right.
 - **`host_permissions` is now narrowed** to `api.groq.com` and
-  `www.googleapis.com`. The self-hosted SearXNG origin is requested at runtime
-  via `optional_host_permissions`, from the **Test** button in settings —
-  `chrome.permissions.request` needs a user gesture, so it cannot move to
-  `saveForm` or to the side panel. `searchWeb()` checks
-  `chrome.permissions.contains` first, so a missing grant reads as "falls back
-  to DuckDuckGo" rather than an opaque network error.
+  `www.googleapis.com` (v0.7; see v0.8 list below). ~~The self-hosted SearXNG origin is requested at runtime
+  via `optional_host_permissions` / `chrome.permissions.request`.~~ v0.8: that
+  is gone. `host_permissions` is now a fixed list (OVHcloud, Google Gemini,
+  Groq, `www.googleapis.com`, and The Nein at stravelakis.com/wp-json/nein/);
+  there is no `optional_host_permissions` and no `chrome.permissions` call.
 
   Note this does **not** remove the "Read and change all your data on all
   websites" install warning: `content_scripts.matches` is `<all_urls>`, which
@@ -425,14 +470,14 @@ rendering artefacts. Measure before fixing what a screenshot appears to show.
 - **Docs site** in `docs/`, the shared theme unchanged except the content
   files. The playground imports `utils/pure.js` with `?raw` and runs it as-is,
   which is only possible because of the no-browser-globals rule in §14b.
-- **Screenshots:** `node lab/shoot.mjs` serves the repo on a random port,
-  drives headless Chrome at `lab/preview.html?shot=<state>[&lang=el][&history]`,
-  and closes the server. It must use async `execFile`: a synchronous call
-  blocks the script's own server and Chrome waits forever (happened once).
-  `node docs/social/render.mjs` then builds the share card and the 16:7
-  carousel slides from them.
+- **Screenshots (v0.8):** `cd lab/shoot && npm install && node shoot.mjs`
+  loads the real extension in Playwright's Chromium (branded Chrome no longer
+  loads unpacked extensions from the command line), asks the free no-key AI
+  for real answers, and writes `screenshots/`, `docs/public/screenshots/`
+  (incl. the carousel `slide-*.png`) and `store/` (1280×800). About 5 min,
+  most of it waiting on OVH. `node shoot.mjs settings` redoes Settings and the
+  frames only. `lab/shoot/` has its own package.json so the extension stays
+  dependency-free. `node docs/social/render.mjs` builds only the share card.
 - **Fixed:** Greek read-aloud went to the English-only Orpheus model; the
-  SearXNG setup text named a CORS option SearXNG doesn't have (the real need is
-  `search.formats: [html, json]`, and CORS doesn't apply to an extension that
-  holds host permission); a doubled full stop in the system prompt.
+  SearXNG setup text named a CORS option SearXNG doesn't have (SearXNG itself was later removed in v0.8); a doubled full stop in the system prompt.
 - `minimum_chrome_version` is 116 (the side-panel calls used).

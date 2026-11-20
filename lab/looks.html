@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlankStare v0.8 — pick a look</title>
+<link rel="stylesheet" href="../fonts/comfortaa.css">
+<link rel="stylesheet" href="../fonts/display.css">
+<style>
+:root{
+  --bg:#0b0a08; --panel:#16140f; --panel-2:#1d1a13; --line:#3a3224; --line-hot:#5a4a2c;
+  --ink:#EDE6D6; --ink-2:#A79E88; --ink-3:#6E6858;
+  --accent:#C9A227; --accent-hi:#F2DCA0; --accent-lo:#7A5A1E; --accent-rgb:201 162 39;
+  --good:#6FC9A8; --display:'BlankStare Display',serif; --body:'Comfortaa',system-ui,sans-serif;
+}
+:root[data-tone="ember"]{ --accent:#f97316; --accent-hi:#ffe4c4; --accent-lo:#9a3d0b; --accent-rgb:249 115 22; --line:#3b2a1d; --line-hot:#6b3d1c; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.55}
+@property --spin{syntax:'<angle>';inherits:false;initial-value:0deg}
+
+/* ── page chrome ── */
+.top{position:sticky;top:0;z-index:20;display:flex;gap:16px;align-items:center;justify-content:space-between;
+  padding:14px 28px;background:rgba(11,10,8,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top h1{margin:0;font:400 26px/1 var(--display);color:var(--accent);letter-spacing:.04em}
+.top p{margin:2px 0 0;color:var(--ink-2);font-size:12px}
+.tone{display:flex;border:1px solid var(--line-hot)}
+.tone button{all:unset;cursor:pointer;padding:8px 14px;font-size:12px;color:var(--ink-2);letter-spacing:.08em;text-transform:uppercase}
+.tone button[aria-pressed="true"]{background:var(--accent);color:#120f08}
+main{padding:28px;max-width:1500px;margin:0 auto}
+h2.sec{font:400 22px var(--display);color:var(--accent);letter-spacing:.06em;margin:28px 0 4px}
+.sec-note{color:var(--ink-2);margin:0 0 18px;max-width:900px}
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+@media (max-width:1100px){.row{grid-template-columns:1fr}}
+.opt{display:flex;flex-direction:column;gap:10px}
+.opt-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.opt-head b{font:400 19px var(--display);color:var(--ink);letter-spacing:.04em}
+.tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line-hot);color:var(--ink-2)}
+.tag.pick{border-color:var(--accent);color:var(--accent)}
+.opt ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:12.5px}
+.opt ul li{margin:2px 0}
+
+/* ── settings frame ── */
+.frame{position:relative;height:640px;overflow:hidden;border:1px solid var(--line-hot);background:#0b0a08;isolation:isolate}
+.frame > canvas.bg{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+.frame .fs{all:unset;position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:4;cursor:pointer;font-size:11px;color:var(--ink-2);padding:4px 8px;border:1px solid var(--line);background:rgba(0,0,0,.5)}
+.frame.full{position:fixed;inset:20px;height:auto;z-index:50}
+.wiz{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:26px 26px 22px}
+.wiz-brand{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.wiz-brand .lot{width:34px;height:34px}
+.wiz-brand span{font:400 24px var(--display);color:var(--accent)}
+
+/* stepper */
+.steps{display:flex;align-items:center;margin:0 0 22px}
+.dot{position:relative;width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border:1px solid var(--line-hot);color:var(--ink-3);font-size:12px;
+  transition:all .45s cubic-bezier(.2,.8,.2,1);background:rgba(0,0,0,.4);cursor:pointer;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.dot.on{border-color:var(--accent);color:#120f08;background:var(--accent);box-shadow:0 0 18px rgb(var(--accent-rgb)/.55);transform:scale(1.1)}
+.dot.done{border-color:var(--accent);color:var(--accent)}
+.dot.done::after{content:'✓';position:absolute;inset:0;display:grid;place-items:center;background:var(--panel);color:var(--accent);animation:pop .4s}
+.bar{flex:1;height:2px;background:var(--line);position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0;background:linear-gradient(90deg,var(--accent-lo),var(--accent),var(--accent-hi));transform:scaleX(0);transform-origin:left;transition:transform .6s cubic-bezier(.6,0,.2,1)}
+.bar.fill i{transform:scaleX(1)}
+@keyframes pop{0%{transform:scale(.2);opacity:0}70%{transform:scale(1.25)}100%{transform:scale(1);opacity:1}}
+
+.stage{position:relative;flex:1}
+.pane{position:absolute;inset:0;opacity:0;transform:translateX(40px);pointer-events:none;transition:opacity .45s, transform .55s cubic-bezier(.2,.8,.2,1);filter:blur(4px)}
+.pane.in{opacity:1;transform:none;pointer-events:auto;filter:none}
+.pane.out{opacity:0;transform:translateX(-40px)}
+.pane h3{margin:0 0 6px;font:400 22px var(--display);color:var(--ink);letter-spacing:.03em}
+.pane p.lede{margin:0 0 18px;color:var(--ink-2)}
+.choices{display:grid;gap:10px}
+.choice{all:unset;cursor:pointer;display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1px solid var(--line);position:relative;transition:all .3s;
+  background:var(--card-bg);backdrop-filter:var(--card-blur)}
+.choice:hover{border-color:var(--line-hot);transform:translateY(-2px)}
+.choice.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent),0 10px 30px -12px rgb(var(--accent-rgb)/.6)}
+.choice .ic{font-size:20px;line-height:1}
+.choice .lang{display:inline-grid;place-items:center;width:30px;height:24px;font:700 11px var(--body);letter-spacing:.06em;color:var(--accent);border:1px solid var(--accent-lo)}
+.choice b{display:block;color:var(--ink);font-weight:700;font-size:14px}
+.choice small{color:var(--ink-2);font-size:12px}
+.choice .free{position:absolute;top:10px;right:12px;font-size:10px;letter-spacing:.1em;color:var(--good);border:1px solid color-mix(in srgb,var(--good) 50%,transparent);padding:1px 6px}
+.keyrow{display:flex;gap:8px;margin:14px 0 8px}
+.keyrow input{flex:1;background:rgba(0,0,0,.55);border:1px solid var(--line-hot);color:var(--ink);padding:11px 12px;font:13px ui-monospace,Consolas,monospace;outline:none;transition:border-color .3s, box-shadow .3s}
+.keyrow input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgb(var(--accent-rgb)/.18)}
+.btn{all:unset;cursor:pointer;padding:11px 18px;background:var(--accent);color:#120f08;font-weight:700;font-size:13px;letter-spacing:.04em;position:relative;overflow:hidden;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);transition:filter .2s, transform .2s}
+.btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.btn::after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s}
+.btn:hover::after{transform:translateX(120%)}
+.btn.ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line-hot)}
+.how{color:var(--ink-2);font-size:12.5px;margin:0;padding-left:18px}
+.how li{margin:3px 0}
+.result{min-height:54px;margin-top:14px;padding:12px 14px;border:1px solid var(--line);background:rgba(0,0,0,.45);font:13px ui-monospace,Consolas,monospace;color:var(--accent-hi);white-space:pre-wrap}
+.result.ok{border-color:color-mix(in srgb,var(--good) 60%,transparent);color:var(--good)}
+.nav{display:flex;justify-content:space-between;margin-top:auto;padding-top:14px}
+.sample{padding:14px;border:1px solid var(--line);background:var(--card-bg);backdrop-filter:var(--card-blur);font-size:13px}
+.sample code{display:block;margin-top:8px;padding:8px 10px;background:rgba(0,0,0,.6);border-left:2px solid var(--accent);color:var(--accent-hi);font-size:12px}
+
+/* per-concept card treatment */
+.cA{--card-bg:rgba(18,15,10,.55);--card-blur:blur(14px) saturate(1.2)}
+.cB{--card-bg:rgba(14,12,9,.82);--card-blur:none}
+.cC{--card-bg:rgba(8,8,7,.78);--card-blur:blur(3px)}
+.cC .pane h3{font-family:ui-monospace,Consolas,monospace;font-size:18px;letter-spacing:0}
+.cC .pane h3::before{content:'> ';color:var(--accent)}
+
+/* ── side panel frames ── */
+.panel{position:relative;width:380px;max-width:100%;height:640px;overflow:hidden;border:1px solid var(--line-hot);background:#0f0e0b;display:flex;flex-direction:column;margin:0 auto}
+.p-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);position:relative}
+.p-head .lot{width:26px;height:26px}
+.p-head span{font:400 20px var(--display);color:var(--accent)}
+.p-head .pill{margin-left:auto;font-size:11px;border:1px solid var(--line-hot);padding:3px 8px;color:var(--ink-2)}
+.scan{position:absolute;left:0;right:0;bottom:-1px;height:2px;overflow:hidden;opacity:0;transition:opacity .3s}
+.scan::before{content:'';position:absolute;top:0;bottom:0;width:35%;background:linear-gradient(90deg,transparent,var(--accent-hi),var(--accent),transparent);animation:scan 1.3s cubic-bezier(.6,0,.4,1) infinite}
+.panel.busy .scan{opacity:1}
+@keyframes scan{from{left:-35%}to{left:100%}}
+.p-body{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.sel-box{padding:10px 12px;border:1px solid var(--line);background:var(--panel);font-size:12px;color:var(--ink-2)}
+.sel-box b{display:block;font-size:10px;letter-spacing:.14em;color:var(--accent);margin-bottom:4px}
+.card{position:relative;padding:14px;background:var(--panel);border:1px solid var(--line);font-size:14px;min-height:150px}
+.card .first{font-size:15.5px;color:var(--ink);margin:0 0 10px;font-weight:700;line-height:1.5}
+.card .rest{color:var(--ink);margin:0}
+.card .w{opacity:0;filter:blur(3px);transition:opacity .35s, filter .35s}
+.card .w.on{opacity:1;filter:none}
+.card .md-code{margin:10px 0 4px;display:flex;align-items:center;gap:8px;background:#0a0907;border:1px solid var(--line);padding:8px 10px;font:12px ui-monospace,Consolas,monospace;color:var(--accent-hi)}
+.card .md-code span{flex:1}
+.card .md-code button{all:unset;cursor:pointer;font-size:10px;border:1px solid var(--line-hot);padding:2px 7px;color:var(--ink-2)}
+.via{font-size:11px;color:var(--ink-3);margin-top:8px}
+/* shimmer border while streaming (concept 1) */
+.shim .card.live{border-color:transparent;background:
+  linear-gradient(var(--panel),var(--panel)) padding-box,
+  conic-gradient(from var(--spin),var(--line) 0deg,var(--accent) 40deg,var(--accent-hi) 60deg,var(--line) 110deg,var(--line) 360deg) border-box;
+  animation:spin 2.4s linear infinite}
+.shim .card.live::after{content:'';position:absolute;inset:-1px;pointer-events:none;box-shadow:0 0 28px -8px rgb(var(--accent-rgb)/.55)}
+@keyframes spin{to{--spin:360deg}}
+.cursor{display:inline-block;width:7px;height:15px;background:var(--accent);vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+/* prompt bar (concept 2) */
+.pb{position:relative;margin-top:auto;padding:10px 14px 14px;border-top:1px solid var(--line)}
+.pb-box{display:flex;align-items:flex-end;gap:8px;border:1px solid var(--line-hot);background:#0a0907;padding:8px 8px 8px 12px;transition:all .36s cubic-bezier(.2,.8,.2,1);border-radius:0}
+.pb-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgb(var(--accent-rgb)/.16),0 14px 34px -14px rgb(var(--accent-rgb)/.7);transform:translateY(-3px)}
+.pb-box textarea{all:unset;flex:1;font:13px var(--body);color:var(--ink);resize:none;min-height:20px;max-height:120px;overflow:auto;line-height:1.5}
+.pb-box textarea::placeholder{color:var(--ink-3)}
+.pb-send{all:unset;cursor:pointer;width:32px;height:32px;display:grid;place-items:center;background:var(--accent);color:#120f08;font-weight:900;transition:transform .25s, border-radius .36s;flex:0 0 32px}
+.pb-box:focus-within .pb-send{border-radius:50%;transform:rotate(-45deg)}
+.pb-send:active{transform:scale(.85) rotate(-45deg)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chips span{font-size:11px;padding:3px 8px;border:1px solid var(--line);color:var(--ink-2);cursor:pointer;transition:all .2s}
+.chips span:hover{border-color:var(--accent);color:var(--accent)}
+.answer{font-size:13px;color:var(--ink);padding:10px 12px;border-left:2px solid var(--accent);background:var(--panel);display:none}
+.play{all:unset;cursor:pointer;align-self:center;margin-top:4px;padding:9px 18px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent)}
+.play:hover{background:var(--accent);color:#120f08}
+footer.note{margin:40px 0 10px;color:var(--ink-3);font-size:12px}
+@media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+<div class="top">
+  <div><h1>BlankStare v0.8 — pick a look</h1><p>Everything here is live. Move the mouse over the backgrounds, click through the steps, press Play.</p></div>
+  <div class="tone" role="group" aria-label="Colour">
+    <button data-tone="brass" aria-pressed="true">Brass (today)</button>
+    <button data-tone="ember" aria-pressed="false">Ember orange</button>
+  </div>
+</div>
+
+<main>
+  <h2 class="sec">Settings page — first-run setup</h2>
+  <p class="sec-note">Same five-step setup in all three, so you compare the feel, not the content. A first-timer walks through it once; after that it opens as normal settings. Click <b>Test my key</b> on step 4.</p>
+
+  <div class="row">
+    <div class="opt">
+      <div class="opt-head"><b>A · Gradient Blinds</b><span class="tag pick">My pick</span></div>
+      <div class="frame cA" data-concept="A"><canvas class="bg"></canvas><button class="fs">⤢ Full size</button></div>
+      <ul><li>Brass slats with a spotlight that follows your mouse; frosted-glass cards.</li><li>Key test: the result decodes from symbols into words.</li><li>Feels premium and calm; one small graphics program, very light.</li></ul>
+    </div>
+    <div class="opt">
+      <div class="opt-head"><b>B · Light Beams</b><span class="tag">Option</span></div>
+      <div class="frame cB" data-concept="B"><canvas class="bg"></canvas><button class="fs">⤢ Full size</button></div>
+      <ul><li>Soft shafts of light drifting behind solid cards, like a stage.</li><li>Key test: same decode.</li><li>Most theatrical; text on solid cards reads best.</li></ul>
+    </div>
+    <div class="opt">
+      <div class="opt-head"><b>C · Symbol Storm</b><span class="tag">Option</span></div>
+      <div class="frame cC" data-concept="C"><canvas class="bg"></canvas><button class="fs">⤢ Full size</button></div>
+      <ul><li>A field of code symbols — the "Dev English" — flickering behind a terminal look.</li><li>Key test: the storm surges, then settles into words.</li><li>Tells the story best; busiest of the three.</li></ul>
+    </div>
+  </div>
+
+  <h2 class="sec">Side panel — motion that helps, never distracts</h2>
+  <p class="sec-note">The panel stays open all day beside your work, so nothing moves while you read. Motion only marks "working" and "done". Press <b>Play</b> to stream a real answer.</p>
+
+  <div class="row">
+    <div class="opt">
+      <div class="opt-head"><b>1 · Decode + glowing edge</b><span class="tag pick">My pick (with 2)</span></div>
+      <div class="panel shim" data-side="1"></div>
+      <ul><li>While the answer streams, a brass light runs around the card's edge.</li><li>The first sentence decodes from symbols; the rest fades in word by word.</li><li>Stops completely once done.</li></ul>
+    </div>
+    <div class="opt">
+      <div class="opt-head"><b>2 · Prompt bar with sparks</b><span class="tag pick">My pick (with 1)</span></div>
+      <div class="panel" data-side="2"></div>
+      <ul><li>The follow-up box lifts and glows when you click in; the send button morphs.</li><li>Sending throws a small burst of sparks.</li><li>Suggestion chips for people who don't know what to ask.</li></ul>
+    </div>
+    <div class="opt">
+      <div class="opt-head"><b>3 · Quiet scanner</b><span class="tag">Calmest</span></div>
+      <div class="panel" data-side="3"></div>
+      <ul><li>Only a thin brass line sweeping under the header while working.</li><li>Words fade in softly. No borders, no sparks.</li><li>For people who want almost nothing moving.</li></ul>
+    </div>
+  </div>
+
+  <footer class="note">All effects pause when off-screen, and hold still for anyone whose computer is set to reduce motion. The animated icons stay as they are.</footer>
+</main>
+
+<script src="../utils/lottie.min.js"></script>
+<script src="../utils/fx.js"></script>
+<script>
+const TONES = {
+  brass: { colors: ['#0d0c0a', '#C9A227'], light: '#ffe4c4', color: '#C9A227', glitch: ['#7A5A1E', '#C9A227', '#F2DCA0'], spark: '#F2DCA0' },
+  ember: { colors: ['#0d0a08', '#f97316'], light: '#ffe4c4', color: '#f97316', glitch: ['#9a3d0b', '#f97316', '#fff000'], spark: '#fff000' },
+};
+let tone = 'brass';
+const fx = [];
+
+const lot = (el, name) => { try { lottie.loadAnimation({ container: el, renderer: 'svg', loop: true, autoplay: !BSFX.REDUCED, path: `../icons/lottie/${name}.json` }); } catch (_) {} };
+
+// ── settings wizard ──
+const STEPS = [
+  { t: 'Which language?', l: 'BlankStare can explain things in English or Greek.', body: () => choices([['<span class="lang">EN</span>', 'English', 'Explanations in plain English'], ['<span class="lang">ΕΛ</span>', 'Ελληνικά', 'Εξηγήσεις σε απλά Ελληνικά']]) },
+  { t: 'How simple?', l: 'Pick the reader you are. You can change this any time in the panel.', body: () => choices([['🍼', 'Like I’m five', 'Shortest words, playful comparisons'], ['🪅', 'New to this', 'Friendly, assumes nothing'], ['😊', 'I work with developers', 'Plain, with work-life comparisons'], ['🤖', 'I build with AI', 'Uses what you already know about AI']], 2) },
+  { t: 'Pick your free AI', l: 'All three are free. The first works right now with nothing to sign up for.', body: () => choices([['⚡', 'Start now — no key', 'OVHcloud, Europe. A little slower when busy.', 'FREE'], ['✨', 'Google Gemini — free key', 'Best quality, unlimited, reads answers aloud. 3 minutes to set up.', 'FREE'], ['🚀', 'Groq — free key', 'Fastest answers. 3 minutes to set up.', 'FREE']], 1) },
+  { t: 'Paste your Gemini key', l: 'We walk you through it — no card, no billing.', body: () => `
+      <ol class="how"><li>Open <b>aistudio.google.com/apikey</b> and sign in with Google.</li><li>Click <b>Create API key</b>.</li><li>Copy it and paste it below.</li></ol>
+      <div class="keyrow"><input placeholder="AIza…" value="AIzaSy•••••••••••••••••••••••••Q4"><button class="btn test">Test my key</button></div>
+      <div class="result" aria-live="polite"></div>` },
+  { t: 'You’re ready', l: 'Select any dev text on any page, right-click, choose “Explain with BlankStare”.', body: () => `
+      <div class="sample"><b>Try it:</b> select this line and right-click.<code>npm ERR! peer react@"^18.0.0" from react-beautiful-dnd@13.1.1</code></div>` },
+];
+function choices(list, sel = 0) {
+  return `<div class="choices">${list.map((c, i) => `<button class="choice${i === sel ? ' sel' : ''}"><span class="ic">${c[0]}</span><span><b>${c[1]}</b><small>${c[2]}</small></span>${c[3] ? `<span class="free">${c[3]}</span>` : ''}</button>`).join('')}</div>`;
+}
+
+function buildWizard(frame) {
+  const c = frame.dataset.concept;
+  const wiz = document.createElement('div'); wiz.className = 'wiz';
+  wiz.innerHTML = `<div class="wiz-brand"><div class="lot"></div><span>BlankStare</span></div>
+    <div class="steps">${STEPS.map((_, i) => `<div class="dot" data-i="${i}">${i + 1}</div>${i < STEPS.length - 1 ? '<div class="bar"><i></i></div>' : ''}`).join('')}</div>
+    <div class="stage">${STEPS.map((s, i) => `<section class="pane" data-i="${i}"><h3>${s.t}</h3><p class="lede">${s.l}</p>${s.body()}</section>`).join('')}</div>
+    <div class="nav"><button class="btn ghost back">Back</button><button class="btn next">Next</button></div>`;
+  frame.appendChild(wiz);
+  lot(wiz.querySelector('.lot'), 'icon-settings');
+  let cur = 0;
+  const go = n => {
+    n = Math.max(0, Math.min(STEPS.length - 1, n));
+    wiz.querySelectorAll('.pane').forEach((p, i) => { p.classList.toggle('in', i === n); p.classList.toggle('out', i < n); });
+    wiz.querySelectorAll('.dot').forEach((d, i) => { d.classList.toggle('on', i === n); d.classList.toggle('done', i < n); });
+    wiz.querySelectorAll('.bar').forEach((b, i) => b.classList.toggle('fill', i < n));
+    wiz.querySelector('.next').textContent = n === STEPS.length - 1 ? 'Finish' : 'Next';
+    cur = n;
+  };
+  wiz.querySelector('.next').onclick = () => go(cur + 1);
+  wiz.querySelector('.back').onclick = () => go(cur - 1);
+  wiz.querySelectorAll('.dot').forEach(d => d.onclick = () => go(+d.dataset.i));
+  wiz.querySelectorAll('.choices').forEach(g => g.addEventListener('click', e => {
+    const b = e.target.closest('.choice'); if (!b) return;
+    g.querySelectorAll('.choice').forEach(x => x.classList.toggle('sel', x === b));
+  }));
+  wiz.querySelector('.test').onclick = async e => {
+    const out = wiz.querySelector('.result'); out.className = 'result';
+    BSFX.sparks(frame, e.clientX - frame.getBoundingClientRect().left, e.clientY - frame.getBoundingClientRect().top, { color: TONES[tone].spark });
+    frame._fx?.storm?.(1);
+    await BSFX.decode(out, 'Checking with Google… finding today’s free models…', { duration: 700 });
+    await new Promise(r => setTimeout(r, 650));
+    out.classList.add('ok');
+    await BSFX.decode(out, '✓ Key works.\n✓ 5 free models ready — best: Gemini 3.8 Live\n✓ Answers will come with a voice, too', { duration: 1300 });
+  };
+  go(0);
+
+  const canvas = frame.querySelector('canvas.bg');
+  const t = TONES[tone];
+  frame._fx = c === 'A' ? BSFX.blinds(canvas, { colors: t.colors, light: t.light })
+            : c === 'B' ? BSFX.beams(canvas, { color: t.color })
+            : BSFX.glitch(canvas, { colors: t.glitch });
+  fx.push(frame._fx);
+  frame.querySelector('.fs').onclick = () => { frame.classList.toggle('full'); frame.querySelector('.fs').textContent = frame.classList.contains('full') ? '✕ Close' : '⤢ Full size'; };
+}
+document.querySelectorAll('.frame').forEach(buildWizard);
+
+// ── side panels ──
+const FIRST = 'A package you’re installing needs an older version of React than your project uses, so the install stopped.';
+const REST = 'You can fix it properly by updating the package, or tell the installer to ignore the mismatch for now. The quick way is to run this in your terminal:';
+const CMD = 'npm install --legacy-peer-deps';
+
+function buildPanel(p) {
+  const n = p.dataset.side;
+  p.innerHTML = `<div class="p-head"><div class="lot"></div><span>BlankStare</span><span class="pill">EN</span><div class="scan"></div></div>
+    <div class="p-body">
+      <div class="sel-box"><b>YOU SELECTED</b>npm ERR! peer react@"^18.0.0" from react-beautiful-dnd@13.1.1 … --legacy-peer-deps</div>
+      <div class="card"><div class="out"></div><div class="via"></div></div>
+      <div class="answer"></div>
+      <button class="play">▶ Play</button>
+    </div>
+    ${n === '2' ? `<div class="pb"><div class="chips"><span>Is this safe?</span><span>Where do I type it?</span><span>Explain like I’m 5</span></div>
+      <div class="pb-box"><textarea rows="1" placeholder="Ask a follow-up…"></textarea><button class="pb-send" aria-label="Send">➜</button></div></div>` : ''}`;
+  lot(p.querySelector('.lot'), 'icon-coding');
+  const card = p.querySelector('.card'), out = p.querySelector('.out'), via = p.querySelector('.via');
+  p.querySelector('.play').onclick = async () => {
+    out.innerHTML = ''; via.textContent = '';
+    p.classList.add('busy'); card.classList.add('live');
+    await new Promise(r => setTimeout(r, 900));
+    const first = document.createElement('p'); first.className = 'first'; out.appendChild(first);
+    if (n === '1') await BSFX.decode(first, FIRST, { duration: 1100 });
+    else await wordsInto(first, FIRST, n === '2');
+    const rest = document.createElement('p'); rest.className = 'rest'; out.appendChild(rest);
+    await wordsInto(rest, REST, n === '2');
+    out.insertAdjacentHTML('beforeend', `<div class="md-code"><span>${CMD}</span><button>Copy</button></div>`);
+    p.classList.remove('busy'); card.classList.remove('live');
+    via.textContent = 'via gemini-3.8-live · Google Gemini';
+  };
+  if (n === '2') {
+    const ta = p.querySelector('textarea'), send = p.querySelector('.pb-send'), ans = p.querySelector('.answer');
+    ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; });
+    p.querySelectorAll('.chips span').forEach(c => c.onclick = () => { ta.value = c.textContent; ta.focus(); });
+    const fire = async () => {
+      if (!ta.value.trim()) { ta.value = 'Is this safe?'; }
+      const r = send.getBoundingClientRect(), pr = p.getBoundingClientRect();
+      BSFX.sparks(p, r.left - pr.left + r.width / 2, r.top - pr.top + r.height / 2, { color: TONES[tone].spark, count: 26, boost: 1.4 });
+      ta.value = ''; ta.style.height = 'auto';
+      ans.style.display = 'block'; ans.textContent = '';
+      await wordsInto(ans, 'Mostly, yes. It only skips a version check — your files are not touched. If something looks broken afterwards, undo it by running the normal install again.', true);
+    };
+    send.onclick = fire;
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); fire(); } });
+  }
+}
+async function wordsInto(el, text, cursor) {
+  const words = text.split(' ');
+  for (const w of words) {
+    const s = document.createElement('span'); s.className = 'w'; s.textContent = w + ' ';
+    el.appendChild(s); requestAnimationFrame(() => s.classList.add('on'));
+    await new Promise(r => setTimeout(r, 45));
+  }
+}
+document.querySelectorAll('.panel').forEach(buildPanel);
+
+// ── tone switch ──
+document.querySelectorAll('.tone button').forEach(b => b.onclick = () => {
+  tone = b.dataset.tone;
+  document.documentElement.dataset.tone = tone;
+  document.querySelectorAll('.tone button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  const t = TONES[tone];
+  document.querySelectorAll('.frame').forEach(f => {
+    const c = f.dataset.concept;
+    f._fx?.setColors?.(c === 'A' ? { colors: t.colors, light: t.light } : c === 'B' ? { color: t.color } : { colors: t.glitch });
+  });
+});
+</script>
+</body>
+</html>

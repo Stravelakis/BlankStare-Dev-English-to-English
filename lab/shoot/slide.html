@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<!-- Frame for the docs carousel and Chrome Web Store images.
+     slide.html?img=<repo path>&title=<text>&caption=<text>&w=1600&h=700
+     The screenshot itself is a real capture from shoot.mjs; this only frames it. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../fonts/comfortaa.css">
+<link rel="stylesheet" href="../../fonts/display.css">
+<style>
+  :root { --accent: #C9A227; --accent-hi: #F2DCA0; --line: #5a4a2c; --ink-2: #A79E88; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #0b0a08; overflow: hidden; }
+  #bg { position: fixed; inset: 0; width: 100%; height: 100%; }
+  .veil { position: fixed; inset: 0; background: linear-gradient(90deg, rgba(11,10,8,.72) 0%, rgba(11,10,8,.35) 45%, rgba(11,10,8,.15) 100%); }
+  .stage { position: relative; width: 100vw; height: 100vh; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6vw; padding: 0 7vw; }
+  .copy h1 { margin: 0; font: 400 clamp(40px, 5.4vw, 86px)/1.08 'BlankStare Display', Georgia, serif; color: var(--accent-hi); letter-spacing: .05em; text-transform: uppercase;
+    text-shadow: 0 0 40px rgba(201,162,39,.35); }
+  .copy p { margin: 22px 0 0; max-width: 30ch; font: 400 clamp(15px, 1.5vw, 22px)/1.5 'Comfortaa', sans-serif; color: var(--ink-2); }
+  .copy .rule { width: 90px; height: 2px; margin: 0 0 26px; background: linear-gradient(90deg, var(--accent), transparent); }
+  .shot { position: relative; align-self: start; margin-top: var(--top, 50px); height: calc(100vh - var(--top, 50px)); overflow: hidden;
+    box-shadow: 0 0 0 1px var(--line), 0 40px 90px -20px rgba(0,0,0,.95), 0 0 70px -20px rgba(201,162,39,.35);
+    -webkit-mask-image: linear-gradient(#000 82%, transparent); mask-image: linear-gradient(#000 82%, transparent); }
+  .shot img { display: block; width: var(--w, 460px); }
+  .shot.wide img { width: var(--w, 760px); }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas><div class="veil"></div>
+<div class="stage">
+  <div class="copy"><div class="rule"></div><h1 id="t"></h1><p id="c"></p></div>
+  <div class="shot" id="s"><img id="i" alt=""></div>
+</div>
+<script src="../../utils/fx.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  document.getElementById('t').textContent = q.get('title') || '';
+  document.getElementById('c').textContent = q.get('caption') || '';
+  const s = document.getElementById('s');
+  if (q.get('wide')) s.classList.add('wide');
+  if (q.get('iw')) s.style.setProperty('--w', q.get('iw') + 'px');
+  if (q.get('top')) s.style.setProperty('--top', q.get('top') + 'px');
+  const img = document.getElementById('i');
+  img.onload = () => { document.body.dataset.ready = '1'; };
+  img.src = '../../' + q.get('img');
+  BSFX.blinds(document.getElementById('bg'), { colors: ['#0d0c0a', '#C9A227'], light: '#ffe4c4' });
+</script>
+</body>
+</html>

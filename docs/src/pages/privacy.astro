@@ -8,23 +8,41 @@ import { siteConfig } from '../../site.config.ts';
 <DocsLayout title="Privacy policy" description="What BlankStare sends, where, and what it keeps.">
   <section class="doc-body" id="top">
     <h1 class="section-title">Privacy policy</h1>
-    <p><em>Last updated 26 September 2026 · applies to BlankStare 0.7.0 and later.</em></p>
+    <p><em>Last updated 19 November 2026 · applies to BlankStare 0.8.0 and later.</em></p>
 
     <p>BlankStare has no server and no account. The author collects nothing:
     no analytics, no tracking, no usage data.</p>
 
     <h2>What leaves your computer, and only when you ask</h2>
+    <p>When you ask for an explanation, BlankStare sends the text you selected
+    (or the readable text of the page when you ask for a full-page summary, or
+    a screenshot you pasted), plus any context or follow-up question you typed,
+    to <b>one</b> AI service: the one answering at that moment. Which one depends
+    on the keys you added and which free models are working today.</p>
     <ul>
-      <li><b>To Groq</b> (api.groq.com), using your own key: the text you select,
-      or the readable text of the page when you ask for a full-page summary, plus
-      any context or follow-up question you type. When you press the speaker
-      button with an Orpheus voice, the English answer is sent to be read aloud.
-      Groq's own policy applies: <a href="https://groq.com/privacy-policy/">groq.com/privacy-policy</a>.</li>
-      <li><b>To YouTube</b> (googleapis.com), only if you added a YouTube key and
-      press Search: a search phrase based on your selection.</li>
-      <li><b>To your own SearXNG server</b>, only if you set one up and press
-      Search: the same search phrase. Without one, Search opens DuckDuckGo in a
-      new tab, as if you had typed it there.</li>
+      <li><b>OVHcloud</b> (oai.endpoints.kepler.ai.cloud.ovh.net), used with no
+      key at all. OVHcloud's policy applies:
+      <a href="https://www.ovhcloud.com/en/personal-data-protection/">ovhcloud.com/en/personal-data-protection</a>.</li>
+      <li><b>Google Gemini</b> (generativelanguage.googleapis.com), only if you
+      added a Gemini key. On Google's free tier, Google says it may use what you
+      send and the answers to improve its products, and that human reviewers may
+      read them. Do not select private or personal information when using it.
+      Google's terms: <a href="https://ai.google.dev/gemini-api/terms">ai.google.dev/gemini-api/terms</a>.</li>
+      <li><b>Groq</b> (api.groq.com), only if you added a Groq key. With the
+      Orpheus voice, the English answer is also sent to Groq to be read aloud.
+      Groq's policy: <a href="https://groq.com/privacy-policy/">groq.com/privacy-policy</a>.</li>
+      <li><b>The Nein</b> (stravelakis.com), once a day: BlankStare downloads the
+      public list of free AI models. Nothing about you or your text is sent.</li>
+      <li><b>The providers' model lists</b>, once a day: BlankStare asks each AI
+      service you use which models it offers, using your key where one is needed.
+      No text of yours is sent.</li>
+      <li><b>YouTube</b> (googleapis.com), only if you added a YouTube key and
+      press Search: a search phrase based on your selection. Playing a video
+      in the panel loads the youtube.com player, and the result thumbnails load
+      from i.ytimg.com; those requests go to Google as if you had opened
+      YouTube yourself.</li>
+      <li><b>Web search</b> opens DuckDuckGo in a new tab, as if you had typed the
+      search there yourself.</li>
     </ul>
 
     <h2>What is stored</h2>
@@ -32,6 +50,8 @@ import { siteConfig } from '../../site.config.ts';
       <li><b>Settings and keys</b>: in Chrome's extension storage
       (<code>chrome.storage.sync</code>). If you have Chrome sync turned on,
       Google syncs these between your own devices, like your bookmarks.</li>
+      <li><b>Today's model list, which models are resting, and today's count of
+      explanations</b>: on this computer only (<code>chrome.storage.local</code>).</li>
       <li><b>Your last 20 answers</b>: in session storage, deleted when the
       browser closes.</li>
       <li>Nothing else. Removing the extension removes all of it.</li>
@@ -44,8 +64,9 @@ import { siteConfig } from '../../site.config.ts';
       when you ask for a summary.</li>
       <li><b>Side panel, context menu, storage</b>: to show the panel, the
       right-click entry, and keep your settings.</li>
-      <li><b>Your search server's address</b>: asked for by name, once, when you
-      press Test. You can refuse.</li>
+      <li><b>The AI services and The Nein listed above</b>: so BlankStare can
+      reach them. Apart from the YouTube player and thumbnails (youtube.com and
+      i.ytimg.com) when you play a video, it reaches no other site.</li>
     </ul>
 
     <p>BlankStare does not sell or share data, and does not use it for anything

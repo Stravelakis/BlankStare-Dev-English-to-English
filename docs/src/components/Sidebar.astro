@@ -4,8 +4,12 @@ import DotField from './DotField.astro';
 import SocialIcon from './SocialIcon.astro';
 import { siteConfig } from '../../site.config.ts';
 
+const sources = import.meta.glob('../docs/source/*.md');
+const hasSource = (slug: string) => `../docs/source/${slug}.md` in sources;
 const nav = [
   ...siteConfig.nav,
+  ...(hasSource('install') ? [{ id: 'install', label: 'Install' }] : []),
+  ...(hasSource('guide') ? [{ id: 'guide', label: 'Guide' }] : []),
   ...(siteConfig.playground.enabled ? [{ id: 'playground', label: 'Playground' }] : []),
 ];
 ---
@@ -26,6 +30,11 @@ const nav = [
       <a href={siteConfig.repoUrl} class="nav-link" style={`--i:${nav.length}`}>
         Source <span class="arrow" aria-hidden="true">↗</span>
       </a>
+      {siteConfig.feedbackUrl && (
+        <a href={siteConfig.feedbackUrl} class="nav-link" style={`--i:${nav.length + 1}`}>
+          Send feedback <span class="arrow" aria-hidden="true">↗</span>
+        </a>
+      )}
     </nav>
 
     <footer class="sidebar-footer">

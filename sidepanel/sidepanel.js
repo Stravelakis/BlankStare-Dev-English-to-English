@@ -8,9 +8,13 @@ const I18N = {
   en: {
     welcomeTitle:'Select any dev text',
     welcomeDesc:'Highlight an error message, README, terminal output, docs, or any jargon. BlankStare rewrites it in plain English you can read <strong>instead of</strong> the original.',
-    nokeyTitle:'API key needed',
-    nokeyDesc:"BlankStare uses Groq's free AI API. You need a free key — takes 2 minutes.",
-    openSettings:'Open Settings →',
+    pasteHint:'📸 Paste a screenshot (Ctrl+V)',
+    prereq:'🧭 What do I need first?',
+    checklist:'✅ Do it with me',
+    via:'via',
+    usage:n => `${n} translation${n === 1 ? '' : 's'} today, all free.`,
+    usageNone:'Works right away — no key needed. Add a free Gemini or Groq key in Settings for more.',
+    imageReading:'Reading your screenshot…',
     translating:'Translating…',
     youSelected:'You selected:',
     goDeeper:'↓ More detail',
@@ -25,13 +29,19 @@ const I18N = {
     ask:'Ask', search:'Search', tryAgain:'Try again',
     greekWarning:'This looks like Greek text. BlankStare translates <strong>English developer content</strong> into plain English. Select an English error message, README, or code snippet. To receive the translation <em>in Greek</em>, use the EN→EL toggle above — but keep selecting English dev text.',
     voiceShortened:'Read aloud was shortened to fit the voice limit.',
+    recent:'Recent explanations',
+    chips:['Is this safe to do?', 'Where do I type this?', 'What could go wrong?', 'Explain it like I’m five'],
   },
   el: {
     welcomeTitle:'Επίλεξε οποιοδήποτε dev κείμενο',
     welcomeDesc:'Επίλεξε μήνυμα σφάλματος, README, terminal output ή ορολογία. Το BlankStare το ξαναγράφει σε απλά Ελληνικά που μπορείς να διαβάσεις <strong>αντί</strong> για το πρωτότυπο.',
-    nokeyTitle:'Χρειάζεσαι κλειδί API',
-    nokeyDesc:'Το BlankStare χρησιμοποιεί το δωρεάν Groq API. Χρειάζεσαι ένα κλειδί — 2 λεπτά διαδικασία.',
-    openSettings:'Άνοιγμα Ρυθμίσεων →',
+    pasteHint:'📸 Επικόλλησε στιγμιότυπο (Ctrl+V)',
+    prereq:'🧭 Τι χρειάζομαι πρώτα;',
+    checklist:'✅ Κάν’ το μαζί μου',
+    via:'μέσω',
+    usage:n => `${n} ${n === 1 ? 'μετάφραση' : 'μεταφράσεις'} σήμερα, όλες δωρεάν.`,
+    usageNone:'Δουλεύει αμέσως — χωρίς κλειδί. Πρόσθεσε δωρεάν κλειδί Gemini ή Groq στις Ρυθμίσεις για περισσότερα.',
+    imageReading:'Διαβάζω το στιγμιότυπο…',
     translating:'Μεταφράζω…',
     youSelected:'Επίλεξες:',
     goDeeper:'↓ Περισσότερη λεπτομέρεια',
@@ -46,22 +56,29 @@ const I18N = {
     ask:'Ρώτα', search:'Αναζήτηση', tryAgain:'Δοκίμασε ξανά',
     greekWarning:'Αυτό μοιάζει με ελληνικό κείμενο. Το BlankStare μεταφράζει <strong>αγγλικό developer περιεχόμενο</strong> σε απλά λόγια. Επίλεξε αγγλικό μήνυμα σφάλματος, κώδικα ή τεκμηρίωση.',
     voiceShortened:'Η ανάγνωση συντομεύτηκε για να χωρέσει στο όριο της φωνής.',
+    recent:'Πρόσφατες εξηγήσεις',
+    chips:['Είναι ασφαλές;', 'Πού το πληκτρολογώ;', 'Τι μπορεί να πάει στραβά;', 'Εξήγησέ το σαν να είμαι πέντε'],
   },
 };
 
-// Longer budget for modes that are explicitly asking for more words. Sharing
-// the default budget is why "More detail" used to truncate mid-sentence.
-const MAX_TOKENS = { normal: 700, rephrase: 700, deeper: 1400, fullpage: 1400 };
+// Budgets include room for thinking: several free models think before they
+// answer, and at v0.7's 700 tokens some spent the lot thinking and returned
+// nothing (seen live on OVH, 19/11/2026).
+const MAX_TOKENS = { normal: 4096, rephrase: 4096, deeper: 8192, fullpage: 8192, followup: 4096, prereq: 3072, checklist: 6144, image: 4096 };
 
 // ══ DOM REFS ══════════════════════════════════════════════════════════════════
 const $ = id => document.getElementById(id);
 const states = {
-  welcome: $('state-welcome'), nokey: $('state-nokey'),
+  welcome: $('state-welcome'),
   loading: $('state-loading'), result: $('state-result'), error: $('state-error'),
 };
 const el = {
   settingsBtn:       $('settings-btn'),
-  gotoSettings:      $('goto-settings-btn'),
+  welcomeUsage:      $('welcome-usage'),
+  modelLine:         $('model-line'),
+  pastedImage:       $('pasted-image'),
+  prereqBtn:         $('prereq-btn'),
+  checklistBtn:      $('checklist-btn'),
   langToggle:        $('lang-toggle'),
   historyBtn:        $('history-btn'),
   historyPanel:      $('history-panel'),
@@ -92,8 +109,7 @@ const el = {
   ytSearchBtn:       $('yt-search-btn'),
   ytResults:         $('yt-results'),
   ytEmbed:           $('yt-embed'),
-  webSearchBtn:      $('web-search-btn'),
-  webResults:        $('web-results'),
+  webSearchLink:     $('web-search-link'),
   customQInput:      $('custom-q-input'),
   customQBtn:        $('custom-q-btn'),
   customQResult:     $('custom-q-result'),
@@ -111,6 +127,7 @@ let lastTimestamp  = 0;
 let voiceActive    = false;
 let currentAudio   = null;   // Orpheus audio element
 let currentAudioUrl = null;  // object URL awaiting revocation
+let liveAudio      = null;   // PCM chunks: the Gemini Live voice of the current answer
 let sessionHistory = [];
 
 // One in-flight request per lane. Starting a second used to leave the first
@@ -138,6 +155,8 @@ function abortAll() {
   glossaryController?.abort();
   customQController?.abort();
   currentController = glossaryController = customQController = null;
+  // generate() calls nothing back after an abort, so release the Ask button here.
+  setLoading(el.customQBtn, false);
 }
 
 // ══ STATE SWITCHER ════════════════════════════════════════════════════════════
@@ -155,6 +174,40 @@ function setStatus(msg) {
 function setStreaming(on) {
   el.explanationCursor?.classList.toggle('hidden', !on);
   el.explanationText?.setAttribute('aria-busy', String(on));
+  el.explanationText?.closest('.explanation-box')?.classList.toggle('live', on);
+  if (!on) stopWaiting();
+}
+
+// ══ WAITING: symbols resolving into words ════════════════════════════════════
+// Before the first word arrives, the answer box shows "Dev English" symbols
+// settling into a plain label. It is the product in one picture, and it stops
+// the moment real text arrives.
+let waiting = null;
+function startWaiting(label) {
+  stopWaiting();
+  const box = document.createElement('div');
+  box.className = 'decoding';
+  box.innerHTML = '<div class="decoding-label"></div><div class="decoding-noise" aria-hidden="true"></div>';
+  el.explanationText.replaceChildren(box);
+  const lab = box.firstChild, noise = box.lastChild;
+  const w = { alive: true, timer: 0 };
+  waiting = w;
+  const S = BSFX.SYMBOLS;
+  const scramble = n => Array.from({ length: n }, () => S[(Math.random() * S.length) | 0]).join('');
+  if (BSFX.REDUCED) { lab.textContent = label; noise.textContent = scramble(34); return; }
+  w.timer = setInterval(() => { noise.textContent = scramble(34); }, 90);
+  (async () => {
+    while (w.alive) {
+      await BSFX.decode(lab, label, { duration: 900 });
+      await new Promise(r => setTimeout(r, 1300));
+    }
+  })();
+}
+function stopWaiting() {
+  if (!waiting) return;
+  waiting.alive = false;
+  clearInterval(waiting.timer);
+  waiting = null;
 }
 
 // ══ i18n ══════════════════════════════════════════════════════════════════════
@@ -164,7 +217,7 @@ function applyI18n(lang) {
   // Static, authored strings — innerHTML is intentional, they carry markup.
   document.querySelectorAll('[data-i18n]').forEach(node => {
     const key = node.dataset.i18n;
-    if (t[key] !== undefined) node.innerHTML = t[key];
+    if (typeof t[key] === 'string') node.innerHTML = t[key];
   });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(node => {
     const key = node.dataset.i18nPlaceholder;
@@ -172,6 +225,7 @@ function applyI18n(lang) {
   });
   el.langToggle.textContent = lang.toUpperCase();
   document.documentElement.lang = lang;
+  if (typeof renderChips === 'function') renderChips();
 }
 
 // ══ LOTTIE ════════════════════════════════════════════════════════════════════
@@ -205,7 +259,6 @@ function loadLottie(containerId, iconName, loop = true) {
 function initLottie() {
   loadLottie('logo-anim',    'icon-coding.json',  true);
   loadLottie('welcome-anim', 'icon-read.json',    true);
-  loadLottie('nokey-anim',   'icon-apikey.json',  true);
   loadLottie('loading-anim', 'icon-loading.json', true);
   loadLottie('error-anim',   'icon-empty.json',   true);
   // Hover-to-play is a deliberate motion the user triggered, but it still has
@@ -238,11 +291,20 @@ async function init() {
   // Survives the panel being closed and reopened.
   sessionHistory = await getHistory();
   renderHistory();
+  cleanRetiredSettings();
+  showUsage();
 
-  if (!settings.groqApiKey) { showState('nokey'); return; }
-
+  // No key gate any more: OVHcloud answers with no key at all.
   // Text queued before this document existed.
   await checkForPendingText();
+}
+
+async function showUsage() {
+  if (!el.welcomeUsage) return;
+  const t = I18N[currentLang] || I18N.en;
+  const u = await getUsage().catch(() => null);
+  el.welcomeUsage.textContent = u?.total ? t.usage(u.total)
+    : (settings.geminiApiKey || settings.groqApiKey) ? '' : t.usageNone;
 }
 
 // Event-driven. This used to be a 500ms setInterval, i.e. two storage reads a
@@ -260,15 +322,48 @@ async function checkForPendingText() {
 }
 
 // ══ EXPLAIN — TRANSLATION MODE ════════════════════════════════════════════════
-async function explainText(text, mode = 'normal') {
-  if (!text) return;
+// Repainting markdown on every token is wasteful; once per frame is plenty.
+//
+// Each new block (paragraph, list item, code box) fades in once. The whole
+// answer is re-rendered every frame, so each block remembers when it first
+// appeared and its animation resumes where it was instead of restarting.
+const paintPending = new Map();
+const FADE_MS = 420;
+function paint(node, text) {
+  const prev = paintPending.get(node);
+  if (prev) cancelAnimationFrame(prev);
+  paintPending.set(node, requestAnimationFrame(() => {
+    paintPending.delete(node);
+    if (node === el.explanationText) stopWaiting();
+    node.innerHTML = renderMarkdown(text);   // renderMarkdown escapes everything first
+    if (BSFX.REDUCED) return;
+    const born = node._born || (node._born = []);
+    const now = performance.now();
+    const blocks = node.querySelectorAll(':scope > *, :scope > ol > li, :scope > ul > li');
+    blocks.forEach((b, i) => {
+      if (born[i] === undefined) born[i] = now;
+      const age = now - born[i];
+      if (age < FADE_MS) { b.classList.add('fresh'); b.style.animationDelay = `-${Math.round(age)}ms`; }
+    });
+    born.length = Math.min(born.length, blocks.length);
+  }));
+}
+function resetPaint(node) { node._born = []; }
+
+function showModel(entry) {
+  if (!el.modelLine) return;
+  const t = I18N[currentLang] || I18N.en;
+  el.modelLine.textContent = entry ? `${t.via} ${entry.model.split('/').pop()} · ${PROVIDERS[entry.provider].label.replace(/ \(.*\)$/, '')}` : '';
+}
+
+async function explainText(text, mode = 'normal', image = null) {
+  if (!text && !image) return;
 
   settings = await getSettings();
-  if (!settings.groqApiKey) { showState('nokey'); return; }
 
   // Greek input is nearly always a mis-selection: BlankStare translates English
   // dev text, in either output language.
-  if (isLikelyGreek(text) && mode === 'normal') {
+  if (text && !image && isLikelyGreek(text) && mode === 'normal') {
     showState('result');
     el.selectedText.textContent = truncate(text, 200);
     el.explanationText.innerHTML = `<div class="lang-warning-inline">${I18N[currentLang].greekWarning}</div>`;
@@ -278,56 +373,71 @@ async function explainText(text, mode = 'normal') {
     return;
   }
 
-  currentText  = text;
-  currentQuery = text.length > 60
-    ? text.slice(0, 60).replace(/\s\S*$/, '').trim()
-    : text.trim();
+  // Prerequisites and checklists are about the same selection; they replace
+  // the answer but keep the selection.
+  const previous = (mode === 'deeper' || mode === 'rephrase') ? currentExplain : '';
 
-  const level     = el.readingLevel?.value || settings.readingLevel || 'standard';
-  const context   = el.userContext?.value.trim() || settings.userContext || '';
-  const sysPrompt = buildSystemPrompt(currentLang, level, context);
-  const userPrompt = buildUserPrompt(mode, text);
+  if (!image) {
+    currentText  = text;
+    currentQuery = text.length > 60 ? text.slice(0, 60).replace(/\s\S*$/, '').trim() : text.trim();
+  }
 
-  el.selectedText.textContent = truncate(text, 200);
-  showState('loading');
-  el.explanationText.textContent = '';
+  const level      = el.readingLevel?.value || settings.readingLevel || 'standard';
+  const context    = el.userContext?.value.trim() || settings.userContext || '';
+  const sysPrompt  = buildSystemPrompt(currentLang, level, context);
+  const userPrompt = buildUserPrompt(image ? 'image' : mode, text || '', previous);
+
+  el.selectedText.textContent = image ? '📸' : truncate(text, 200);
+  el.pastedImage?.classList.toggle('hidden', !image);
+  if (image && el.pastedImage) el.pastedImage.src = image.dataUrl;
+  showState('result');
+  resetPaint(el.explanationText);
   setStreaming(true);
+  startWaiting(image ? I18N[currentLang].imageReading : I18N[currentLang].translating);
   setStatus('');
+  showModel(null);
   el.explanationActions.classList.add('hidden');
   el.jargonResults.classList.add('hidden');
   resetSecondary();
-  updateResourceLinks(text);
+  if (!image) updateResourceLinks(text);
   currentExplain = '';
+  liveAudio = null;
+  stopVoice();
 
   const signal     = beginRequest();
   const controller = currentController;
 
-  await explainWithGroq({
-    apiKey:       settings.groqApiKey,
-    model:        settings.model,
+  await generate({
+    settings, mode, image,
     systemPrompt: sysPrompt,
     userPrompt,
-    maxTokens:    MAX_TOKENS[mode] ?? MAX_TOKENS.normal,
-    autoFallback: !!settings.autoFallback,
+    maxTokens:    MAX_TOKENS[image ? 'image' : mode] ?? MAX_TOKENS.normal,
+    temperature:  mode === 'rephrase' ? 0.6 : 0.3,
     signal,
+
+    onModel: showModel,
 
     onChunk: (_delta, full) => {
       if (states.result.classList.contains('hidden')) showState('result');
-      el.explanationText.textContent = full;
+      paint(el.explanationText, full);
       currentExplain = full;
     },
 
     onStatus: setStatus,
 
-    onDone: async (full) => {
+    onDone: async (full, meta) => {
       endRequest(controller);
       currentExplain = full;
+      liveAudio = meta?.audio || null;
+      if (states.result.classList.contains('hidden')) showState('result');
+      paint(el.explanationText, full);
       setStreaming(false);
       el.explanationActions.classList.remove('hidden');
+      if (el.modelLine?.textContent) BSFX.decode(el.modelLine, el.modelLine.textContent, { duration: 700 });
       clearRerunPending();
-      if (el.jargonCb?.checked) runGlossary(full);
+      if (el.jargonCb?.checked && !image) runGlossary(full);
       sessionHistory = await pushHistory({
-        query: currentQuery, text, explanation: full,
+        query: image ? '📸 Screenshot' : currentQuery, text: text || '', explanation: full,
         lang: currentLang, timestamp: Date.now(),
       });
       renderHistory();
@@ -341,7 +451,8 @@ async function explainText(text, mode = 'normal') {
       // Keep it on screen and explain the gap rather than blanking the panel.
       if (err.partial) {
         currentExplain = err.partial;
-        el.explanationText.textContent = err.partial;
+        if (states.result.classList.contains('hidden')) showState('result');
+        paint(el.explanationText, err.partial);
         el.explanationActions.classList.remove('hidden');
         setStatus(err.message);
         return;
@@ -351,19 +462,6 @@ async function explainText(text, mode = 'normal') {
       showState('error');
     },
   });
-}
-
-function buildUserPrompt(mode, text) {
-  switch (mode) {
-    case 'deeper':
-      return `The reader wants more detail. Expand on this translation — go deeper while staying in plain language. Do not repeat what you already said, just add depth.\n\nOriginal dev text:\n${text}\n\nYour previous translation:\n${currentExplain}`;
-    case 'rephrase':
-      return `Translate the same dev text again, using completely different wording and a fresh approach. Do not repeat any phrases from the previous translation.\n\nDev text:\n${text}`;
-    case 'fullpage':
-      return `Translate this entire page's content into plain language. Give a clear 3-5 point summary of what this page is about and what it's asking the reader to understand or do.\n\nPage content:\n${text}`;
-    default:
-      return `Translate this dev text into plain language:\n\n${text}`;
-  }
 }
 
 // ══ RESOURCE LINKS ════════════════════════════════════════════════════════════
@@ -390,13 +488,27 @@ async function toggleVoice() {
   if (voiceActive) { stopVoice(); return; }
   if (!currentExplain) return;
 
-  const mode  = settings.ttsMode || 'browser';
+  const mode  = settings.ttsMode || 'auto';
   const key   = settings.groqApiKey;
   const voice = settings.orpheusVoice || 'tara';
 
+  // An answer from Gemini Live arrived already spoken. Playing that voice costs
+  // nothing and speaks Greek properly too.
+  if (liveAudio && mode === 'auto') {
+    try {
+      setVoiceActive(true);
+      currentAudioUrl = liveAudioUrl(liveAudio);
+      currentAudio    = new Audio(currentAudioUrl);
+      currentAudio.onended = stopVoice;
+      currentAudio.onerror = stopVoice;
+      await currentAudio.play();
+      return;
+    } catch (_) { releaseAudio(); }
+  }
+
   // Orpheus is English-only: handed Greek text it reads it with English
   // phonetics. Greek always goes to the system's Greek voice.
-  if (mode === 'orpheus' && key && currentLang !== 'el') {
+  if (mode !== 'browser' && key && currentLang !== 'el') {
     try {
       setVoiceActive(true);
       const { url, truncated } = await speakWithOrpheus(currentExplain, key, voice);
@@ -419,7 +531,9 @@ async function toggleVoice() {
 }
 
 function useBrowserVoice() {
-  const u = new SpeechSynthesisUtterance(currentExplain);
+  // Read the words, not the markdown symbols around them.
+  const spoken = currentExplain.replace(/```[^\n]*\n?/g, '').replace(/[`*#]/g, '').replace(/^\s*- \[[ xX]\]\s*/gm, '');
+  const u = new SpeechSynthesisUtterance(spoken);
   const bestVoice = getBestSystemVoice(currentLang);
   if (bestVoice) u.voice = bestVoice;
   u.lang  = currentLang === 'el' ? 'el-GR' : 'en-US';
@@ -480,8 +594,8 @@ async function runGlossary(translationText) {
 
   try {
     const terms = await fetchGlossary({
+      settings,
       translation: translationText,
-      apiKey:      settings.groqApiKey,
       signal:      controller.signal,
     });
 
@@ -573,40 +687,32 @@ function embedVideo(id) {
   el.ytEmbed.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ══ WEB SEARCH ════════════════════════════════════════════════════════════════
-async function handleWebSearch() {
-  setLoading(el.webSearchBtn, true);
-  el.webResults.innerHTML = '';
-  el.webResults.classList.add('hidden');
-
+// ══ PASTED SCREENSHOT ═════════════════════════════════════════════════════════
+// Ctrl+V anywhere in the panel (outside a text field). Read by a free model
+// that can see images. Large screenshots are scaled down first: free tiers cap
+// request size, and text stays readable at 1600px.
+async function handlePaste(e) {
+  if (e.target.closest('input, textarea')) return;
+  const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+  if (!item) return;
+  e.preventDefault();
   try {
-    const results = await searchWeb(currentQuery, settings.searxngUrl);
-
-    if (!results) {
-      el.webResults.innerHTML =
-        `<div class="ddg-fallback">
-           <a href="${esc(duckDuckGoUrl(currentQuery))}" target="_blank" rel="noopener">🔍 Search DuckDuckGo for "${esc(currentQuery)}" ↗</a>
-           <br><span class="inline-hint">Add a SearXNG URL in Settings for inline results.</span>
-         </div>`;
-    } else if (!results.length) {
-      el.webResults.innerHTML = `<p class="inline-note">No results.</p>`;
-    } else {
-      // r.url already passed safeUrl() in api.js — results with a rejected
-      // scheme were dropped there rather than rendered inert here.
-      el.webResults.innerHTML = results.map(r => `
-        <div class="search-card">
-          <a class="search-card-title" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>
-          <div class="search-card-url">${esc(r.url)}</div>
-          <div class="search-card-snippet">${esc(r.snippet)}</div>
-        </div>`).join('');
-    }
-    el.webResults.classList.remove('hidden');
-  } catch (err) {
-    el.webResults.innerHTML = `<p class="inline-error">${esc(err.message)}</p>`;
-    el.webResults.classList.remove('hidden');
-  } finally {
-    setLoading(el.webSearchBtn, false);
+    const image = await shrinkImage(item.getAsFile(), 1600);
+    explainText('', 'normal', image);
+  } catch (_) {
+    el.errorMessage.textContent = 'That image could not be read. Try a PNG or JPG screenshot.';
+    showState('error');
   }
+}
+
+async function shrinkImage(file, maxSide) {
+  const bmp   = await createImageBitmap(file);
+  const scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+  const canvas = new OffscreenCanvas(Math.round(bmp.width * scale), Math.round(bmp.height * scale));
+  canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.88 });
+  const dataUrl = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob); });
+  return { mime: 'image/jpeg', base64: String(dataUrl).split(',')[1], dataUrl };
 }
 
 // ══ CUSTOM QUESTION ═══════════════════════════════════════════════════════════
@@ -620,24 +726,27 @@ async function handleCustomQuestion() {
   customQController = new AbortController();
 
   setLoading(el.customQBtn, true);
+  sparkFrom(el.customQBtn);
+  el.customQInput.value = '';
+  sizeAsk();
   el.customQResult.classList.add('hidden');
   el.customQResult.textContent = '';
+  resetPaint(el.customQResult);
 
   const level = el.readingLevel?.value || settings.readingLevel || 'standard';
 
-  await explainWithGroq({
-    apiKey:       settings.groqApiKey,
-    model:        settings.model,
+  await generate({
+    settings, mode: 'followup',
     systemPrompt: buildSystemPrompt(currentLang, level, ''),
-    userPrompt:   `Context (dev text the reader selected):\n${currentText}\n\nQuestion: ${q}`,
-    autoFallback: !!settings.autoFallback,
+    userPrompt:   buildUserPrompt('followup', currentText, currentExplain, q),
+    maxTokens:    MAX_TOKENS.followup,
     signal:       customQController.signal,
 
     onChunk: (_d, full) => {
-      el.customQResult.textContent = full;
+      paint(el.customQResult, full);
       el.customQResult.classList.remove('hidden');
     },
-    onDone:  () => setLoading(el.customQBtn, false),
+    onDone:  full => { paint(el.customQResult, full); setLoading(el.customQBtn, false); },
     onError: err => {
       el.customQResult.textContent = '❌ ' + err.message;
       el.customQResult.classList.remove('hidden');
@@ -676,8 +785,11 @@ function restoreFromHistory(index) {
 
   el.historyPanel.classList.add('hidden');
   currentText = h.text; currentExplain = h.explanation; currentQuery = h.query;
-  el.selectedText.textContent = truncate(h.text, 200);
-  el.explanationText.textContent = h.explanation;
+  el.selectedText.textContent = h.text ? truncate(h.text, 200) : h.query;
+  el.explanationText.innerHTML = renderMarkdown(h.explanation);
+  el.pastedImage?.classList.add('hidden');
+  showModel(null);
+  liveAudio = null;
   setStreaming(false);
   setStatus('');
   el.explanationActions.classList.remove('hidden');
@@ -700,8 +812,9 @@ function clearRerunPending() {
 
 // ══ HELPERS ═══════════════════════════════════════════════════════════════════
 function resetSecondary() {
-  [el.ytResults, el.ytEmbed, el.webResults, el.customQResult, el.jargonResults]
+  [el.ytResults, el.ytEmbed, el.customQResult, el.jargonResults]
     .forEach(e => { e?.classList.add('hidden'); if (e) e.innerHTML = ''; });
+  if (el.webSearchLink && currentQuery) el.webSearchLink.href = duckDuckGoUrl(currentQuery);
 }
 
 function setLoading(btn, on) {
@@ -732,7 +845,20 @@ function esc(s = '') {
 
 // ══ EVENT LISTENERS ═══════════════════════════════════════════════════════════
 el.settingsBtn?.addEventListener('click', openSettings);
-el.gotoSettings?.addEventListener('click', openSettings);
+document.addEventListener('paste', handlePaste);
+
+// Copy buttons on command blocks. Delegated: the blocks are re-rendered on
+// every streamed token.
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('.md-copy');
+  if (!btn) return;
+  try {
+    await navigator.clipboard.writeText(btn.dataset.copy || '');
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1600);
+  } catch (_) {}
+});
 
 el.clearBtn?.addEventListener('click', () => {
   abortAll();
@@ -765,6 +891,8 @@ el.voiceBtn?.addEventListener('click', toggleVoice);
 el.deeperBtn?.addEventListener('click',   () => explainText(currentText, 'deeper'));
 el.rephraseBtn?.addEventListener('click', () => explainText(currentText, 'rephrase'));
 el.fullpageBtn?.addEventListener('click', handleFullPage);
+el.prereqBtn?.addEventListener('click',    () => explainText(currentText, 'prereq'));
+el.checklistBtn?.addEventListener('click', () => explainText(currentText, 'checklist'));
 el.rerunBtn?.addEventListener('click', () => {
   if (!currentText) return;
   clearRerunPending();
@@ -778,9 +906,31 @@ el.jargonCb?.addEventListener('change', () => {
 });
 
 el.ytSearchBtn?.addEventListener('click', handleYouTubeSearch);
-el.webSearchBtn?.addEventListener('click', handleWebSearch);
 el.customQBtn?.addEventListener('click', handleCustomQuestion);
-el.customQInput?.addEventListener('keydown', e => { if (e.key === 'Enter') handleCustomQuestion(); });
+el.customQInput?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCustomQuestion(); }
+});
+el.customQInput?.addEventListener('input', sizeAsk);
+
+function sizeAsk() {
+  const ta = el.customQInput; if (!ta) return;
+  ta.style.height = 'auto';
+  ta.style.height = `${Math.min(110, ta.scrollHeight)}px`;
+}
+function sparkFrom(btn) {
+  const host = btn.closest('.collapsible-section') || document.body;
+  const r = btn.getBoundingClientRect(), h = host.getBoundingClientRect();
+  BSFX.sparks(host, r.left - h.left + r.width / 2, r.top - h.top + r.height / 2, { color: '#F2DCA0', count: 24, boost: 1.3 });
+}
+function renderChips() {
+  const box = $('q-chips'); if (!box) return;
+  box.replaceChildren(...(I18N[currentLang] || I18N.en).chips.map(c => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'q-chip'; b.textContent = c;
+    b.addEventListener('click', () => { el.customQInput.value = c; sizeAsk(); handleCustomQuestion(); });
+    return b;
+  }));
+}
 
 el.readingLevel?.addEventListener('change', () => {
   saveSettings({ readingLevel: el.readingLevel.value }).catch(() => {});
@@ -806,7 +956,7 @@ document.addEventListener('visibilitychange', async () => {
   if (el.readingLevel) {
     el.readingLevel.value = VALID_LEVELS.includes(settings.readingLevel) ? settings.readingLevel : 'standard';
   }
-  if (settings.groqApiKey && !states.nokey.classList.contains('hidden')) showState('welcome');
+  showUsage();
   checkForPendingText();
 });
 

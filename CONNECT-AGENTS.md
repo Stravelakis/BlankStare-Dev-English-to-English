@@ -34,7 +34,7 @@ them and never write one into a file.
 
 ```bash
 npm test                        # pure logic, Node's own test runner
-node lab/shoot.mjs              # regenerate panel screenshots (headless Chrome)
+cd lab/shoot && npm install && node shoot.mjs   # every screenshot, from the real extension
 cd docs && npm ci && npm run build   # docs site still builds
 ```
 
@@ -44,6 +44,6 @@ open `lab/preview.html` (see GUIDE.md → Previewing).
 ## Off limits
 
 - Never start long-lived servers from a background shell; they outlive the
-  session. `lab/shoot.mjs` runs its own server and closes it.
+  session. `lab/shoot/shoot.mjs` runs its own server and closes it.
 - Nothing from the Hermes Agent install, ever (a machine-wide rule on the
   maintainer's PC).

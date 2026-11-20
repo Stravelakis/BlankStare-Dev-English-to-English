@@ -1,0 +1,120 @@
+---
+// Jargon tooltips + ELI5 explainers (STANDARDS.md §7). Terms come from the
+// repo's docs/glossary.yml via scripts/sync-docs.mjs. Every match inside the
+// docs gets a dotted underline; hover, tap or keyboard focus shows the meaning
+// for the reader's current level. Which text shows is pure CSS on
+// <html data-vern>, so switching level updates every tooltip instantly.
+import glossary from '../data/glossary.json';
+---
+<script is:inline type="application/json" id="glossary-data" set:html={JSON.stringify(glossary)}></script>
+
+<script>
+  type Term = { term: string; eli5?: string; english?: string; dev?: string; explainer?: boolean };
+  const data: Term[] = JSON.parse(document.getElementById('glossary-data')?.textContent || '[]');
+  const SKIP = 'code, pre, a, h1, h2, h3, h4, h5, h6, button, .term, .explainer, script, style';
+
+  const levels = (t: Term) => {
+    const frag = document.createDocumentFragment();
+    for (const [lvl, text] of [['eli5', t.eli5], ['plain', t.english], ['dev', t.dev]] as const) {
+      const s = document.createElement('span');
+      s.className = `lvl lvl-${lvl}`;
+      s.textContent = text || t.english || t.dev || t.eli5 || '';
+      frag.append(s);
+    }
+    return frag;
+  };
+
+  if (data.length) {
+    // Longest first, so "API key" wins over "API".
+    const sorted = [...data].sort((a, b) => b.term.length - a.term.length);
+    const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`\\b(${sorted.map((t) => esc(t.term)).join('|')})\\b`, 'gi');
+    const byKey = new Map(sorted.map((t) => [t.term.toLowerCase(), t]));
+    const explained = new Set<string>();
+    let n = 0;
+
+    document.querySelectorAll<HTMLElement>('[data-glossary]').forEach((root) => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: (node) =>
+          node.parentElement?.closest(SKIP) || !node.nodeValue?.trim()
+            ? NodeFilter.FILTER_REJECT
+            : NodeFilter.FILTER_ACCEPT,
+      });
+      const nodes: Text[] = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+
+      for (const node of nodes) {
+        const text = node.nodeValue ?? '';
+        re.lastIndex = 0;
+        if (!re.test(text)) continue;
+        re.lastIndex = 0;
+        const frag = document.createDocumentFragment();
+        let last = 0;
+        for (const m of text.matchAll(re)) {
+          const t = byKey.get(m[0].toLowerCase());
+          if (!t) continue;
+          frag.append(text.slice(last, m.index));
+          const id = `term-tip-${n++}`;
+          const term = document.createElement('span');
+          term.className = 'term';
+          term.tabIndex = 0;
+          term.setAttribute('aria-describedby', id);
+          term.textContent = m[0];
+          const tip = document.createElement('span');
+          tip.className = 'term-tip';
+          tip.id = id;
+          tip.setAttribute('role', 'tooltip');
+          tip.append(levels(t));
+          term.append(tip);
+          frag.append(term);
+          last = (m.index ?? 0) + m[0].length;
+
+          // "What's this?" box after the paragraph of the first mention per page.
+          const key = t.term.toLowerCase();
+          if (t.explainer && !explained.has(key)) {
+            explained.add(key);
+            const block = node.parentElement?.closest('p, li') ?? node.parentElement;
+            const box = document.createElement('aside');
+            box.className = 'explainer';
+            const label = document.createElement('strong');
+            label.textContent = `What's this? ${t.term}`;
+            box.append(label, levels(t));
+            queueMicrotask(() => block?.after(box));
+          }
+        }
+        frag.append(text.slice(last));
+        node.replaceWith(frag);
+      }
+    });
+
+    // Keep each tooltip inside the screen: measure when it opens, nudge it left/right.
+    const place = (term: HTMLElement) =>
+      requestAnimationFrame(() => {
+        const tip = term.querySelector<HTMLElement>('.term-tip');
+        if (!tip) return;
+        term.style.setProperty('--tip-x', '0px');
+        const r = tip.getBoundingClientRect();
+        const pad = 12;
+        let dx = 0;
+        if (r.right > innerWidth - pad) dx = innerWidth - pad - r.right;
+        if (r.left + dx < pad) dx = pad - r.left;
+        term.style.setProperty('--tip-x', `${dx}px`);
+      });
+    for (const ev of ['mouseover', 'focusin'] as const)
+      document.addEventListener(ev, (e) => {
+        const t = (e.target as HTMLElement).closest?.('.term');
+        if (t) place(t as HTMLElement);
+      });
+
+    // Tap to toggle on touch screens; Escape closes.
+    document.addEventListener('click', (e) => {
+      const hit = (e.target as HTMLElement).closest('.term');
+      document.querySelectorAll('.term.open').forEach((el) => el !== hit && el.classList.remove('open'));
+      hit?.classList.toggle('open');
+      if (hit) place(hit as HTMLElement);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') document.querySelectorAll('.term.open').forEach((el) => el.classList.remove('open'));
+    });
+  }
+</script>

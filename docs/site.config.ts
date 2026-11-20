@@ -11,7 +11,7 @@ interface SocialLink {
 export const siteConfig = {
   projectName: 'BlankStare',
   description:
-    'A free Chrome side panel that rewrites developer docs, error messages and terminal output into plain English or Greek, as you read. Bring your own free Groq key.',
+    'A free Chrome side panel that rewrites developer docs, error messages and terminal output into plain English or Greek, as you read. Works with no key; add a free Gemini or Groq key for more.',
   repoUrl: 'https://github.com/Stravelakis/BlankStare-Dev-English-to-English',
   // Path under /public including the base path, e.g. '/repo-name/favicon.svg'. Empty = no favicon tag.
   faviconHref: '/BlankStare-Dev-English-to-English/favicon.png',
@@ -23,7 +23,7 @@ export const siteConfig = {
   // show a bare, easily-ignored link. Always set both before publishing.
   seoTitle: 'BlankStare: developer docs and error messages in plain English (free Chrome extension)',
   socialImage: 'og-image.png',
-  socialImageAlt: 'BlankStare: an art-deco side panel turning a TypeError into plain English, with the tagline "Developer docs, in plain English."',
+  socialImageAlt: 'BlankStare: a brass-on-black side panel turning a TypeError into plain English, with the tagline "Developer docs, in plain English."',
   locale: 'en_GB',
 
   // Sidebar menu. Each id must match an element id on the page.
@@ -37,6 +37,12 @@ export const siteConfig = {
 
   // Reading-level switch at the top of the sidebar. The ids are fixed (they
   // match src/docs/dev.md, plain.md, eli5.md); change labels only.
+  // First-visit level (STANDARDS §7: English). A saved choice still wins.
+  defaultVernacular: 'plain',
+
+  // Tally form link (STANDARDS §8). Empty = no "Send feedback" link.
+  feedbackUrl: '',
+
   vernaculars: [
     { id: 'dev', label: 'Dev' },
     { id: 'plain', label: 'English' },

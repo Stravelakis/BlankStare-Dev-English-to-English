@@ -53,7 +53,6 @@
   <span class="sep">|</span>
   state:
   <button data-state="welcome">welcome</button>
-  <button data-state="nokey">no key</button>
   <button data-state="loading">loading</button>
   <button data-state="result">result</button>
   <button data-state="error">error</button>
@@ -131,7 +130,7 @@ const SAMPLE = {
 
   // The animated icons, same files the panel loads (it resolves them through
   // chrome.runtime.getURL; here they are plain relative paths).
-  [['logo-anim','icon-coding'],['welcome-anim','icon-read'],['nokey-anim','icon-apikey'],
+  [['logo-anim','icon-coding'],['welcome-anim','icon-read'],
    ['loading-anim','icon-loading'],['error-anim','icon-empty'],['settings-anim','icon-settings']]
     .forEach(([id, icon]) => document.getElementById(id) && lottie.loadAnimation({
       container: document.getElementById(id), renderer: 'svg', loop: true, autoplay: true,
@@ -139,7 +138,7 @@ const SAMPLE = {
     }));
 
   const $ = id => document.getElementById(id);
-  const states = ['welcome', 'nokey', 'loading', 'result', 'error'];
+  const states = ['welcome', 'loading', 'result', 'error'];
 
   function showState(name) {
     states.forEach(s => $('state-' + s)?.classList.toggle('hidden', s !== name));
@@ -151,7 +150,7 @@ const SAMPLE = {
   $('explanation-actions').classList.remove('hidden');
   $('explanation-cursor').classList.add('hidden');
 
-  $('stream-status').textContent = 'llama-3.1-8b-instant is rate-limited — trying qwen/qwen3-32b…';
+  $('stream-status').textContent = 'The first model is busy — trying the next one…';
   $('stream-status').classList.remove('hidden');
 
   $('jargon-toggle-cb').checked = true;
@@ -170,18 +169,13 @@ const SAMPLE = {
       </div>
     </div>`).join('');
 
-  $('web-results').classList.remove('hidden');
-  $('web-results').innerHTML = SAMPLE.results.map(([t, u, s]) => `
-    <div class="search-card">
-      <a class="search-card-title" href="#">${t}</a>
-      <div class="search-card-url">${u}</div>
-      <div class="search-card-snippet">${s}</div>
-    </div>`).join('');
+  // Web search is now a plain DuckDuckGo link in the panel; no results list.
+  $('model-line').textContent = 'Answered by: sample model (preview)';
 
   $('custom-q-result').textContent = 'It means the data is not there yet, not that it is wrong.';
   $('custom-q-result').classList.remove('hidden');
 
-  $('error-message').textContent = 'Invalid Groq API key — check Settings.';
+  $('error-message').textContent = 'The AI did not answer. Try again in a moment.';
 
   // History, so the panel can be checked with the drawer open.
   $('history-empty').classList.add('hidden');
@@ -214,7 +208,6 @@ const SAMPLE = {
   // Greek copy, to check the display face actually swaps and nothing clips.
   const EL = {
     welcomeTitle: 'Επίλεξε οποιοδήποτε dev κείμενο',
-    nokeyTitle:   'Χρειάζεσαι κλειδί API',
     youSelected:  'Επίλεξες:',
     translating:  'Μεταφράζω…',
     readMoreOn:   '📚 Διάβασε περισσότερα:',
@@ -225,7 +218,6 @@ const SAMPLE = {
   };
   const EN = {
     welcomeTitle: 'Select any dev text',
-    nokeyTitle:   'API key needed',
     youSelected:  'You selected:',
     translating:  'Translating…',
     readMoreOn:   '📚 Read more on:',

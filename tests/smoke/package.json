@@ -1,0 +1,12 @@
+{
+  "name": "blankstare-smoke",
+  "private": true,
+  "description": "Smoke test: loads the real extension in Chromium. Kept apart so the extension itself stays dependency-free.",
+  "type": "module",
+  "scripts": {
+    "test:smoke": "node smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.57.0"
+  }
+}

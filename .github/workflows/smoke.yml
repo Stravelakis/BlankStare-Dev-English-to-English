@@ -1,0 +1,38 @@
+# Smoke test: does the extension start, does its one job work (STANDARDS.md §2).
+# Loads the real unpacked extension in Chromium with no key and asks the free
+# no-key AI one question. See tests/smoke/smoke.mjs.
+name: smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    # Pinned: Playwright 1.57 cannot install Chromium on ubuntu-latest (26.04)
+    # yet ("does not support chromium on ubuntu26.04-x64", 20 Nov 2026).
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: tests/smoke
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tests/smoke/package-lock.json
+
+      - run: npm ci
+
+      - name: Install browser
+        run: npx playwright-core install --with-deps chromium
+
+      - name: Run smoke test
+        run: node smoke.mjs

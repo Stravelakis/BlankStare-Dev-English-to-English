@@ -15,6 +15,7 @@ interface Props {
 
 const { title, description = siteConfig.description, home = false } = Astro.props;
 const vernIds = siteConfig.vernaculars.map((v) => v.id);
+const defaultVern = vernIds.includes(siteConfig.defaultVernacular) ? siteConfig.defaultVernacular : vernIds[0];
 const pageTitle = home && siteConfig.seoTitle ? siteConfig.seoTitle : `${title} · ${siteConfig.projectName}`;
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 // Social cards need an absolute URL; a relative og:image is ignored.
@@ -23,7 +24,7 @@ const socialImage =
   Astro.site && siteConfig.socialImage ? new URL(base + siteConfig.socialImage, Astro.site).href : undefined;
 ---
 <!doctype html>
-<html lang="en" data-vern={vernIds[0]}>
+<html lang="en" data-vern={defaultVern}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

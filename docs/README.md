@@ -6,7 +6,7 @@ Built from the shared Stravelakis docs theme. Content lives in
 
 ```bash
 npm ci && npm run dev      # preview
-node social/render.mjs     # rebuild share card + carousel slides (run lab/shoot.mjs first)
+node social/render.mjs     # rebuild the share card (slides come from lab/shoot/shoot.mjs)
 ```
 
 Deploys on every `v*` tag via `.github/workflows/deploy-docs.yml` at the repo

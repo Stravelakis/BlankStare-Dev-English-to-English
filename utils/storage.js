@@ -4,18 +4,19 @@
 // VALID_LEVELS lives in utils/pure.js — load that first.
 
 const SETTINGS_DEFAULTS = {
-  // API keys
+  // Keys. None are required: OVHcloud answers with no key at all.
+  geminiApiKey:     '',
   groqApiKey:       '',
   youtubeKey:       '',
-  searxngUrl:       '',
 
-  // AI model
-  model:            'llama-3.1-8b-instant',
-  autoFallback:     true,   // automatically try next model when rate-limited
+  // AI model. '' = automatic (today's best free model, checked daily).
+  // Otherwise 'provider:model', tried first, then automatic.
+  pinnedModel:      '',
 
-  // Text-to-speech
-  ttsMode:          'orpheus',  // 'browser' | 'orpheus'
-  orpheusVoice:     'zoe',      // tara | leah | leo | jess | zac | zoe | mia | julia
+  // Text-to-speech. 'auto' = Gemini Live's own voice when the answer came
+  // from it, otherwise Orpheus (needs a Groq key) or the browser voice.
+  ttsMode:          'auto',     // 'auto' | 'orpheus' | 'browser'
+  orpheusVoice:     'zoe',
 
   // Language & reading
   language:         'en',
@@ -29,10 +30,21 @@ const SETTINGS_DEFAULTS = {
   // Features
   jargonDictionary: false,
   excludeList:      [],
+
+  // First-run setup finished
+  onboarded:        false,
 };
 
+// Settings from v0.7 that no longer exist. Removed on first load so they do
+// not linger in sync storage forever.
+const RETIRED_SETTINGS = ['model', 'autoFallback', 'searxngUrl'];
+
 async function getSettings() {
-  return await chrome.storage.sync.get(SETTINGS_DEFAULTS);
+  return chrome.storage.sync.get(SETTINGS_DEFAULTS);
+}
+
+async function cleanRetiredSettings() {
+  await chrome.storage.sync.remove(RETIRED_SETTINGS).catch(() => {});
 }
 
 async function saveSettings(partial) {

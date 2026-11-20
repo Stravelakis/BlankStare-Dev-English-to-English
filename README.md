@@ -25,23 +25,36 @@ full of the same jargon.
   tools", switchable with one click.
 - **English or Greek.** The panel, the answers and the read-aloud voice.
 - **Names the jargon.** Every technical term with a short meaning.
-- **Costs nothing.** Runs on your own free Groq key. Nine free models; if one
-  is busy it moves to the next by itself.
-- **Asks for little.** Talks to Groq, and to YouTube or your own search server
-  only if you set them up.
+- **Works with no key at all.** Out of the box it uses OVHcloud's anonymous
+  AI endpoint (in Europe, free, slower when busy). You can add a free Google
+  Gemini key (best quality) or a free Groq key (fastest). No card or billing
+  for either.
+- **Fixes itself.** Once a day it checks which free models still work and
+  builds a ranked list. A model that is gone is skipped; a busy one rests a
+  minute; a refused key is set aside for the day.
+- **Asks for little.** The text you select goes to whichever AI answers
+  (OVHcloud, Google or Groq). It also reads a public model list from
+  [The Nein](https://stravelakis.com/project/the-nein/). Your keys stay in
+  Chrome's sync storage.
 
-Also: go deeper, rephrase, full-page summary, follow-up questions, videos and
-web search in the panel, the last 20 answers, an exclude list, and keyboard
-shortcuts (Alt+Shift+B opens the panel, Alt+Shift+E sends the selection).
+Also: paste a screenshot (Ctrl+V) to have it explained, "What do I need
+first?", a "Do it with me" checklist, commands in copy boxes, "More detail",
+"Different wording", full-page summary, follow-up questions, a term glossary,
+read aloud, videos and a web search link, the last 20 answers, a list of sites
+to stay quiet on, and keyboard shortcuts (Alt+Shift+B opens the panel,
+Alt+Shift+E queues the selection).
 
 ## Quick start
 
 1. Download this repo and unzip it.
 2. `chrome://extensions` → switch on **Developer mode** → **Load unpacked** →
    pick the folder.
-3. Paste a free key from [console.groq.com](https://console.groq.com) into
-   Settings → **Test** → **Save Settings**.
-4. Select any confusing text and press the brass button.
+3. Settings opens with a 5-step setup. Pick **Try it now** (no key needed), or
+   paste a free key from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+   (Gemini) or [console.groq.com/keys](https://console.groq.com/keys) (Groq).
+4. Open the panel (toolbar icon, or Alt+Shift+B). Select any confusing text
+   and press the ⚡ button beside it, or right-click → **Explain with
+   BlankStare**. The ⚡ button only appears while the panel is open.
 
 Full setup: [INSTALL.md](INSTALL.md) · Full manual: [GUIDE.md](GUIDE.md) ·
 Docs site: https://docs.stravelakis.com/BlankStare-Dev-English-to-English/ ·
@@ -53,26 +66,25 @@ Docs site: https://docs.stravelakis.com/BlankStare-Dev-English-to-English/ ·
 |---|---|---|
 | ![The panel in Greek](screenshots/sidepanel-greek.png) | ![The last 20 answers](screenshots/sidepanel-history.png) | ![Settings](screenshots/settings.png) |
 
-The look is **Deco Noir**, an art-deco identity: a chamfer on two opposing
+The look is **brass on black**: cards with a chamfer on two opposing
 corners, brass on near-black. Greek titles are set in GFS Didot and Latin ones
 in Poiret One, chosen letter by letter. All fonts ship inside the extension;
 nothing loads from Google.
 
 ## Status
 
-- **Works:** everything listed above. 39 automated tests cover the core logic
+- **Works:** everything listed above. Automated tests cover the core logic
   (streaming, link safety, language detection, site exclusion).
-- **Not yet:** a Chrome Web Store listing; image and screenshot explanations;
-  choosing the voice from the panel.
+- **Not yet:** a Chrome Web Store listing.
 - **Known rough edge:** Chrome warns that BlankStare can "read and change all
-  your data on all websites". The brass button has to be on every page for
+  your data on all websites". The ⚡ button has to be on every page for
   select-to-explain to work; BlankStare only reads your selection.
 
 ## For developers
 
 No build step: load the folder and it runs. `npm test` runs the test suite
 with Node's own runner, no install needed. `lab/preview.html` shows the panel
-without loading the extension, and `node lab/shoot.mjs` regenerates every
+without loading the extension, and `cd lab/shoot && npm install && node shoot.mjs` regenerates every
 screenshot. Architecture and decisions: [HANDOFF.md](HANDOFF.md). Agents:
 [CONNECT-AGENTS.md](CONNECT-AGENTS.md).
 

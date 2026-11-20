@@ -84,7 +84,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
    also clipping renders as a plain rectangle, which is the single most common
    way this identity gets silently dropped. */
 .selected-box, .explanation-box, .jargon-section, .resources-section,
-.collapsible-section, .phase2-tray, .history-panel, .stream-status,
+.collapsible-section, .history-panel, .stream-status,
 .lang-warning-inline, .btn, .action-pill, .hint-chip, .resource-btn,
 .level-select, .context-input, .custom-q-input, .yt-thumb, .header-pill,
 .header-icon-btn, .icon-btn-sm, .history-item, .rerun-btn, .context-toggle-btn {
@@ -94,7 +94,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 
 /* Three sizes. Small parts get the small cut or the corner swallows them. */
 .selected-box, .explanation-box, .jargon-section, .resources-section,
-.collapsible-section, .phase2-tray, .history-panel, .lang-warning-inline { --c: var(--cut); }
+.collapsible-section, .history-panel, .lang-warning-inline { --c: var(--cut); }
 
 .btn, .action-pill, .hint-chip, .resource-btn, .level-select, .context-input,
 .custom-q-input, .yt-thumb, .header-pill, .header-icon-btn, .icon-btn-sm,
@@ -103,13 +103,13 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 /* ── PANELS ──────────────────────────────────────────────────────────────────
    background = the trim hairline · ::before = the face · ::after = corner rules */
 .selected-box, .explanation-box, .jargon-section, .resources-section,
-.collapsible-section, .phase2-tray {
+.collapsible-section {
   position: relative;
   background: linear-gradient(160deg, var(--line-hot), var(--line) 40%, var(--metal-lo));
 }
 
 .selected-box::before, .explanation-box::before, .jargon-section::before,
-.resources-section::before, .collapsible-section::before, .phase2-tray::before {
+.resources-section::before, .collapsible-section::before {
   content: '';
   position: absolute;
   inset: 1px;
@@ -125,7 +125,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
    data-dress, so stepping down to `plain` retires the ornament without
    touching the silhouette. */
 .selected-box::after, .explanation-box::after, .jargon-section::after,
-.resources-section::after, .collapsible-section::after, .phase2-tray::after {
+.resources-section::after, .collapsible-section::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -142,7 +142,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 
 /* Children sit above the face. */
 .selected-box > *, .explanation-box > *, .jargon-section > *,
-.resources-section > *, .collapsible-section > *, .phase2-tray > * {
+.resources-section > *, .collapsible-section > * {
   position: relative;
   z-index: 1;
 }
@@ -151,7 +151,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
    The ornamental face is for type read once: the wordmark and the state
    headings. Never a button, label or value — its hairlines thin out at UI
    sizes. See fonts/display.css for the Latin/Greek pairing. */
-.logo-text, .welcome-title, .nokey-title {
+.logo-text, .welcome-title {
   font-family: var(--display-deco);
   font-weight: var(--display-deco-weight);
   letter-spacing: var(--display-deco-track);
@@ -166,7 +166,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
    They keep Comfortaa: at 11-12px the deco face's hairlines thin out, which is
    the exact case rule 6 warns against. Brass and small-caps carries the
    identity here instead. */
-.section-title, .jargon-label, .resources-label, .phase2-heading {
+.section-title, .jargon-label, .resources-label {
   color: var(--accent);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -176,7 +176,6 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 
 /* The tray is deliberately quiet, so it dims as a whole rather than by
    greying its heading out of the palette. */
-.phase2-heading { color: var(--accent); opacity: 0.75; }
 
 /* ── HEADER ── */
 .header {
@@ -294,18 +293,16 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 .history-empty { padding: 12px; font-size: 12px; color: var(--ink-3); text-align: center; }
 
 /* ── WELCOME / NO-KEY / LOADING ── */
-.welcome-body, .nokey-body {
+.welcome-body {
   display: flex; flex-direction: column; align-items: center;
   text-align: center; padding: 36px 24px 24px; gap: 10px;
 }
 .icon-anim-lg { width: 56px; height: 56px; margin-bottom: 4px; }
 .welcome-title { font-size: 20px; }
-.nokey-title   { font-size: 19px; }
-.welcome-desc, .nokey-desc {
+.welcome-desc {
   font-size: 13px; color: var(--ink-2); line-height: 1.7; max-width: 280px;
 }
 .welcome-desc strong { color: var(--accent); font-weight: 600; }
-.nokey-link { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
 
 .hint-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
 .hint-chip {
@@ -576,22 +573,6 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 .lang-warning-inline strong { color: var(--ink); font-weight: 700; }
 .lang-warning-inline em     { font-style: italic; color: var(--crit); }
 
-/* ── PHASE 2 TRAY ── */
-.phase2-tray { margin: 14px 12px 4px; padding: 10px 12px; opacity: 0.7; }
-.phase2-heading {
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.12em; color: var(--ink-3); margin-bottom: 7px;
-}
-.phase2-items { display: flex; flex-direction: column; gap: 5px; }
-.phase2-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-3); }
-/* Semantic pill, not the accent — this is a state, not a control. */
-.phase2-badge {
-  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
-  color: var(--ink-3); background: var(--metal);
-  box-shadow: inset 0 0 0 1px var(--line);
-  padding: 2px 7px; margin-left: auto;
-}
-
 /* ── FOOTER ── */
 .panel-footer {
   margin-top: 10px; padding: 9px 12px 12px;
@@ -615,3 +596,97 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
   .rerun-btn.rerun-active { animation: none; }
   .typing-cursor { animation: none; opacity: 1; }
 }
+
+/* ══ v0.8 MOTION ════════════════════════════════════════════════════════════
+   Motion marks only "working" and "done". Nothing moves while you read.
+   1. Glowing edge: while an answer streams, a brass light runs around the
+      answer card's hairline (the card's own background is that hairline).
+   2. Waiting decode: symbols settle into "Translating…" until the first word.
+   3. New blocks fade in once.
+   4. Prompt bar: lifts and glows when focused, send button turns, sparks.  */
+@property --spin { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+
+.explanation-box.live {
+  background: conic-gradient(from var(--spin), var(--line) 0deg, var(--accent) 50deg, var(--accent-hi) 72deg,
+              var(--line) 130deg, var(--line) 250deg, var(--accent-lo) 300deg, var(--line) 360deg);
+  animation: bs-spin 2.6s linear infinite;
+}
+.explanation-box.live::before { inset: 1.5px; }
+.explanation-box.live::after { opacity: 0; transition: opacity .3s; }
+@keyframes bs-spin { to { --spin: 360deg; } }
+
+.decoding { padding: 4px 0 2px; }
+.decoding-label { font: 700 14px var(--display, inherit); letter-spacing: .06em; color: var(--accent-hi); white-space: pre; }
+.decoding-noise { margin-top: 6px; font: 11px var(--data, ui-monospace, monospace); color: var(--accent-lo); letter-spacing: .12em;
+  white-space: nowrap; overflow: hidden; opacity: .75; -webkit-mask-image: linear-gradient(90deg, #000 60%, transparent); mask-image: linear-gradient(90deg, #000 60%, transparent); }
+
+.fresh { animation: bs-fresh 420ms cubic-bezier(.2,.8,.2,1) both; }
+@keyframes bs-fresh { from { opacity: 0; filter: blur(3px); transform: translateY(4px); } }
+
+.model-line { font-size: 10.5px; color: var(--ink-3); margin-top: 6px; letter-spacing: .02em; min-height: 0; }
+
+/* prompt bar */
+.q-chips { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 11px 8px; }
+.q-chip { all: unset; cursor: pointer; font-size: 11px; padding: 3px 8px; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line);
+  background: rgba(0,0,0,.25); transition: color .2s, box-shadow .2s, transform .2s; }
+.q-chip:hover, .q-chip:focus-visible { color: var(--accent-hi); box-shadow: inset 0 0 0 1px var(--accent); transform: translateY(-1px); }
+.custom-q-body { display: block; }
+.pb-box { --c: var(--cut-sm, 7px); display: flex; align-items: flex-end; gap: 8px; padding: 7px 7px 7px 11px; background: #0a0907;
+  box-shadow: inset 0 0 0 1px var(--line-hot); transition: box-shadow .36s cubic-bezier(.2,.8,.2,1), transform .36s cubic-bezier(.2,.8,.2,1);
+  clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c)); }
+.pb-box:focus-within { box-shadow: inset 0 0 0 1px var(--accent), inset 0 -14px 24px -18px rgb(var(--accent-rgb) / .7); transform: translateY(-2px); }
+.pb-input { all: unset; flex: 1; min-height: 20px; max-height: 110px; overflow: auto; font: 13px/1.5 var(--body, inherit); color: var(--ink); white-space: pre-wrap; word-break: break-word; }
+.pb-input::placeholder { color: var(--ink-3); }
+.pb-send { all: unset; flex: 0 0 30px; width: 30px; height: 30px; display: grid; place-items: center; cursor: pointer; background: var(--accent); color: #120f08; font-weight: 900;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1), border-radius .36s, filter .2s; }
+.pb-send:hover { filter: brightness(1.12); }
+.pb-box:focus-within .pb-send { border-radius: 50%; transform: rotate(-45deg); }
+.pb-send:active { transform: scale(.85) rotate(-45deg); }
+.pb-send:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 2px; }
+.pb-send[data-loading="true"] { animation: bs-pulse 1s ease-in-out infinite; }
+@keyframes bs-pulse { 50% { filter: brightness(.7); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .explanation-box.live { animation: none; }
+  .fresh, .pb-send[data-loading="true"] { animation: none; }
+  .pb-box, .pb-send, .q-chip { transition: none; }
+}
+
+/* ══ ANSWER FORMATTING (markdown from utils/pure.js renderMarkdown) ══════════ */
+.explanation-text blockquote, .custom-q-result blockquote { margin: 0 0 .8em; padding: 9px 12px; background: rgba(0,0,0,.3); box-shadow: inset 2px 0 0 var(--accent-lo); color: var(--ink); font-style: italic; }
+.explanation-text blockquote p:last-child, .custom-q-result blockquote p:last-child { margin-bottom: 0; }
+.explanation-text, .custom-q-result { white-space: normal; }
+.explanation-text p, .custom-q-result p { margin: 0 0 .7em; }
+.explanation-text > p:first-child { font-size: 14.5px; font-weight: 700; color: var(--ink); line-height: 1.6; }
+.explanation-text .md-head { margin: 1em 0 .35em; color: var(--accent-hi); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+.explanation-text ol, .explanation-text ul, .custom-q-result ol, .custom-q-result ul { margin: 0 0 .7em; padding-left: 0; list-style: none; }
+.explanation-text ol, .custom-q-result ol { counter-reset: step; }
+.explanation-text ol > li, .custom-q-result ol > li { counter-increment: step; position: relative; padding-left: 30px; margin: 0 0 .45em; }
+.explanation-text ol > li::before, .custom-q-result ol > li::before { content: counter(step); position: absolute; left: 0; top: .15em; width: 20px; height: 20px;
+  display: grid; place-items: center; font: 700 11px var(--data, ui-monospace, monospace); color: #120f08; background: var(--accent);
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px); }
+.explanation-text ul:not(.md-checklist) > li, .custom-q-result ul:not(.md-checklist) > li { position: relative; padding-left: 18px; margin: 0 0 .35em; }
+.explanation-text ul:not(.md-checklist) > li::before, .custom-q-result ul:not(.md-checklist) > li::before { content: ''; position: absolute; left: 4px; top: .65em; width: 6px; height: 6px; background: var(--accent); transform: rotate(45deg); }
+.explanation-text code, .custom-q-result code { font: .9em var(--data, ui-monospace, monospace); color: var(--accent-hi); background: rgba(0,0,0,.4); padding: 1px 5px; }
+
+.md-code { display: flex; align-items: stretch; margin: .2em 0 .9em 30px; background: #0a0907; box-shadow: inset 2px 0 0 var(--accent), inset 0 0 0 1px var(--line); }
+.custom-q-result .md-code, .explanation-text > .md-code:first-child { margin-left: 0; }
+.md-code pre { flex: 1; margin: 0; padding: 9px 11px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.md-code pre code { background: none; padding: 0; font-size: 12px; color: var(--accent-hi); }
+.md-copy { all: unset; cursor: pointer; flex: 0 0 auto; align-self: center; margin: 6px; padding: 4px 9px; font: 700 10.5px var(--body, inherit); letter-spacing: .06em;
+  color: #120f08; background: var(--accent); clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px); transition: filter .2s, transform .2s; }
+.md-copy:hover { filter: brightness(1.15); }
+.md-copy:active { transform: scale(.92); }
+.md-copy.copied { background: var(--good); }
+
+.md-checklist { padding: 0; }
+.md-checklist li { display: flex; gap: 10px; align-items: flex-start; padding: 7px 9px; margin: 0 0 4px; background: rgba(0,0,0,.25); box-shadow: inset 0 0 0 1px var(--line); transition: background .3s, opacity .3s; }
+.md-checklist input { appearance: none; flex: 0 0 18px; width: 18px; height: 18px; margin: 1px 0 0; cursor: pointer; border: 1px solid var(--accent-lo); background: #0a0907; display: grid; place-items: center; transition: background .25s, border-color .25s; }
+.md-checklist input:checked { background: var(--accent); border-color: var(--accent); }
+.md-checklist input:checked::after { content: '✓'; font: 900 12px/1 var(--body, inherit); color: #120f08; animation: bs-tick .35s cubic-bezier(.34,1.56,.64,1); }
+.md-checklist input:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 2px; }
+.md-checklist label { cursor: pointer; }
+.md-checklist li:has(input:checked) { opacity: .6; }
+.md-checklist li:has(input:checked) label { text-decoration: line-through; text-decoration-color: var(--accent-lo); }
+.md-checklist + .md-code, .md-checklist ~ .md-code { margin-left: 28px; }
+@keyframes bs-tick { from { transform: scale(0); } }

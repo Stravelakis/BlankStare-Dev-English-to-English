@@ -17,10 +17,12 @@ BlankStare does differently, and why.
 - **The docs site lives in `docs/`**, with its deploy workflow at the repo root
   (`.github/workflows/deploy-docs.yml`). `docs/superpowers/` holds design
   specs and is not part of the site.
-- **Look: Deco Noir inside the extension, the docs theme outside it.** The
-  extension wears the Deco Noir identity (vendored in `vendor/`). The docs site
-  uses the shared docs theme unchanged, as the standards require. Share images
-  and carousel slides carry the Deco Noir look, since they show the product.
+- **Look: brass on black inside the extension, the docs theme outside it.**
+  The extension's chamfered brass cards come from the stylesheet vendored in
+  `vendor/` (file names keep its original name). The docs site uses the shared
+  docs theme, as the standards require. Share images and carousel slides carry
+  the brass look, since they show the product. (Ak, 20 Nov 2026: the old
+  "Deco Noir" name is retired.)
 - **Nothing in `utils/pure.js` may touch `chrome`, `document`, `window` or
   `fetch`.** That is what lets it run under the test suite and in the docs
   playground unchanged.

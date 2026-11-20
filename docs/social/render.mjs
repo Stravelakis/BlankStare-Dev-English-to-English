@@ -1,5 +1,5 @@
-// Renders the docs site's share card and carousel slides with headless Chrome.
-//   node docs/social/render.mjs      (after `node lab/shoot.mjs`)
+// Renders the docs site's share card with headless Chrome.
+//   node docs/social/render.mjs
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -10,13 +10,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUB = path.join(HERE, '..', 'public');
 const CHROME = process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 
-const SLIDES = [
-  ['slide-result.png',   'sidepanel-result.png',  'A TypeError, in plain English'],
-  ['slide-greek.png',    'sidepanel-greek.png',   'The same, in Greek'],
-  ['slide-history.png',  'sidepanel-history.png', 'Your last twenty answers'],
-  ['slide-welcome.png',  'sidepanel-welcome.png', 'Waiting at the side of the page'],
-  ['slide-settings.png', 'settings.png',          'One free key, and a test button'],
-];
+// The carousel slides are made by lab/shoot/shoot.mjs from real captures.
+
 
 async function shoot(page, query, out, w, h) {
   const url = pathToFileURL(path.join(HERE, page)).href + (query ? '?' + query : '');
@@ -26,5 +21,3 @@ async function shoot(page, query, out, w, h) {
 }
 
 await shoot('card.html', '', path.join(PUB, 'og-image.png'), 1200, 630);
-for (const [out, img, title] of SLIDES)
-  await shoot('slide.html', new URLSearchParams({ img, title }).toString(), path.join(PUB, 'screenshots', out), 1600, 700);
