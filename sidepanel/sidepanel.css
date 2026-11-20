@@ -151,7 +151,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
    The ornamental face is for type read once: the wordmark and the state
    headings. Never a button, label or value — its hairlines thin out at UI
    sizes. See fonts/display.css for the Latin/Greek pairing. */
-.logo-text, .welcome-title, .nokey-title {
+.logo-text, .welcome-title {
   font-family: var(--display-deco);
   font-weight: var(--display-deco-weight);
   letter-spacing: var(--display-deco-track);
@@ -294,18 +294,16 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 .history-empty { padding: 12px; font-size: 12px; color: var(--ink-3); text-align: center; }
 
 /* ── WELCOME / NO-KEY / LOADING ── */
-.welcome-body, .nokey-body {
+.welcome-body {
   display: flex; flex-direction: column; align-items: center;
   text-align: center; padding: 36px 24px 24px; gap: 10px;
 }
 .icon-anim-lg { width: 56px; height: 56px; margin-bottom: 4px; }
 .welcome-title { font-size: 20px; }
-.nokey-title   { font-size: 19px; }
-.welcome-desc, .nokey-desc {
+.welcome-desc {
   font-size: 13px; color: var(--ink-2); line-height: 1.7; max-width: 280px;
 }
 .welcome-desc strong { color: var(--accent); font-weight: 600; }
-.nokey-link { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
 
 .hint-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
 .hint-chip {

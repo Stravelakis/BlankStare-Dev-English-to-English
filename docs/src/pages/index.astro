@@ -4,13 +4,20 @@ import VernacularPanels from '../components/VernacularPanels.astro';
 import FeatureCards from '../components/FeatureCards.astro';
 import Carousel from '../components/Carousel.astro';
 import Playground from '../components/Playground.astro';
+import ReviewStamp from '../components/ReviewStamp.astro';
+import Glossary from '../components/Glossary.astro';
 import { siteConfig } from '../../site.config.ts';
 // The version shown is the extension's own, so it can never go stale.
 import manifest from '../../../manifest.json';
 
-import { Content as Dev } from '../docs/dev.md';
-import { Content as Plain } from '../docs/plain.md';
-import { Content as Eli5 } from '../docs/eli5.md';
+import { Content as Dev, frontmatter as devFm } from '../docs/dev.md';
+import { Content as Plain, frontmatter as plainFm } from '../docs/plain.md';
+import { Content as Eli5, frontmatter as eli5Fm } from '../docs/eli5.md';
+
+// One source: GUIDE.md / INSTALL.md copied in by scripts/sync-docs.mjs.
+const sources = import.meta.glob<{ Content: any }>('../docs/source/*.md', { eager: true });
+const guide = sources['../docs/source/guide.md'];
+const install = sources['../docs/source/install.md'];
 
 // The extension's own tested logic, loaded unchanged so the playground runs
 // the real thing rather than a copy that could drift.
@@ -80,11 +87,11 @@ console.log(buildSystemPrompt('el', 'newbie', ''));
   <FeatureCards features={features} title="What it does" />
   <Carousel slides={slides} label="Showcase" />
 
-  <section class="doc-body reveal" id="docs" aria-label="Documentation">
+  <section class="doc-body reveal" id="docs" aria-label="Documentation" data-glossary>
     <VernacularPanels>
-      <Dev slot="dev" />
-      <Plain slot="plain" />
-      <Eli5 slot="eli5" />
+      <Fragment slot="dev"><ReviewStamp {...devFm} /><Dev /></Fragment>
+      <Fragment slot="plain"><ReviewStamp {...plainFm} /><Plain /></Fragment>
+      <Fragment slot="eli5"><ReviewStamp {...eli5Fm} /><Eli5 /></Fragment>
     </VernacularPanels>
   </section>
 
@@ -94,11 +101,24 @@ console.log(buildSystemPrompt('el', 'newbie', ''));
       <li><b>Install.</b> Download the code, open <code>chrome://extensions</code>, switch on <b>Developer mode</b>, press <b>Load unpacked</b> and pick the folder. Settings opens by itself.</li>
       <li><b>Pick your AI.</b> Settings opens with 5 short steps. Choose <b>Try it now</b>: no key needed. Or paste a free key from <a href="https://aistudio.google.com/apikey">Google Gemini</a> or <a href="https://console.groq.com/keys">Groq</a>. Settings save by themselves.</li>
       <li><b>Open the panel.</b> Click the toolbar icon, or press <kbd>Alt+Shift+B</kbd>.</li>
-      <li><b>Select something confusing</b> on any page: an error, a README paragraph, a line of terminal output. Press the small brass button that appears, or right-click → <b>Explain with BlankStare</b>.</li>
-      <li><b>Read the translation</b> as it streams in. Too hard? Change the level and press <b>Re-explain</b>. Want more? <b>Go deeper</b>.</li>
-      <li><b>Optional:</b> paste a screenshot with <kbd>Ctrl+V</kbd> to have it explained, press <b>Do it with me</b> for a checklist, or add a YouTube key for videos on the topic.</li>
+      <li><b>Select something confusing</b> on any page: an error, a README paragraph, a line of terminal output. Press the small ⚡ button that appears (it shows only while the panel is open), or right-click → <b>Explain with BlankStare</b>.</li>
+      <li><b>Read the translation</b> as it streams in. Too hard? Change the level and press <b>Re-explain</b>. Want more? <b>↓ More detail</b>.</li>
+      <li><b>Optional:</b> paste a screenshot with <kbd>Ctrl+V</kbd> to have it explained, press <b>✅ Do it with me</b> for a checklist, or add a YouTube key for videos on the topic.</li>
     </ol>
   </section>
 
+  {/* No "reveal" on Install and Guide: a long section never reaches the reveal threshold. */}
+  {install && (
+    <section class="doc-body doc-source" id="install" aria-label="Install" data-glossary>
+      <install.Content />
+    </section>
+  )}
+  {guide && (
+    <section class="doc-body doc-source" id="guide" aria-label="Guide" data-glossary>
+      <guide.Content />
+    </section>
+  )}
+
   {siteConfig.playground.enabled && <Playground code={playgroundCode} title="Playground: the extension's own logic" />}
+  <Glossary />
 </DocsLayout>

@@ -274,7 +274,9 @@ function inlineMd(s) {
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
 }
 
+let mdRenders = 0;   // keeps checkbox ids unique when two answers show checklists
 function renderMarkdown(src) {
+  const run = ++mdRenders;
   const text  = normalizeText(src).replace(/\r\n/g, '\n');
   const parts = text.split(/```[^\n`]*\n?/);   // even = prose, odd = code
   const out   = [];
@@ -307,7 +309,7 @@ function renderMarkdown(src) {
         if (quote[1].trim()) out.push(`<p>${inlineMd(escHtml(quote[1]))}</p>`);
       } else if (check) {
         if (list !== 'check') { close(); out.push('<ul class="md-checklist">'); list = 'check'; }
-        const id = `chk-${i}-${checkN++}`;
+        const id = `chk-${run}-${i}-${checkN++}`;
         out.push(`<li><input type="checkbox" id="${id}"${check[1] !== ' ' ? ' checked' : ''}><label for="${id}">${inlineMd(escHtml(check[2]))}</label></li>`);
       } else if (ol) {
         // A code box between steps splits the list; keep the model's own

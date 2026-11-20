@@ -8,9 +8,7 @@
   "permissions": [
     "storage",
     "contextMenus",
-    "sidePanel",
-    "activeTab",
-    "tabs"
+    "sidePanel"
   ],
   "host_permissions": [
     "https://oai.endpoints.kepler.ai.cloud.ovh.net/*",
@@ -70,18 +68,5 @@
       "128": "icons/icon128.png"
     },
     "default_title": "Open BlankStare (Alt+Shift+B)"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "icons/lottie/*.json",
-        "fonts/*.woff2",
-        "fonts/*.css"
-      ],
-      "matches": [
-        "<all_urls>"
-      ],
-      "use_dynamic_url": false
-    }
-  ]
+  }
 }

@@ -155,6 +155,8 @@ function abortAll() {
   glossaryController?.abort();
   customQController?.abort();
   currentController = glossaryController = customQController = null;
+  // generate() calls nothing back after an abort, so release the Ask button here.
+  setLoading(el.customQBtn, false);
 }
 
 // ══ STATE SWITCHER ════════════════════════════════════════════════════════════
@@ -492,7 +494,7 @@ async function toggleVoice() {
 
   // An answer from Gemini Live arrived already spoken. Playing that voice costs
   // nothing and speaks Greek properly too.
-  if (liveAudio && mode !== 'browser') {
+  if (liveAudio && mode === 'auto') {
     try {
       setVoiceActive(true);
       currentAudioUrl = liveAudioUrl(liveAudio);

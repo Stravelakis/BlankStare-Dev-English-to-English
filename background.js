@@ -7,14 +7,22 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ══ INSTALL ══════════════════════════════════════════════════════════════════
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async ({ reason, previousVersion }) => {
   // "Keep open" was removed in v0.7.0 (it was saved but never used).
   chrome.storage.sync.remove('triggerAlwaysOn');
 
   // Build context menu based on saved setting (default: enabled)
   const { triggerRightClick = true } = await chrome.storage.sync.get('triggerRightClick');
   if (triggerRightClick) createContextMenu();
-  chrome.runtime.openOptionsPage();
+  // Settings opens on a fresh install, and once for people coming from a
+  // version before 0.8 (new providers, new setup). Not on every reload.
+  const before08 = reason === 'update' && /^0\.[0-7]\./.test(previousVersion || '');
+  if (before08) {
+    // v0.7's voice default was 'orpheus'; 'auto' is a strict superset of it.
+    const { ttsMode } = await chrome.storage.sync.get('ttsMode');
+    if (ttsMode === 'orpheus') await chrome.storage.sync.set({ ttsMode: 'auto' });
+  }
+  if (reason === 'install' || before08) chrome.runtime.openOptionsPage();
   console.log(`[BlankStare] v${chrome.runtime.getManifest().version} installed.`);
 });
 

@@ -40,7 +40,7 @@ Optional: a YouTube Data API key, for videos.
 ## Check it works
 
 1. Press **Alt + Shift + B**. The panel opens.
-2. Select any sentence on any page and press the brass button beside it.
+2. Select any sentence on any page and press the ⚡ button beside it (it only appears while the panel is open), or right-click → **Explain with BlankStare**.
 3. A plain-English version appears in the panel.
 
 ## For developers

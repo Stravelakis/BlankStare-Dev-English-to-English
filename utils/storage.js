@@ -40,13 +40,7 @@ const SETTINGS_DEFAULTS = {
 const RETIRED_SETTINGS = ['model', 'autoFallback', 'searxngUrl'];
 
 async function getSettings() {
-  const s = await chrome.storage.sync.get(SETTINGS_DEFAULTS);
-  // v0.7 → v0.8: 'orpheus' was the old default; 'auto' is a strict superset.
-  if (s.ttsMode === 'orpheus' && !s._ttsMigrated) {
-    s.ttsMode = 'auto';
-    chrome.storage.sync.set({ ttsMode: 'auto', _ttsMigrated: true }).catch(() => {});
-  }
-  return s;
+  return chrome.storage.sync.get(SETTINGS_DEFAULTS);
 }
 
 async function cleanRetiredSettings() {

@@ -143,14 +143,14 @@
   </header>
 
   <nav class="tab-bar reveal" role="tablist">
-    <button class="tab active" data-tab="settings" role="tab" aria-selected="true">Settings</button>
-    <button class="tab" data-tab="howto" role="tab" aria-selected="false">How to use</button>
-    <button class="tab" data-tab="about" role="tab" aria-selected="false">About</button>
+    <button class="tab active" id="tabbtn-settings" data-tab="settings" role="tab" aria-selected="true" aria-controls="tab-settings">Settings</button>
+    <button class="tab" id="tabbtn-howto" data-tab="howto" role="tab" aria-selected="false" aria-controls="tab-howto">How to use</button>
+    <button class="tab" id="tabbtn-about" data-tab="about" role="tab" aria-selected="false" aria-controls="tab-about">About</button>
     <span class="tab-ink" aria-hidden="true"></span>
   </nav>
 
   <!-- ══ TAB: SETTINGS ══ -->
-  <main id="tab-settings" class="tab-content" role="tabpanel">
+  <main id="tab-settings" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-settings">
 
     <!-- You -->
     <section class="card glass cut reveal">
@@ -171,7 +171,7 @@
         <button class="seg-btn" data-value="vibecoder" type="button">🤖 I build with AI</button>
       </div>
       <h3 class="label">About you <span class="opt">optional</span></h3>
-      <textarea id="user-context" class="field" rows="2" maxlength="400"
+      <textarea id="user-context" aria-label="About you" class="field" rows="2" maxlength="400"
         placeholder="e.g. I run a small shop website on WordPress and use Windows."></textarea>
       <p class="fine">One or two lines. BlankStare uses it to pick examples that fit you. It is sent with each question, so leave out anything private.</p>
     </section>
@@ -231,7 +231,7 @@
     <section class="card glass cut reveal">
       <div class="card-head">
         <div id="lottie-voice" class="card-lottie" aria-hidden="true"></div>
-        <div><h2>Voice</h2><p>What you hear when you press 🔊 Listen in the panel.</p></div>
+        <div><h2>Voice</h2><p>What you hear when you press 🔊 Read aloud in the panel.</p></div>
       </div>
       <div class="seg wrap" data-group="ttsMode">
         <button class="seg-btn" data-value="auto" type="button">✨ Best available</button>
@@ -262,17 +262,17 @@
       </div>
       <div class="toggle">
         <div><b>🖱️ Right-click menu</b><small>Select text → right-click → “Explain with BlankStare”.</small></div>
-        <label class="switch"><input type="checkbox" id="trigger-rightclick"><span></span></label>
+        <label class="switch"><input type="checkbox" id="trigger-rightclick" aria-label="Right-click menu"><span></span></label>
       </div>
       <div class="toggle">
-        <div><b>⚡ Floating button</b><small>Select text → a small ⚡ button appears → click it, then the BlankStare icon in the toolbar.</small></div>
-        <label class="switch"><input type="checkbox" id="trigger-floating"><span></span></label>
+        <div><b>⚡ Floating button</b><small>While the panel is open, a small ⚡ button appears beside text you select. Click it to explain.</small></div>
+        <label class="switch"><input type="checkbox" id="trigger-floating" aria-label="Floating button"><span></span></label>
       </div>
       <div class="toggle">
         <div><b>📖 Jargon list under each answer</b><small>Lists every technical word in the answer with a one-line meaning.</small></div>
-        <label class="switch"><input type="checkbox" id="jargon-dictionary"><span></span></label>
+        <label class="switch"><input type="checkbox" id="jargon-dictionary" aria-label="Jargon list under each answer"><span></span></label>
       </div>
-      <p class="keys"><span>Shortcuts</span><kbd>Alt+Shift+B</kbd> open the panel <kbd>Alt+Shift+E</kbd> explain the selected text</p>
+      <p class="keys"><span>Shortcuts</span><kbd>Alt+Shift+B</kbd> open the panel <kbd>Alt+Shift+E</kbd> explain the selected text (at once if the panel is open)</p>
     </section>
 
     <!-- Extras -->
@@ -301,7 +301,7 @@
       </details>
 
       <h3 class="label">Stay quiet on these sites</h3>
-      <textarea id="exclude-list" class="field mono" rows="4" placeholder="One site per line, e.g.&#10;mail.google.com&#10;app.notion.so"></textarea>
+      <textarea id="exclude-list" aria-label="Sites where BlankStare stays quiet" class="field mono" rows="4" placeholder="One site per line, e.g.&#10;mail.google.com&#10;app.notion.so"></textarea>
       <p class="fine"><code>example.com</code> also covers <code>www.example.com</code>. Takes effect on the next page load.</p>
     </section>
 
@@ -311,7 +311,7 @@
   </main>
 
   <!-- ══ TAB: HOW TO USE ══ -->
-  <div id="tab-howto" class="tab-content hidden" role="tabpanel">
+  <div id="tab-howto" class="tab-content hidden" role="tabpanel" aria-labelledby="tabbtn-howto">
     <section class="card glass cut">
       <h2 class="title">Three steps</h2>
       <ol class="big-steps">
@@ -325,12 +325,12 @@
       <div class="grid">
         <div><b>🧭 What do I need first?</b><small>Accounts, programs and files to have ready.</small></div>
         <div><b>✅ Do it with me</b><small>The steps as a checklist you tick off.</small></div>
-        <div><b>↓ Go deeper</b><small>More detail on the same thing.</small></div>
-        <div><b>↺ Say it differently</b><small>Same meaning, new words.</small></div>
-        <div><b>📄 Whole page</b><small>A short summary of the page you are on.</small></div>
+        <div><b>↓ More detail</b><small>Goes further into the same thing.</small></div>
+        <div><b>↺ Different wording</b><small>Same meaning, new words.</small></div>
+        <div><b>📄 Full page</b><small>A short summary of the page you are on.</small></div>
         <div><b>💬 Ask a follow-up</b><small>Type any question about the answer.</small></div>
         <div><b>📸 Paste a screenshot</b><small>Press Ctrl+V in the panel.</small></div>
-        <div><b>🔊 Listen</b><small>Hear the answer read aloud.</small></div>
+        <div><b>🔊 Read aloud</b><small>Hear the answer read aloud.</small></div>
       </div>
     </section>
     <section class="card glass cut">
@@ -344,7 +344,7 @@
   </div>
 
   <!-- ══ TAB: ABOUT ══ -->
-  <div id="tab-about" class="tab-content hidden" role="tabpanel">
+  <div id="tab-about" class="tab-content hidden" role="tabpanel" aria-labelledby="tabbtn-about">
     <section class="card glass cut about">
       <div id="lottie-about" class="about-lottie" aria-hidden="true"></div>
       <span class="wordmark big">BlankStare</span>

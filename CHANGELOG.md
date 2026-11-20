@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), version
 
 ## [Unreleased]
 
-## [0.8.0] - 2026-11-19
+## [0.8.0] - 2026-11-20
 
 ### Added
 - Works with no key: OVHcloud's free, account-free AI is the default.
@@ -44,6 +44,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), version
 ### Fixed
 - The Groq key test and translations failed because Groq shut down the
   models v0.7 relied on.
+- Settings no longer opens on every update or reload: only on install, and
+  once when coming from a version before 0.8.
+- Choosing the Orpheus voice could be reset to "Best available", and Gemini's
+  own voice played even with Orpheus chosen.
+- The follow-up Ask button could stay disabled after clearing an answer.
+- Checklist tick boxes in two answers could control each other.
+- Old tabs logged an error on every selection after the extension reloaded.
+- Settings and panel: labels for screen readers on every switch and text
+  box, the selected option announced, readable help-text contrast.
+- Settings help texts now use the panel's real button names.
+
+### Security
+- Dropped the unused `tabs` and `activeTab` permissions and the fonts and
+  icons that every website could load from the extension.
+
+### Docs and checks
+- Docs site on the current theme: review stamps, jargon tooltips, Install
+  and Guide sections built from INSTALL.md and GUIDE.md, rewritten Dev /
+  English / ELI5 pages, background starts on first move (speed 89–99).
+- Smoke test (`tests/smoke`) loads the real extension and gets a real
+  no-key answer; runs on every pull request. Lighthouse check after every
+  docs deploy.
 - Google keys in the newer `AQ.` format were not accepted.
 
 ## [0.7.0] - 2026-09-26

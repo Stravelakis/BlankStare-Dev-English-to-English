@@ -105,7 +105,10 @@ function placeThumb(seg) {
 }
 function setSeg(group, value) {
   $$(`.seg[data-group="${group}"]`).forEach(seg => {
-    seg.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('sel', b.dataset.value === value));
+    seg.querySelectorAll('.seg-btn').forEach(b => {
+      b.classList.toggle('sel', b.dataset.value === value);
+      b.setAttribute('aria-pressed', String(b.dataset.value === value));
+    });
     placeThumb(seg);
   });
 }
@@ -363,7 +366,7 @@ $$('#wizard .choices').forEach(g => {
   const group = g.dataset.group;
   g.addEventListener('click', e => {
     const b = e.target.closest('.choice'); if (!b) return;
-    g.querySelectorAll('.choice').forEach(x => x.classList.toggle('sel', x === b));
+    g.querySelectorAll('.choice').forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-pressed', String(x === b)); });
     wiz.picks[group] = b.dataset.value;
   });
   g.addEventListener('dblclick', e => { if (e.target.closest('.choice')) wizGo(wiz.step + 1); });
@@ -371,7 +374,7 @@ $$('#wizard .choices').forEach(g => {
 
 function wizSelectDefaults() {
   for (const [group, value] of Object.entries(wiz.picks)) {
-    $$(`#wizard .choices[data-group="${group}"] .choice`).forEach(b => b.classList.toggle('sel', b.dataset.value === value));
+    $$(`#wizard .choices[data-group="${group}"] .choice`).forEach(b => { b.classList.toggle('sel', b.dataset.value === value); b.setAttribute('aria-pressed', String(b.dataset.value === value)); });
   }
 }
 

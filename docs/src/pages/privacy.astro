@@ -37,7 +37,10 @@ import { siteConfig } from '../../site.config.ts';
       service you use which models it offers, using your key where one is needed.
       No text of yours is sent.</li>
       <li><b>YouTube</b> (googleapis.com), only if you added a YouTube key and
-      press Search: a search phrase based on your selection.</li>
+      press Search: a search phrase based on your selection. Playing a video
+      in the panel loads the youtube.com player, and the result thumbnails load
+      from i.ytimg.com; those requests go to Google as if you had opened
+      YouTube yourself.</li>
       <li><b>Web search</b> opens DuckDuckGo in a new tab, as if you had typed the
       search there yourself.</li>
     </ul>
@@ -62,7 +65,8 @@ import { siteConfig } from '../../site.config.ts';
       <li><b>Side panel, context menu, storage</b>: to show the panel, the
       right-click entry, and keep your settings.</li>
       <li><b>The AI services and The Nein listed above</b>: so BlankStare can
-      reach them. It reaches no other site.</li>
+      reach them. Apart from the YouTube player and thumbnails (youtube.com and
+      i.ytimg.com) when you play a video, it reaches no other site.</li>
     </ul>
 
     <p>BlankStare does not sell or share data, and does not use it for anything

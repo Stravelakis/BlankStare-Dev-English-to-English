@@ -38,10 +38,11 @@ full of the same jargon.
   Chrome's sync storage.
 
 Also: paste a screenshot (Ctrl+V) to have it explained, "What do I need
-first?", a "Do it with me" checklist, commands in copy boxes, go deeper,
-rephrase, full-page summary, follow-up questions, videos and a web search
-link, the last 20 answers, an exclude list, and keyboard shortcuts
-(Alt+Shift+B opens the panel, Alt+Shift+E sends the selection).
+first?", a "Do it with me" checklist, commands in copy boxes, "More detail",
+"Different wording", full-page summary, follow-up questions, a term glossary,
+read aloud, videos and a web search link, the last 20 answers, a list of sites
+to stay quiet on, and keyboard shortcuts (Alt+Shift+B opens the panel,
+Alt+Shift+E queues the selection).
 
 ## Quick start
 
@@ -51,7 +52,9 @@ link, the last 20 answers, an exclude list, and keyboard shortcuts
 3. Settings opens with a 5-step setup. Pick **Try it now** (no key needed), or
    paste a free key from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
    (Gemini) or [console.groq.com/keys](https://console.groq.com/keys) (Groq).
-4. Select any confusing text and press the brass button.
+4. Open the panel (toolbar icon, or Alt+Shift+B). Select any confusing text
+   and press the ⚡ button beside it, or right-click → **Explain with
+   BlankStare**. The ⚡ button only appears while the panel is open.
 
 Full setup: [INSTALL.md](INSTALL.md) · Full manual: [GUIDE.md](GUIDE.md) ·
 Docs site: https://docs.stravelakis.com/BlankStare-Dev-English-to-English/ ·
@@ -74,7 +77,7 @@ nothing loads from Google.
   (streaming, link safety, language detection, site exclusion).
 - **Not yet:** a Chrome Web Store listing.
 - **Known rough edge:** Chrome warns that BlankStare can "read and change all
-  your data on all websites". The brass button has to be on every page for
+  your data on all websites". The ⚡ button has to be on every page for
   select-to-explain to work; BlankStare only reads your selection.
 
 ## For developers

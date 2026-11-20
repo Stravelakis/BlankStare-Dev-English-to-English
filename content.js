@@ -88,10 +88,14 @@ async function isPanelOpen() {
   _panelCacheTime = now;
   _panelOpenCache = await new Promise(resolve => {
     const t = setTimeout(() => resolve(false), 250);
-    chrome.runtime.sendMessage({ type: 'IS_PANEL_OPEN' }, res => {
-      clearTimeout(t);
-      resolve(!chrome.runtime.lastError && res?.open === true);
-    });
+    // After the extension is reloaded, pages opened before it still run this
+    // script with a dead connection; sendMessage then throws.
+    try {
+      chrome.runtime.sendMessage({ type: 'IS_PANEL_OPEN' }, res => {
+        clearTimeout(t);
+        resolve(!chrome.runtime.lastError && res?.open === true);
+      });
+    } catch (_) { clearTimeout(t); resolve(false); }
   });
   return _panelOpenCache;
 }

@@ -1,0 +1,64 @@
+[
+  {
+    "term": "API key",
+    "explainer": true,
+    "eli5": "A secret password that lets an app use someone else's service, like a library card for a robot.",
+    "english": "A private code that proves you're allowed to use an online service. Whoever has it can use your account, so it stays secret.",
+    "dev": "Bearer credential sent with each request to authenticate and bill calls to a provider's API."
+  },
+  {
+    "term": "key",
+    "eli5": "A free ticket that lets the helper use a faster clever computer.",
+    "english": "A private code from Google or Groq that lets BlankStare use their free AI on your behalf. Optional; BlankStare works without one.",
+    "dev": "Provider API key (Gemini or Groq), stored in chrome.storage.sync and sent only to that provider."
+  },
+  {
+    "term": "side panel",
+    "eli5": "A little window that sits at the side of your browser.",
+    "english": "Chrome's panel at the right edge of the window, which stays open beside the page you are reading.",
+    "dev": "chrome.sidePanel surface (MV3), opened from a user gesture."
+  },
+  {
+    "term": "terminal",
+    "explainer": true,
+    "eli5": "A window where you type instructions to your computer instead of clicking.",
+    "english": "The app where you type commands, such as Terminal on a Mac or PowerShell on Windows.",
+    "dev": "Command-line shell (bash, zsh, PowerShell)."
+  },
+  {
+    "term": "README",
+    "eli5": "The \"read me first\" note that comes with a program.",
+    "english": "The front page of a software project, explaining what it is and how to install it.",
+    "dev": "README.md at a repo root."
+  },
+  {
+    "term": "model",
+    "eli5": "The clever computer brain that writes the answer.",
+    "english": "One particular AI that writes answers. Different companies offer different models; BlankStare picks a working free one each day.",
+    "dev": "LLM identifier at a provider, e.g. gemini-3.8-live or Qwen3.8-27B; ranked daily from The Nein plus the provider catalogue."
+  },
+  {
+    "term": "The Nein",
+    "eli5": "A checker that looks every day at which clever computers are free.",
+    "english": "A daily list, made by BlankStare's author, of AI models that are free and actually working today.",
+    "dev": "Public JSON at stravelakis.com/wp-json/nein/v1/models.json with free status, lifecycle and test status per model."
+  },
+  {
+    "term": "OVHcloud",
+    "eli5": "A company in Europe that lends its clever computer for free, no ticket needed.",
+    "english": "A European cloud company whose AI service answers BlankStare's questions when you have no key. Free, slower when busy.",
+    "dev": "OVHcloud AI Endpoints, anonymous OpenAI-compatible lane, about 2 requests per minute per model per IP."
+  },
+  {
+    "term": "Groq",
+    "eli5": "A company with very fast clever computers. You need a free ticket from them.",
+    "english": "An AI company known for very fast answers. A free key from console.groq.com makes it available in BlankStare.",
+    "dev": "OpenAI-compatible API at api.groq.com; also hosts the Orpheus TTS model."
+  },
+  {
+    "term": "Gemini",
+    "eli5": "Google's clever computer. With a free ticket it can also talk.",
+    "english": "Google's AI. A free key from Google AI Studio gives BlankStare its best answers, read aloud in Gemini's own voice.",
+    "dev": "Gemini API (generativelanguage.googleapis.com), streamGenerateContent plus the Live BidiGenerateContent WebSocket."
+  }
+]

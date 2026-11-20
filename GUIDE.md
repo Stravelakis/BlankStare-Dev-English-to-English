@@ -21,9 +21,12 @@ The complete manual. Install first: [INSTALL.md](INSTALL.md).
 
 ### Translate a selection
 
-- **How:** select text on any page, then press the brass button that appears
+- **How:** select text on any page, then press the ⚡ button that appears
   beside it, or right-click → **Explain with BlankStare**, or press
-  **Alt + Shift + E**.
+  **Alt + Shift + E**. The ⚡ button only appears while the panel is open.
+  Alt + Shift + E queues your selection (a "!" badge shows on the toolbar
+  icon); it is explained at once if the panel is already open, otherwise when
+  you open the panel (toolbar icon or Alt + Shift + B).
 - **Options:** reading level (dropdown at the top), **+ Context** (tell it who
   you are or what you're doing, e.g. "I'm setting up WordPress").
 - **Screenshots:** copy a screenshot and press **Ctrl + V** in the panel to
@@ -39,12 +42,12 @@ The complete manual. Install first: [INSTALL.md](INSTALL.md).
   won't let a page open the panel by itself). Right-click and the shortcut work
   either way.
 
-### Re-explain, Go deeper, Different wording
+### Re-explain, More detail, Different wording
 
 - **Re-explain (↻):** after changing the level, language or context, the button
   turns bright; press it to run the same text again.
-- **Go deeper:** a longer, fuller answer (twice the length budget).
-- **Different wording:** the same meaning, said another way.
+- **↓ More detail:** a longer, fuller answer (twice the length budget).
+- **↺ Different wording:** the same meaning, said another way.
 
 ### What do I need first? and Do it with me
 
@@ -52,14 +55,15 @@ The complete manual. Install first: [INSTALL.md](INSTALL.md).
   starting.
 - **✅ Do it with me** turns the answer into a checklist with tick boxes.
 
-### Jargon dictionary
+### Term glossary
 
-Switch on **Jargon dictionary** in the panel. Every technical term in the
-selection is listed with a two-to-ten word meaning.
+Switch on **📖 Term glossary** in the panel (Settings calls the same setting
+**Jargon list under each answer**). Every technical term in the selection is
+listed with a two-to-ten word meaning.
 
 ### Read aloud
 
-- The speaker button reads the answer.
+- The 🔊 button (tooltip: Read aloud) reads the answer.
 - **Gemini key:** Gemini 3.8 Live answers can be read aloud in Gemini's own
   voice.
 - **Groq key:** also unlocks the Orpheus voice (English only).
@@ -71,18 +75,18 @@ selection is listed with a two-to-ten word meaning.
 
 ### Full page summary
 
-**Full page** summarises the whole page you're on in three to five points.
+**📄 Full page** summarises the whole page you're on in three to five points.
 BlankStare picks the main article and skips menus and footers.
 
 ### Ask your own question
 
-**Ask a follow-up** under the answer: ask anything, with the selection as
+**💬 Ask a follow-up** under the answer: ask anything, with the selection as
 background.
 
 ### Read more, videos and web search
 
 - **Read more on:** links to MDN, W3Schools and DevDocs for the selection.
-- **YouTube:** needs a free YouTube key (Settings → YouTube). Videos play
+- **YouTube:** needs a free YouTube key (Settings → Extras → YouTube videos in the panel). Videos play
   inside the panel.
 - **Web search:** **Search** opens DuckDuckGo in a new tab.
 
@@ -96,9 +100,9 @@ again. History is cleared when you close the browser.
 **EN / EL** at the top switches the panel, the answers and the voice between
 English and Greek.
 
-### Exclude list
+### Stay quiet on these sites
 
-Settings → **Exclude list**: websites where BlankStare stays completely silent
+Settings → Extras → **Stay quiet on these sites**: websites where BlankStare stays completely silent
 (no button, nothing). One domain per line; `example.com` also covers
 `www.example.com`.
 
@@ -113,20 +117,27 @@ rests a minute. If a key is refused, that provider is set aside for the day.
 ## Configuration
 
 Settings open with a 5-step setup: language, how simple, pick your free AI, a
-key or **Try it now**, done. Press **Run the setup again** to redo it.
-Settings save by themselves; there is no Save button.
+key or **Try it now**, done. Press **Run the setup again** (bottom of
+Settings) to redo it. Settings save by themselves; there is no Save button.
+The page has these sections: **You** (Language, How simple, About you), **Your
+free AI** (OVHcloud, Google Gemini and Groq cards, Today's models, Try first),
+**Voice** (Best available, Orpheus, Browser voice), **How you open it**
+(Right-click menu, Floating button, Jargon list under each answer) and
+**Extras** (YouTube key, Stay quiet on these sites).
 
 | Setting | Default | What it does |
 |---|---|---|
 | Language | English | Language of the panel, answers and voice |
-| Default reading level | Standard | Level each new answer starts at |
+| How simple | Standard | Level each new answer starts at |
 | Gemini key | none (optional) | Free, best quality. From aistudio.google.com/apikey |
 | Groq key | none (optional) | Free, fastest. From console.groq.com/keys. Also unlocks Orpheus |
 | Try first | Automatic | Optional pin: ask one model first |
 | YouTube key | none | Turns on video search |
-| Floating button | on | The brass button beside selected text |
+| Floating button | on | The ⚡ button beside selected text (only while the panel is open) |
 | Right-click menu | on | "Explain with BlankStare" on right-click |
-| Exclude list | empty | Sites where BlankStare does nothing |
+| Stay quiet on these sites | empty | Sites where BlankStare does nothing |
+| Jargon list under each answer | off | Same as the panel's Term glossary switch |
+| Voice | Best available | Best available, Orpheus (Groq key) or Browser voice |
 
 ## Troubleshooting
 
@@ -135,8 +146,8 @@ Settings save by themselves; there is no Save button.
 | Answers are slow | The no-key AI (OVHcloud) is busy | Wait, or add a free Gemini or Groq key in Settings |
 | A key is refused | Mistyped, or deleted at the provider | Paste a new key. BlankStare sets that provider aside for the day and uses the others |
 | A model rests for a minute | It was busy | Nothing: BlankStare tries the next one |
-| No brass button appears | Panel is closed, the site is on the exclude list, or the button is switched off | Open the panel (Alt + Shift + B); check Settings → Trigger modes and Exclude list |
-| Button doesn't appear on `chrome://` pages or the Web Store | Chrome forbids extensions there | Copy the text into any normal page |
+| No ⚡ button appears | Panel is closed, the site is on the quiet list, or the button is switched off | Open the panel (Alt + Shift + B); check Settings → How you open it, and Extras → Stay quiet on these sites |
+| ⚡ button doesn't appear on `chrome://` pages or the Web Store | Chrome forbids extensions there | Copy the text into any normal page |
 | Voice reads nothing | Free voice allowance used up, or no system voice installed | Use the computer's voice; for Greek, add a Greek voice in your computer's speech settings |
 | The answer stops halfway with a notice | The connection dropped | What arrived is kept; press ↻ to run it again |
 
@@ -163,10 +174,11 @@ The text you select (or a pasted screenshot, or the page for a summary) goes to
 whichever AI answers: OVHcloud, Google or Groq. BlankStare also fetches The
 Nein's public model list. Video searches go to YouTube and web searches to
 DuckDuckGo, only when you press Search. Keys stay in Chrome's sync storage.
-Nothing goes to the author.
+No data about you goes to the author. The daily model-list fetch from
+stravelakis.com sends nothing about you.
 
 **Why does Chrome warn it can "read and change all your data"?**
-The brass button has to be on every page before you select anything, and that
+The ⚡ button has to be on every page before you select anything, and that
 requires access to every page. BlankStare only reads your selection, or the
 page when you ask for a summary.
 

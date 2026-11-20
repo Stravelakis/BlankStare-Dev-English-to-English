@@ -43,7 +43,7 @@
       <button id="rerun-btn" class="rerun-btn" title="Re-explain with current settings" aria-label="Re-explain" disabled>↻</button>
     </div>
     <div id="context-input-area" class="context-input-area hidden">
-      <input id="user-context" type="text" class="context-input"
+      <input id="user-context" type="text" aria-label="Context about you" class="context-input"
              placeholder="I'm reading this because… (e.g. reviewing a dev's PR as a designer)">
     </div>
   </div>
@@ -52,7 +52,7 @@
   <div id="history-panel" class="history-panel hidden" aria-label="Explanation history">
     <div class="history-header">
       <span data-i18n="recent">Recent explanations</span>
-      <button id="history-close" class="icon-btn-sm">✕</button>
+      <button id="history-close" class="icon-btn-sm" aria-label="Close history">✕</button>
     </div>
     <div id="history-list" class="history-list"></div>
     <div id="history-empty" class="history-empty">No explanations yet this session.</div>
@@ -128,7 +128,7 @@
       <div class="jargon-toggle-row">
         <span class="jargon-label" data-i18n="jargonToggle">📖 Jargon dictionary</span>
         <label class="mini-toggle" for="jargon-toggle-cb">
-          <input type="checkbox" id="jargon-toggle-cb">
+          <input type="checkbox" id="jargon-toggle-cb" aria-label="Term glossary">
           <span class="mini-knob"></span>
         </label>
       </div>
@@ -171,7 +171,7 @@
       <div id="q-chips" class="q-chips"></div>
       <div class="custom-q-body">
         <div class="pb-box">
-          <textarea id="custom-q-input" rows="1" class="pb-input" data-i18n-placeholder="customQPlaceholder" placeholder="Ask anything about the selected text…"></textarea>
+          <textarea id="custom-q-input" rows="1" aria-label="Ask a follow-up" class="pb-input" data-i18n-placeholder="customQPlaceholder" placeholder="Ask anything about the selected text…"></textarea>
           <button id="custom-q-btn" class="pb-send" aria-label="Ask" title="Ask">➜</button>
         </div>
       </div>

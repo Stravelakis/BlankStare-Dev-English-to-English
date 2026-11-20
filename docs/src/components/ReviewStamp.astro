@@ -1,0 +1,33 @@
+---
+// Review stamp (STANDARDS.md §7). Set in each page's front matter after
+// ticking templates/docs/REVIEW-CHECKLIST.md:
+//   checkedAgainst: v1.2.0
+//   checkedOn: 2026-10-18
+// A missing stamp shows a visible "not reviewed yet" note on purpose.
+interface Props {
+  checkedAgainst?: string;
+  checkedOn?: string | Date;
+}
+const { checkedAgainst, checkedOn } = Astro.props;
+// Front matter can hand the date over as a Date or as a full ISO string
+// ("2026-11-18T00:00:00.000Z"): keep the day only.
+const date = checkedOn instanceof Date ? checkedOn.toISOString().slice(0, 10) : checkedOn ? String(checkedOn).slice(0, 10) : undefined;
+const ok = Boolean(checkedAgainst && date);
+// The date is shown as "18 Nov 2026" (easier to read than 2026-11-18).
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const shown = (() => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(date ?? ''));
+  return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}` : date;
+})();
+---
+<p class:list={['review-stamp', { 'review-stamp--missing': !ok }]}>
+  {ok ? (
+    <>
+      <span aria-hidden="true">✓</span> Checked against <strong>{checkedAgainst}</strong> on <time datetime={date}>{shown}</time>
+    </>
+  ) : (
+    <>
+      <span aria-hidden="true">!</span> Not reviewed yet for this version
+    </>
+  )}
+</p>

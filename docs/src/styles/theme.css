@@ -846,3 +846,33 @@ pre code {
     animation: none;
   }
 }
+
+
+/* ---- Review stamp (§7) ---- */
+.review-stamp { display: inline-flex; gap: .5em; align-items: center; margin: 0 0 1.25rem; padding: .35rem .8rem; border-radius: 999px; font-size: .82rem; color: #82d8b7; background: rgba(130,216,183,.1); border: 1px solid rgba(130,216,183,.35); }
+.review-stamp--missing { color: #ffcf7a; background: rgba(255,207,122,.1); border-color: rgba(255,207,122,.4); }
+
+/* ---- Jargon tooltips + explainers (§7) ---- */
+.term { position: relative; text-decoration: underline dotted rgba(130,216,183,.8); text-underline-offset: .2em; cursor: help; border-radius: 3px; }
+.term:focus-visible { outline: 2px solid #42a9a4; outline-offset: 2px; }
+.term-tip { position: absolute; left: var(--tip-x, 0px); bottom: calc(100% + .5rem); z-index: 30; width: max-content; max-width: min(22rem, 80vw); padding: .6rem .8rem; border-radius: .6rem; font-size: .85rem; line-height: 1.45; font-weight: 400; color: #e8ecff; background: #141a3d; border: 1px solid #344080; box-shadow: 0 10px 30px rgba(0,0,0,.45); display: none; pointer-events: none; text-decoration: none; }
+.term:hover .term-tip, .term:focus .term-tip, .term:focus-within .term-tip, .term.open .term-tip { display: block; animation: tip-in .15s ease-out; }
+@keyframes tip-in { from { opacity: 0; margin-bottom: -4px; } to { opacity: 1; margin-bottom: 0; } }
+.explainer { margin: .75rem 0 1.25rem; padding: .8rem 1rem; border-left: 3px solid #42a9a4; border-radius: 0 .6rem .6rem 0; background: rgba(66,169,164,.08); font-size: .92rem; }
+.explainer strong { display: block; margin-bottom: .25rem; color: #82d8b7; }
+.term-tip .lvl, .explainer .lvl { display: none; }
+.term-tip .lvl { white-space: normal; }
+html[data-vern="eli5"] .lvl-eli5, html[data-vern="plain"] .lvl-plain, html[data-vern="dev"] .lvl-dev { display: inline; }
+@media (prefers-reduced-motion: reduce) { .term-tip { animation: none !important; } }
+.doc-source { margin-top: 3rem; }
+
+/* ---------- Wide tables scroll inside themselves, never the page ---------- */
+.doc-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* BlankStare: Shiki's github-dark comment colour (#6A737D) fails contrast on
+   this background (Lighthouse, 20 Nov 2026). Lift it to a readable grey. */
+.astro-code span[style*="#6A737D" i] { color: #9DA7B3 !important; }
