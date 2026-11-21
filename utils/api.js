@@ -469,12 +469,12 @@ async function testProvider(provider, key) {
 // ══ GLOSSARY ══════════════════════════════════════════════════════════════════
 // Supplementary pass after a translation is shown. Uses the same chain as
 // everything else, minus the Live model (it needs strict JSON, not speech).
-function fetchGlossary({ settings, translation, signal }) {
+function fetchGlossary({ settings, source, signal }) {
   return new Promise((resolve, reject) => {
     generate({
       settings, mode: 'glossary', signal, maxTokens: 2048, temperature: 0.1,
       systemPrompt: 'You extract technical terms. You answer only with JSON.',
-      userPrompt: buildGlossaryPrompt(translation),
+      userPrompt: buildGlossaryPrompt(source),
       onDone: raw => {
         try {
           const json = raw.replace(/```json|```/g, '').trim();
@@ -551,19 +551,3 @@ async function searchYouTube(query, apiKey, signal) {
     }));
 }
 
-// ══ WEB SEARCH ════════════════════════════════════════════════════════════════
-// SearXNG was removed in v0.8 (Ak, 19/11/2026). Search is a hand-off to
-// DuckDuckGo in a new tab: no service, no key, nothing to set up.
-function duckDuckGoUrl(query) {
-  return `https://duckduckgo.com/?q=${encodeURIComponent(query + ' explained simply')}`;
-}
-
-// ══ RESOURCE LINKS ════════════════════════════════════════════════════════════
-function buildResourceLinks(selectedText) {
-  const q = encodeURIComponent(selectedText.trim());
-  return {
-    mdn:     `https://developer.mozilla.org/en-US/search?q=${q}`,
-    w3s:     `https://www.w3schools.com/search/search_result.asp?search=${q}`,
-    devdocs: `https://devdocs.io/#q=${q}`,
-  };
-}

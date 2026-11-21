@@ -6,6 +6,19 @@
 // Content-script messages do NOT count. This is a Chrome hard limit.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ══ ONE PANEL PER TAB ═════════════════════════════════════════════════════════
+// The manifest has no default panel, so a panel only exists in the tabs it was
+// opened in, and each of those tabs has its own. Both calls are synchronous
+// and in this order: setOptions is queued before open, and open still runs
+// inside the gesture.
+function openPanel(tabId) {
+  chrome.sidePanel.setOptions({ tabId, path: `sidepanel/sidepanel.html?tab=${tabId}`, enabled: true }).catch(() => {});
+  chrome.sidePanel.open({ tabId }).catch(() => {});
+  chrome.action.setBadgeText({ text: '', tabId });
+}
+const queue = (text, tabId) =>
+  chrome.storage.session.set({ pendingText: text, pendingTimestamp: Date.now(), pendingTabId: tabId });
+
 // ══ INSTALL ══════════════════════════════════════════════════════════════════
 chrome.runtime.onInstalled.addListener(async ({ reason, previousVersion }) => {
   // "Keep open" was removed in v0.7.0 (it was saved but never used).
@@ -41,8 +54,7 @@ function removeContextMenu() {
 // ══ TOOLBAR CLICK — open panel SYNCHRONOUSLY ══════════════════════════════════
 chrome.action.onClicked.addListener((tab) => {
   // ✅ SYNC: open the panel while the gesture token is still alive
-  chrome.sidePanel.open({ tabId: tab.id });
-  chrome.action.setBadgeText({ text: '', tabId: tab.id });
+  openPanel(tab.id);
 
   // ✅ ASYNC after: grab selection if nothing queued
   ;(async () => {
@@ -50,9 +62,7 @@ chrome.action.onClicked.addListener((tab) => {
       const { pendingText } = await chrome.storage.session.get(['pendingText']);
       if (!pendingText) {
         const res = await chrome.tabs.sendMessage(tab.id, { type: 'GET_SELECTION' });
-        if (res?.text) {
-          await chrome.storage.session.set({ pendingText: res.text, pendingTimestamp: Date.now() });
-        }
+        if (res?.text) await queue(res.text, tab.id);
       }
     } catch (_) {}
   })();
@@ -62,10 +72,9 @@ chrome.action.onClicked.addListener((tab) => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId !== 'blankstare-explain' || !info.selectionText) return;
   // ✅ SYNC: open panel first
-  chrome.sidePanel.open({ tabId: tab.id });
-  chrome.action.setBadgeText({ text: '', tabId: tab.id });
+  openPanel(tab.id);
   // ✅ ASYNC after: store the text
-  chrome.storage.session.set({ pendingText: info.selectionText.trim(), pendingTimestamp: Date.now() });
+  queue(info.selectionText.trim(), tab.id);
 });
 
 // ══ KEYBOARD SHORTCUT — Alt+Shift+E ══════════════════════════════════════════
@@ -76,7 +85,7 @@ chrome.commands.onCommand.addListener(async (command) => {
   try {
     const res = await chrome.tabs.sendMessage(tab.id, { type: 'GET_SELECTION' });
     if (res?.text) {
-      await chrome.storage.session.set({ pendingText: res.text, pendingTimestamp: Date.now() });
+      await queue(res.text, tab.id);
       chrome.action.setBadgeText({ text: '!', tabId: tab.id });
       chrome.action.setBadgeBackgroundColor({ color: '#e8a838', tabId: tab.id });
     }
@@ -89,7 +98,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'EXPLAIN_TEXT') {
     const tabId = sender.tab?.id;
     if (!tabId) { sendResponse({ ok: false }); return; }
-    chrome.storage.session.set({ pendingText: message.text, pendingTimestamp: Date.now() })
+    queue(message.text, tabId)
       .then(() => {
         chrome.action.setBadgeText({ text: '!', tabId });
         chrome.action.setBadgeBackgroundColor({ color: '#e8a838', tabId });
