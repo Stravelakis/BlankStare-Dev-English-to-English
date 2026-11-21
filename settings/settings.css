@@ -145,6 +145,10 @@ body.wiz-open .page { opacity: 0; filter: blur(8px); pointer-events: none; }
 .tab:hover { color: var(--ink); }
 .tab.active { color: var(--accent-hi); }
 .tab:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: -2px; }
+/* Looks like a tab, opens the docs site in a new tab. */
+.tab-ext { margin-left: auto; padding: 11px 18px; font: 700 13px var(--body); color: var(--ink-2); text-decoration: none; transition: color .25s; }
+.tab-ext:hover { color: var(--accent-hi); }
+.tab-ext:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: -2px; }
 .tab-ink { position: absolute; bottom: -1px; height: 2px; left: 0; width: 0; background: linear-gradient(90deg, var(--accent-lo), var(--accent-hi), var(--accent-lo));
   box-shadow: 0 0 12px rgb(var(--accent-rgb) / .8); transition: left .45s var(--snap), width .45s var(--snap); }
 .tab-content { display: grid; gap: 18px; }

@@ -564,7 +564,6 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 .panel-footer a { color: var(--ink-3); text-decoration: none; }
 .panel-footer a:hover { color: var(--accent); }
 .footer-sep { color: var(--line-hot); }
-.footer-kofi:hover { color: var(--crit) !important; }
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 5px; }

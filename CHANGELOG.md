@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), version
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-21
+
 ### Changed
 - Each tab has its own panel. The panel opens only in the tab you opened it
   from, keeps its own answer, and hides when you switch to another tab.
@@ -17,7 +19,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), version
 - A clear message when a page cannot be read (browser pages, or tabs opened
   before an install or update).
 
+### Added
+- Settings has a **Full Documentation** tab that opens the docs site.
+
 ### Removed
+- The Ko-fi links (panel footer, Settings, README). The panel footer now
+  links to stravelakis.com instead of skilitsa.com.
 - The "Read more on" links (MDN, W3Schools, DevDocs) and the Web search
   button.
 

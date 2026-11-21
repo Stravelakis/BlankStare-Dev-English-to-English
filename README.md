@@ -110,4 +110,3 @@ BlankStare was built by **Lambros Stravelakis** while building
 Available for web apps, Chrome extensions and AI tools:
 [stravelakis.com](https://stravelakis.com) · lambros@stravelakis.com
 
-If BlankStare saves you time: [ko-fi.com/stravelakis](https://ko-fi.com/stravelakis)
