@@ -1,6 +1,6 @@
 # Handoff: BlankStare
 
-_Last updated: 2026-11-21 · by: Claude Code · version: v0.8.0 (released 20 Nov 2026) + unreleased panel-per-tab work_
+_Last updated: 2026-11-21 · by: Claude Code · version: v0.8.1 (21 Nov 2026), Web Store submission prepared_
 
 ## In one paragraph
 
@@ -11,7 +11,18 @@ rebuilt daily from The Nein and each provider's own catalogue. Works with no
 key (OVHcloud), better with a free Gemini or Groq key. Released on GitHub;
 not on the Chrome Web Store yet. Plan and sources: PLAN-v0.8.md.
 
-## Since v0.8.0 (unreleased, 21 Nov 2026)
+## v0.8.1 and the Chrome Web Store (21 Nov 2026)
+
+- **Web Store:** everything to paste is in `store/LISTING.md` (description,
+  permission justifications, data-use answers, privacy URL); images in
+  `store/` incl. the required 440×280 promo tile (`node shoot.mjs tiles`).
+  Ak does the account ($5 one-time fee), upload and submit.
+- **Links:** Ko-fi removed everywhere; panel footer → stravelakis.com;
+  Settings tab bar has **Full Documentation ↗** (docs site).
+- **Screenshots** re-shot 21/11 with `GEMINI_KEY` (OVH refuses this laptop);
+  the key is set after the Settings shots so it never appears.
+
+## v0.8.1 contents (21 Nov 2026)
 
 - **One panel per tab.** The manifest has no default panel any more;
   `openPanel()` in background.js sets a panel for that tab only
@@ -74,11 +85,10 @@ not on the Chrome Web Store yet. Plan and sources: PLAN-v0.8.md.
 
 ## Next steps, in order
 
-1. Ak tries, in a real Chrome: toolbar icon and right-click open the panel in
+1. Ak: register the Chrome Web Store developer account and submit, following
+   `store/LISTING.md`. Upload `blankstare-v0.8.1.zip` (built from the tag).
+2. Ak tries, in a real Chrome: toolbar icon and right-click open the panel in
    that tab only; Alt+Shift+E; Full page after moving to another page.
-2. Chrome Web Store listing: images in `store/`; privacy answers must list
-   OVHcloud, Google (free-tier review rule), Groq and The Nein; zip with the
-   `git archive` line in DEPLOY.md.
 3. Copy the DotField speed fix into the shared docs theme.
 
 ## Open questions
@@ -121,9 +131,8 @@ so a non-developer can read the translation *instead of* the original.
 
 - **GitHub**: https://github.com/Stravelakis/BlankStare-Dev-English-to-English
 - **Creator**: Lambros Stravelakis — lambros@stravelakis.com — https://stravelakis.com
-- **Ko-fi**: https://ko-fi.com/stravelakis
 - **Built with**: Claude Code + Hermes agent
-- **Business model**: Zero cost. ~~BYOK: users supply their own free Groq API key.~~ v0.8: works with no key; free Gemini or Groq keys are optional. Optional support via Ko-fi. No subscription, never.
+- **Business model**: Zero cost. ~~BYOK: users supply their own free Groq API key.~~ v0.8: works with no key; free Gemini or Groq keys are optional. No Ko-fi link (removed 21/11/2026). No subscription, never.
 - **Target audience**: Vibecoders first and foremost (people building real things with AI coding tools without a traditional dev background), and secondarily anyone else who works alongside developers — designers, PMs, founders, marketers.
 
 ---

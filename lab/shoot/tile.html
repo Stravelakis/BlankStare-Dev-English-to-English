@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- Chrome Web Store promo tiles: small 440x280 (required) and marquee 1400x560.
+     tile.html?size=small|marquee. Rendered by `node shoot.mjs tiles`. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../fonts/comfortaa.css">
+<link rel="stylesheet" href="../../fonts/display.css">
+<style>
+  :root { --accent: #C9A227; --accent-hi: #F2DCA0; --line: #5a4a2c; --ink-2: #A79E88; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #0b0a08; overflow: hidden; width: 100vw; height: 100vh; }
+  #bg { position: fixed; inset: 0; width: 100%; height: 100%; }
+  .veil { position: fixed; inset: 0; background: radial-gradient(ellipse at 30% 50%, rgba(11,10,8,.25), rgba(11,10,8,.8) 75%); }
+  .frame { position: fixed; inset: 3.5vh 2.2vw; box-shadow: inset 0 0 0 1px var(--line); }
+  .peek { display: none; }
+  .marquee .peek { display: block; position: fixed; right: 6vw; top: 9vh; width: 330px; height: 91vh; overflow: hidden;
+    box-shadow: 0 0 0 1px var(--line), 0 30px 80px -20px rgba(0,0,0,.95), 0 0 60px -20px rgba(201,162,39,.4);
+    -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+  .peek img { display: block; width: 100%; }
+  .stage { position: relative; height: 100vh; display: flex; align-items: center; gap: 4vw; padding: 0 7vw; }
+  .icon { width: 22vh; height: 22vh; flex: none; filter: drop-shadow(0 0 24px rgba(201,162,39,.45)); }
+  h1 { margin: 0; font: 400 11vh/1 'BlankStare Display', Georgia, serif; color: var(--accent-hi); letter-spacing: .06em; text-transform: uppercase;
+    text-shadow: 0 0 40px rgba(201,162,39,.4); }
+  .rule { width: 12vh; height: 2px; margin: 4vh 0 3.5vh; background: linear-gradient(90deg, var(--accent), transparent); }
+  p { margin: 0; font: 700 6vh/1.35 'Comfortaa', sans-serif; color: var(--ink-2); }
+  p b { color: var(--accent); font-weight: 700; }
+  .small .icon { width: 30vh; height: 30vh; }
+  .small h1 { font-size: 13vh; }
+  .small p { font-size: 7.6vh; }
+  .marquee p { font-size: 5.6vh; max-width: 36ch; }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas><div class="veil"></div><div class="frame"></div>
+<div class="peek"><img src="../../screenshots/sidepanel-result.png" alt=""></div>
+<div class="stage">
+  <img class="icon" src="../../icons/icon128.png" alt="">
+  <div>
+    <h1>BlankStare</h1>
+    <div class="rule"></div>
+    <p id="line"></p>
+  </div>
+</div>
+<script src="../../utils/fx.js"></script>
+<script>
+  const size = new URLSearchParams(location.search).get('size') || 'small';
+  document.body.classList.add(size);
+  document.getElementById('line').innerHTML = size === 'small'
+    ? 'Dev text → <b>plain English</b>'
+    : 'Error messages, READMEs and docs, rewritten in <b>plain English or Greek</b> you can act on. Free, no account.';
+  BSFX.blinds(document.getElementById('bg'), { colors: ['#0d0c0a', '#C9A227'], light: '#ffe4c4' });
+  Promise.all([document.fonts.ready, ...[...document.images].map(i => new Promise(r => { i.complete ? r() : i.onload = i.onerror = r; }))])
+    .then(() => { document.body.dataset.ready = '1'; });
+</script>
+</body>
+</html>

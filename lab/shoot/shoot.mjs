@@ -3,6 +3,12 @@
 // from the free no-key AI (OVHcloud), fetched while the script runs.
 //
 //   cd lab/shoot && npm install && node shoot.mjs
+//   node shoot.mjs settings   Settings and the frames only
+//   node shoot.mjs tiles      the two Web Store promo tiles only
+//
+// GEMINI_KEY=<free key> makes the panel answers come from Gemini instead of
+// the no-key AI (use when OVH refuses this internet address). The key is
+// set only after the Settings shots, so it never appears in an image.
 //
 // Needs a Chromium that can load unpacked extensions (branded Chrome cannot
 // from the command line any more). Set CHROMIUM_PATH, or install one with
@@ -67,7 +73,10 @@ async function padBox(page, sel, pad, maxH) {
   return { x, y, width: Math.min(vp.width - x, b.width + pad * 2), height: Math.min(maxH || vp.height, vp.height - y, b.height + pad * 2) };
 }
 
+const MODE = process.argv[2] || 'all';
+
 // ══ 1. the real extension ═══════════════════════════════════════════════════
+if (MODE !== 'tiles') {
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'bs-shoot-'));
 const ctx = await chromium.launchPersistentContext(profile, {
   executablePath: CHROMIUM, headless: true, deviceScaleFactor: 2, viewport: { width: 1280, height: 800 },
@@ -95,18 +104,25 @@ try {
   await s.close();
 
   // `node shoot.mjs settings` re-shoots Settings and the frames only.
-  if (process.argv[2] !== 'settings') {
+  if (MODE !== 'settings') {
 
   // Side panel.
   const p = await ctx.newPage();
   await p.setViewportSize({ width: 380, height: 640 });
   await p.goto(`chrome-extension://${id}/sidepanel/sidepanel.html`);
+  if (process.env.GEMINI_KEY) {
+    await p.evaluate(k => chrome.storage.sync.set({ geminiApiKey: k }), process.env.GEMINI_KEY);
+    await p.reload();
+  }
   await wait(1500);
   await save(p, 'sidepanel-welcome.png');
 
   const ask = async (label, trigger) => {
     const t0 = Date.now();
     await trigger();
+    // The previous answer's buttons are still showing until the new question
+    // starts; wait for them to go, or a fast reply looks finished at once.
+    await p.waitForFunction(() => document.getElementById('explanation-actions').classList.contains('hidden'), null, { timeout: 10000 }).catch(() => {});
     await p.waitForFunction(() => !document.getElementById('explanation-actions').classList.contains('hidden')
       || !document.getElementById('state-error').classList.contains('hidden'), null, { timeout: 240000 });
     const err = await p.evaluate(() => document.getElementById('state-error').classList.contains('hidden') ? '' : document.getElementById('error-message').textContent);
@@ -140,6 +156,7 @@ try {
   await ctx.close();
   fs.rmSync(profile, { recursive: true, force: true });
 }
+}
 
 // ══ 2. frames for the docs carousel and the store ═══════════════════════════
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json',
@@ -167,6 +184,18 @@ const STORE = ['result', 'checklist', 'greek', 'setup', 'settings'];
 
 const browser = await chromium.launch({ executablePath: CHROMIUM, headless: true, args: GL });
 try {
+  // Promo tiles: small 440x280 is required by the Web Store, marquee optional.
+  for (const [w, h, size] of [[440, 280, 'small'], [1400, 560, 'marquee']]) {
+    const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+    await page.goto(`http://127.0.0.1:${port}/lab/shoot/tile.html?size=${size}`);
+    await page.waitForFunction(() => document.body.dataset.ready === '1');
+    await wait(1500);
+    const name = `promo-${size}-${w}x${h}.png`;
+    await page.screenshot({ path: path.join(OUT.store, name) });
+    console.log('wrote store', name);
+    await page.close();
+  }
+  if (MODE === 'tiles') throw 'done';
   for (const [w, h, kind] of [[1600, 700, 'slide'], [1280, 800, 'store']]) {
     const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
     for (const [img, title, caption, opt, key] of FRAMES) {
@@ -182,7 +211,7 @@ try {
     }
     await page.close();
   }
-} finally {
+} catch (e) { if (e !== 'done') throw e; } finally {
   await browser.close();
   server.close();
 }

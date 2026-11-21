@@ -169,7 +169,6 @@ screenshot.
 **Is it really free?**
 Yes. It works with no key, and the optional Gemini and Groq keys are free (no
 card or billing). BlankStare has no paid tier.
-If it saves you time, there's a Ko-fi link in the README.
 
 **What does it send, and where?**
 The text you select (or a pasted screenshot, or the page for a summary) goes to
