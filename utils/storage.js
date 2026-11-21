@@ -60,16 +60,19 @@ async function getSetting(key) {
 // Session storage is the hand-off between the background worker (which has the
 // user gesture) and the panel (which does the work).
 
-async function getPendingText() {
-  const { pendingText, pendingTimestamp } = await chrome.storage.session.get(
-    ['pendingText', 'pendingTimestamp']
+// Each tab has its own panel. Text queued in one tab waits for that tab's
+// panel; text with no tab (tests, screenshots) goes to whichever panel asks.
+async function getPendingText(tabId) {
+  const { pendingText, pendingTimestamp, pendingTabId } = await chrome.storage.session.get(
+    ['pendingText', 'pendingTimestamp', 'pendingTabId']
   );
   if (!pendingText) return null;
+  if (pendingTabId && tabId && pendingTabId !== tabId) return null;
   return { text: pendingText, timestamp: pendingTimestamp };
 }
 
 async function clearPendingText() {
-  await chrome.storage.session.remove(['pendingText', 'pendingTimestamp']);
+  await chrome.storage.session.remove(['pendingText', 'pendingTimestamp', 'pendingTabId']);
 }
 
 // ══ HISTORY ═══════════════════════════════════════════════════════════════════

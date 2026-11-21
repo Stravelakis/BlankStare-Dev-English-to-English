@@ -40,7 +40,7 @@ full of the same jargon.
 Also: paste a screenshot (Ctrl+V) to have it explained, "What do I need
 first?", a "Do it with me" checklist, commands in copy boxes, "More detail",
 "Different wording", full-page summary, follow-up questions, a term glossary,
-read aloud, videos and a web search link, the last 20 answers, a list of sites
+read aloud, videos, the last 20 answers, a separate panel per tab, a list of sites
 to stay quiet on, and keyboard shortcuts (Alt+Shift+B opens the panel,
 Alt+Shift+E queues the selection).
 

@@ -21,9 +21,7 @@ const I18N = {
     rephrase:'↺ Different wording',
     fullPage:'📄 Full page',
     jargonToggle:'📖 Term glossary',
-    readMoreOn:'📚 Read more on:',
     ytSection:'📺 YouTube explanation',
-    webSearch:'🔍 Web search',
     customQ:'💬 Ask a follow-up',
     customQPlaceholder:'Ask anything about the selected text…',
     ask:'Ask', search:'Search', tryAgain:'Try again',
@@ -48,9 +46,7 @@ const I18N = {
     rephrase:'↺ Διαφορετική διατύπωση',
     fullPage:'📄 Ολόκληρη σελίδα',
     jargonToggle:'📖 Γλωσσάρι όρων',
-    readMoreOn:'📚 Διάβασε περισσότερα:',
     ytSection:'📺 Εξήγηση YouTube',
-    webSearch:'🔍 Αναζήτηση στο web',
     customQ:'💬 Κάνε ερώτηση',
     customQPlaceholder:'Ρώτησε οτιδήποτε για το επιλεγμένο κείμενο…',
     ask:'Ρώτα', search:'Αναζήτηση', tryAgain:'Δοκίμασε ξανά',
@@ -103,13 +99,9 @@ const el = {
   rerunBtn:          $('rerun-btn'),
   jargonCb:          $('jargon-toggle-cb'),
   jargonResults:     $('jargon-results'),
-  linkMdn:           $('link-mdn'),
-  linkW3s:           $('link-w3s'),
-  linkDevdocs:       $('link-devdocs'),
   ytSearchBtn:       $('yt-search-btn'),
   ytResults:         $('yt-results'),
   ytEmbed:           $('yt-embed'),
-  webSearchLink:     $('web-search-link'),
   customQInput:      $('custom-q-input'),
   customQBtn:        $('custom-q-btn'),
   customQResult:     $('custom-q-result'),
@@ -269,6 +261,28 @@ function initLottie() {
   }
 }
 
+// ══ WHICH TAB THIS PANEL BELONGS TO ═══════════════════════════════════════════
+// background.js opens each panel as sidepanel.html?tab=<id>. Opened any other
+// way (tests, screenshots), it follows the active tab.
+const PANEL_TAB = Number(new URLSearchParams(location.search).get('tab')) || null;
+async function panelTabId() {
+  if (PANEL_TAB) return PANEL_TAB;
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  return tab?.id || null;
+}
+
+// Chrome rebuilds a tab's panel when you come back to that tab, so the last
+// answer is kept per tab for the browser session and shown again.
+const TAB_KEY = PANEL_TAB ? `tabAnswer:${PANEL_TAB}` : null;
+function rememberForTab(h) {
+  if (TAB_KEY) chrome.storage.session.set({ [TAB_KEY]: h }).catch(() => {});
+}
+async function restoreForTab() {
+  if (!TAB_KEY) return;
+  const { [TAB_KEY]: h } = await chrome.storage.session.get(TAB_KEY).catch(() => ({}));
+  if (h?.explanation) showSaved(h);
+}
+
 // ══ STARTUP ═══════════════════════════════════════════════════════════════════
 async function init() {
   settings    = await getSettings();
@@ -295,7 +309,8 @@ async function init() {
   showUsage();
 
   // No key gate any more: OVHcloud answers with no key at all.
-  // Text queued before this document existed.
+  // This tab's last answer, then any text queued before this document existed.
+  await restoreForTab();
   await checkForPendingText();
 }
 
@@ -314,7 +329,7 @@ chrome.storage.session.onChanged.addListener(changes => {
 });
 
 async function checkForPendingText() {
-  const pending = await getPendingText();
+  const pending = await getPendingText(PANEL_TAB);
   if (!pending || pending.timestamp <= lastTimestamp) return;
   lastTimestamp = pending.timestamp;
   await clearPendingText();
@@ -399,13 +414,16 @@ async function explainText(text, mode = 'normal', image = null) {
   el.explanationActions.classList.add('hidden');
   el.jargonResults.classList.add('hidden');
   resetSecondary();
-  if (!image) updateResourceLinks(text);
   currentExplain = '';
   liveAudio = null;
   stopVoice();
 
   const signal     = beginRequest();
   const controller = currentController;
+
+  // The glossary is about the selected text, so it starts now, beside the
+  // answer, instead of waiting for the answer to finish first.
+  if (el.jargonCb?.checked && !image && (mode === 'normal' || mode === 'fullpage')) runGlossary(text);
 
   await generate({
     settings, mode, image,
@@ -435,11 +453,12 @@ async function explainText(text, mode = 'normal', image = null) {
       el.explanationActions.classList.remove('hidden');
       if (el.modelLine?.textContent) BSFX.decode(el.modelLine, el.modelLine.textContent, { duration: 700 });
       clearRerunPending();
-      if (el.jargonCb?.checked && !image) runGlossary(full);
-      sessionHistory = await pushHistory({
+      const entry = {
         query: image ? '📸 Screenshot' : currentQuery, text: text || '', explanation: full,
         lang: currentLang, timestamp: Date.now(),
-      });
+      };
+      rememberForTab(entry);
+      sessionHistory = await pushHistory(entry);
       renderHistory();
     },
 
@@ -462,14 +481,6 @@ async function explainText(text, mode = 'normal', image = null) {
       showState('error');
     },
   });
-}
-
-// ══ RESOURCE LINKS ════════════════════════════════════════════════════════════
-function updateResourceLinks(text) {
-  const links = buildResourceLinks(text);
-  if (el.linkMdn)     el.linkMdn.href     = links.mdn;
-  if (el.linkW3s)     el.linkW3s.href     = links.w3s;
-  if (el.linkDevdocs) el.linkDevdocs.href = links.devdocs;
 }
 
 // ══ COPY ══════════════════════════════════════════════════════════════════════
@@ -580,11 +591,11 @@ function stopVoice() {
 }
 
 // ══ GLOSSARY ══════════════════════════════════════════════════════════════════
-// Supplementary reference, shown after the translation. The request itself
+// The terms in the selected text, each with a short plain meaning. The request itself
 // lives in utils/api.js so it shares key handling with everything else.
-async function runGlossary(translationText) {
-  // Its own lane: a re-run replaces the previous glossary, but the glossary
-  // must not cancel the translation, which has already finished by now anyway.
+async function runGlossary(sourceText) {
+  // Its own lane: a re-run replaces the previous glossary, and the glossary
+  // never cancels the answer running beside it.
   glossaryController?.abort();
   glossaryController = new AbortController();
   const controller = glossaryController;
@@ -595,7 +606,7 @@ async function runGlossary(translationText) {
   try {
     const terms = await fetchGlossary({
       settings,
-      translation: translationText,
+      source:      sourceText.slice(0, 8000),
       signal:      controller.signal,
     });
 
@@ -619,11 +630,11 @@ async function runGlossary(translationText) {
 // ══ FULL PAGE SUMMARY ═════════════════════════════════════════════════════════
 async function handleFullPage() {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id) return;
-    // The content script already trims to MAX_PAGE_CHARS after stripping the
-    // page furniture; slicing again here would only re-apply the same limit.
-    const res = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_CONTENT' });
+    // This panel's own tab, read now: whatever page that tab shows at the
+    // moment of the click, not the page it showed when the panel opened.
+    const tabId = await panelTabId();
+    if (!tabId) return;
+    const res = await chrome.tabs.sendMessage(tabId, { type: 'GET_PAGE_CONTENT' });
     const txt = (res?.text || '').slice(0, MAX_PAGE_CHARS);
     if (!txt) {
       el.errorMessage.textContent = 'There was no readable text on this page. Try selecting the part you want instead.';
@@ -632,7 +643,9 @@ async function handleFullPage() {
     }
     explainText(txt, 'fullpage');
   } catch (_) {
-    el.errorMessage.textContent = 'Could not read page content. Try selecting specific text instead.';
+    // No content script answered: a browser page (chrome://, the Web Store,
+    // PDFs) or a tab opened before BlankStare was installed or updated.
+    el.errorMessage.textContent = 'BlankStare cannot read this page. If it is a normal web page, reload it once and try again. Otherwise select the text you want instead.';
     showState('error');
   }
 }
@@ -784,6 +797,10 @@ function restoreFromHistory(index) {
   abortAll();
 
   el.historyPanel.classList.add('hidden');
+  showSaved(h);
+}
+
+function showSaved(h) {
   currentText = h.text; currentExplain = h.explanation; currentQuery = h.query;
   el.selectedText.textContent = h.text ? truncate(h.text, 200) : h.query;
   el.explanationText.innerHTML = renderMarkdown(h.explanation);
@@ -793,7 +810,6 @@ function restoreFromHistory(index) {
   setStreaming(false);
   setStatus('');
   el.explanationActions.classList.remove('hidden');
-  updateResourceLinks(h.text);
   resetSecondary();
   showState('result');
 }
@@ -814,7 +830,6 @@ function clearRerunPending() {
 function resetSecondary() {
   [el.ytResults, el.ytEmbed, el.customQResult, el.jargonResults]
     .forEach(e => { e?.classList.add('hidden'); if (e) e.innerHTML = ''; });
-  if (el.webSearchLink && currentQuery) el.webSearchLink.href = duckDuckGoUrl(currentQuery);
 }
 
 function setLoading(btn, on) {
@@ -901,7 +916,7 @@ el.rerunBtn?.addEventListener('click', () => {
 
 el.jargonCb?.addEventListener('change', () => {
   saveSettings({ jargonDictionary: el.jargonCb.checked }).catch(() => {});
-  if (el.jargonCb.checked && currentExplain) runGlossary(currentExplain);
+  if (el.jargonCb.checked && currentText) runGlossary(currentText);
   else el.jargonResults.classList.add('hidden');
 });
 
@@ -943,8 +958,12 @@ el.userContext?.addEventListener('change', () => {
 el.userContext?.addEventListener('input', markRerunPending);
 
 // IS_PANEL_OPEN — answers content script pings
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.type === 'IS_PANEL_OPEN') { sendResponse({ open: true }); return true; }
+// Only for this panel's own tab: a panel in another tab must not make the
+// floating button appear here.
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== 'IS_PANEL_OPEN') return;
+  if (PANEL_TAB && sender.tab?.id !== PANEL_TAB) return;
+  sendResponse({ open: true });
 });
 
 // Settings may have changed in the options tab while the panel was hidden.

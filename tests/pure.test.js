@@ -229,6 +229,12 @@ test('chainFor: whole pages and the glossary skip the slow Live model', () => {
   assert.strictEqual(chainFor(roster, 'glossary')[0].model, 'gemma-4-31b-it');
 });
 
+test('chainFor: the glossary asks a small fast model first', () => {
+  const roster = buildRoster({ nein: null, catalogues: { google_gemini: ['gemini-3.8-live', 'gemma-4-31b-it', 'gemini-3.5-flash-lite'] }, usable: ['google_gemini'] });
+  assert.strictEqual(chainFor(roster, 'glossary')[0].model, 'gemini-3.5-flash-lite');
+  assert.strictEqual(chainFor(roster, 'fullpage')[0].model, 'gemma-4-31b-it');
+});
+
 test('chainFor: resting models and resting providers are skipped until their time is up', () => {
   const roster = buildRoster({ nein: null, catalogues: { groq: ['qwen/qwen3.8-27b'], ovh: ['Qwen3.8-27B', 'gpt-oss-20b'] }, usable: ['groq', 'ovh'] });
   const now = 1000;

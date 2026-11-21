@@ -218,8 +218,20 @@ function buildRoster({ nein, catalogues = {}, usable = PROVIDER_ORDER, pinned = 
 
 // The order to try for one request: today's roster, minus anything resting.
 //   resting — { 'provider:model': untilTimestamp } and { 'provider:*': until }
+//
+// The glossary is a short list, not an answer, so fast models go first.
+// Best-first sent it to the biggest model (30s). Gemma 4 26B thinks before it
+// writes and still took 13-28s; Flash-Lite took 2s (measured 21/11/2026).
+function glossarySpeed(model) {
+  if (/flash-lite/i.test(model)) return 2;
+  return /nano|mini|small|-9b\b|-20b\b|a3b|a4b/i.test(model) ? 1 : 0;
+}
+
 function chainFor(roster, mode, resting = {}, now = Date.now()) {
-  return roster.filter(r => {
+  const list = mode === 'glossary'
+    ? [...roster].sort((a, b) => glossarySpeed(b.model) - glossarySpeed(a.model))
+    : roster;
+  return list.filter(r => {
     if (r.transport === 'live' && !LIVE_MODES.includes(mode)) return false;
     if ((resting[`${r.provider}:*`] || 0) > now) return false;
     return (resting[`${r.provider}:${r.model}`] || 0) <= now;
@@ -489,10 +501,10 @@ function buildUserPrompt(mode, text, previous = '', question = '') {
   }
 }
 
-function buildGlossaryPrompt(translation) {
-  return 'From this plain-language translation, list any technical terms or acronyms that still appear (the ones the translator could not avoid). ' +
-         'Return ONLY valid JSON, no markdown, no backticks: [{"term":"word","def":"5-10 word plain definition"}]. If none remain, return [].\n\n' +
-         `<dev_text>\n${translation}\n</dev_text>`;
+function buildGlossaryPrompt(source) {
+  return 'List the technical terms and acronyms in this developer text that a non-developer would not know. ' +
+         'Return ONLY valid JSON, no markdown, no backticks: [{"term":"word","def":"5-10 word plain definition"}]. If there are none, return [].\n\n' +
+         `<dev_text>\n${source}\n</dev_text>`;
 }
 
 // ══ EXPORT GUARD ══════════════════════════════════════════════════════════════

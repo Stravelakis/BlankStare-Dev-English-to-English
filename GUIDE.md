@@ -15,7 +15,8 @@ The complete manual. Install first: [INSTALL.md](INSTALL.md).
   Standard (a smart non-developer), or Vibecoder (someone who builds with AI
   tools and knows what an API or a prompt is).
 - **The panel.** Chrome's side panel, on the right of the window. BlankStare
-  lives there, next to the page you are reading.
+  lives there, next to the page you are reading. Each tab gets its own panel:
+  it opens in the tab you opened it from and hides when you switch tabs.
 
 ## Features
 
@@ -59,7 +60,8 @@ The complete manual. Install first: [INSTALL.md](INSTALL.md).
 
 Switch on **📖 Term glossary** in the panel (Settings calls the same setting
 **Jargon list under each answer**). Every technical term in the selection is
-listed with a two-to-ten word meaning.
+listed with a two-to-ten word meaning. The list starts with the answer and
+usually arrives first.
 
 ### Read aloud
 
@@ -75,20 +77,20 @@ listed with a two-to-ten word meaning.
 
 ### Full page summary
 
-**📄 Full page** summarises the whole page you're on in three to five points.
-BlankStare picks the main article and skips menus and footers.
+**📄 Full page** summarises the page the tab shows at the moment you press it,
+in three to five points. BlankStare picks the main article and skips menus and
+footers. If it says it cannot read the page, reload the page once: tabs opened
+before BlankStare was installed or updated cannot be read until then.
 
 ### Ask your own question
 
 **💬 Ask a follow-up** under the answer: ask anything, with the selection as
 background.
 
-### Read more, videos and web search
+### Videos
 
-- **Read more on:** links to MDN, W3Schools and DevDocs for the selection.
-- **YouTube:** needs a free YouTube key (Settings → Extras → YouTube videos in the panel). Videos play
-  inside the panel.
-- **Web search:** **Search** opens DuckDuckGo in a new tab.
+**YouTube:** needs a free YouTube key (Settings → Extras → YouTube videos in
+the panel). Videos play inside the panel.
 
 ### History
 
@@ -172,8 +174,8 @@ If it saves you time, there's a Ko-fi link in the README.
 **What does it send, and where?**
 The text you select (or a pasted screenshot, or the page for a summary) goes to
 whichever AI answers: OVHcloud, Google or Groq. BlankStare also fetches The
-Nein's public model list. Video searches go to YouTube and web searches to
-DuckDuckGo, only when you press Search. Keys stay in Chrome's sync storage.
+Nein's public model list. Video searches go to YouTube, only when you press
+Search. Keys stay in Chrome's sync storage.
 No data about you goes to the author. The daily model-list fetch from
 stravelakis.com sends nothing about you.
 

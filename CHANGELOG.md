@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), version
 
 ## [Unreleased]
 
+### Changed
+- Each tab has its own panel. The panel opens only in the tab you opened it
+  from, keeps its own answer, and hides when you switch to another tab.
+- The term glossary starts beside the answer and asks a fast model first:
+  about 1 second instead of about 30 seconds after the answer (measured
+  21/11/2026 with a free Gemini key).
+
+### Fixed
+- **Full page** reads the page the tab shows when you press it.
+- A clear message when a page cannot be read (browser pages, or tabs opened
+  before an install or update).
+
+### Removed
+- The "Read more on" links (MDN, W3Schools, DevDocs) and the Web search
+  button.
+
 ## [0.8.0] - 2026-11-20
 
 ### Added

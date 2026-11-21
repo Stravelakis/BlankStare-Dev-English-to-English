@@ -1,6 +1,6 @@
 # Handoff: BlankStare
 
-_Last updated: 2026-11-20 · by: Claude Code · version: v0.8.0 (released 20 Nov 2026)_
+_Last updated: 2026-11-21 · by: Claude Code · version: v0.8.0 (released 20 Nov 2026) + unreleased panel-per-tab work_
 
 ## In one paragraph
 
@@ -10,6 +10,29 @@ models, which broke the extension for everyone) with a self-correcting list
 rebuilt daily from The Nein and each provider's own catalogue. Works with no
 key (OVHcloud), better with a free Gemini or Groq key. Released on GitHub;
 not on the Chrome Web Store yet. Plan and sources: PLAN-v0.8.md.
+
+## Since v0.8.0 (unreleased, 21 Nov 2026)
+
+- **One panel per tab.** The manifest has no default panel any more;
+  `openPanel()` in background.js sets a panel for that tab only
+  (`sidepanel.html?tab=<id>`) and opens it. Queued text carries
+  `pendingTabId`, so it only goes to its own tab's panel. The last answer is
+  kept per tab (`tabAnswer:<id>` in session storage) because Chrome rebuilds
+  the panel when you return to a tab.
+- **Full page** reads the panel's own tab at the moment of the click.
+- **Glossary** starts beside the answer, from the selected text, and asks a
+  fast model first (Flash-Lite): 1.1s, was ~30s after the answer.
+- **Removed:** "Read more on" links and the Web search button.
+- **Tested** in Chromium with the free Gemini key: 10 checks (panel only in
+  its tab, queued text stays with its tab, Full page reads the new page after
+  navigating, answer restored, floating button only where a panel is).
+  **Not testable headless:** the real toolbar / right-click open, because
+  Chrome needs a real click for that.
+- **OVH no-key lane blocks this laptop's internet address** until about
+  31 Dec 2026 (`retry-after` 3,497,343s, "limit 1 per year", seen 21/11).
+  GitHub's smoke test from another address still gets answers. The extension
+  treats any 429 as "busy, rest 60s", so a blocked user sees endless retries
+  instead of "add a free key". Not fixed yet.
 
 ## Current state (v0.8.0)
 
@@ -51,7 +74,8 @@ not on the Chrome Web Store yet. Plan and sources: PLAN-v0.8.md.
 
 ## Next steps, in order
 
-1. Ak tries the right-click menu and Alt+Shift+E in a real Chrome.
+1. Ak tries, in a real Chrome: toolbar icon and right-click open the panel in
+   that tab only; Alt+Shift+E; Full page after moving to another page.
 2. Chrome Web Store listing: images in `store/`; privacy answers must list
    OVHcloud, Google (free-tier review rule), Groq and The Nein; zip with the
    `git archive` line in DEPLOY.md.
@@ -112,7 +136,7 @@ so a non-developer can read the translation *instead of* the original.
 | AI | ~~Groq API, 9-model registry~~ v0.8: OVHcloud (no key), Google Gemini and Groq (optional free keys); a daily ranked model roster with fallback |
 | TTS | v0.8: Best available (Gemini Live voice, Orpheus via Groq for English, or the browser voice). Was: Orpheus via Groq by default |
 | Video | YouTube Data API v3 (optional) |
-| Search | ~~SearXNG self-hosted + DuckDuckGo fallback~~ v0.8: no SearXNG; "Search" opens DuckDuckGo in a new tab |
+| Search | ~~SearXNG self-hosted + DuckDuckGo fallback~~ v0.8: no SearXNG. Removed after v0.8.0: no web search at all |
 | Font | Comfortaa (Greek + Latin, bundled locally as woff2) |
 | Icons | 12 Lottie JSON animations (bundled, colors baked in for lottie_light.min.js) |
 | Build | No build step. Pure HTML/CSS/JS. No npm, no webpack. |
