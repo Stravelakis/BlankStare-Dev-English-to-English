@@ -18,7 +18,7 @@ The complete manual. Install first: [INSTALL.md](INSTALL.md).
   lives there, next to the page you are reading. Each tab gets its own panel:
   it opens in the tab you opened it from and hides when you switch tabs.
 
-## Features
+## Feature details
 
 ### Translate a selection
 

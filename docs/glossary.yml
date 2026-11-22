@@ -1,30 +1,41 @@
 # Jargon tooltips and ELI5 explainers (STANDARDS.md §7).
-# Every term here gets a dotted underline on the docs site. Hover, tap or
-# keyboard focus shows the text for the reader's chosen level.
-# explainer: true → also a short "What's this?" box the first time the term
-# appears on a page. Keep each level to one or two sentences.
+# Every term here gets a dotted underline on the docs site, once per reading
+# level. Hover, tap or keyboard focus shows the text for the reader's level.
+# explainer: true -> also a short "What's this?" box the first time the term
+# appears on a page (English and ELI5 only). Keep each level to one or two sentences.
 
 API key:
   explainer: true
-  eli5: A secret password that lets an app use someone else's service, like a library card for a robot.
-  english: A private code that proves you're allowed to use an online service. Whoever has it can use your account, so it stays secret.
-  dev: Bearer credential sent with each request to authenticate and bill calls to a provider's API.
+  eli5: A secret code, like a free library ticket, that lets a program use a company's service for you. Keep it private.
+  english: A private code that proves you are allowed to use an online service. Whoever has it can use your account, so keep it secret.
+  dev: Credential sent with each request. Gemini takes it in the x-goog-api-key header (and in the ?key= query string on the Live WebSocket), Groq as a Bearer token, YouTube as a query parameter.
 
 key:
-  eli5: A free ticket that lets the helper use a faster clever computer.
-  english: A private code from Google or Groq that lets BlankStare use their free AI on your behalf. Optional; BlankStare works without one.
-  dev: Provider API key (Gemini or Groq), stored in chrome.storage.sync and sent only to that provider.
+  eli5: A free ticket that lets BlankStare use a faster clever computer.
+  english: A private code from Google or Groq that lets BlankStare use their free AI for you. Optional; BlankStare works without one.
+  dev: Provider API key (Gemini, Groq or YouTube), stored in chrome.storage.sync and sent only to that provider.
+
+extension:
+  explainer: true
+  eli5: A small helper you add to your web browser, like adding an app to a phone.
+  english: A small add-on that adds features to your browser. BlankStare is a Chrome extension.
+  dev: A Manifest V3 package of scripts, pages and a manifest.json that Chrome loads. BlankStare has no build step.
 
 side panel:
-  eli5: A little window that sits at the side of your browser.
-  english: Chrome's panel at the right edge of the window, which stays open beside the page you are reading.
-  dev: chrome.sidePanel surface (MV3), opened from a user gesture.
+  eli5: A little window that sits at the right side of your browser, next to the page you are reading.
+  english: Chrome's panel at the right edge of the window, which stays open beside the page. BlankStare lives there.
+  dev: The chrome.sidePanel surface. open() must run synchronously inside a user gesture.
+
+browser:
+  eli5: The program you use to look at websites.
+  english: The program you use to visit websites, such as Chrome, Edge or Brave.
+  dev: Here, a Chromium-based browser from version 116, which has the side panel API.
 
 terminal:
   explainer: true
   eli5: A window where you type instructions to your computer instead of clicking.
   english: The app where you type commands, such as Terminal on a Mac or PowerShell on Windows.
-  dev: Command-line shell (bash, zsh, PowerShell).
+  dev: A command-line shell (bash, zsh, PowerShell).
 
 README:
   eli5: The "read me first" note that comes with a program.
@@ -33,25 +44,91 @@ README:
 
 model:
   eli5: The clever computer brain that writes the answer.
-  english: One particular AI that writes answers. Different companies offer different models; BlankStare picks a working free one each day.
-  dev: LLM identifier at a provider, e.g. gemini-3.8-live or Qwen3.8-27B; ranked daily from The Nein plus the provider catalogue.
+  english: One particular AI that writes answers. BlankStare picks a working free one each day.
+  dev: An LLM identifier at a provider. Today's ranked list comes from The Nein plus each provider's own catalogue.
 
 The Nein:
   eli5: A checker that looks every day at which clever computers are free.
-  english: A daily list, made by BlankStare's author, of AI models that are free and actually working today.
-  dev: Public JSON at stravelakis.com/wp-json/nein/v1/models.json with free status, lifecycle and test status per model.
+  english: A daily public list, made by BlankStare's author, of AI models that are free and working today.
+  dev: Public JSON at stravelakis.com/wp-json/nein/v1/models.json, read once a day, with free_status, lifecycle_state and test_status per model.
 
 OVHcloud:
-  eli5: A company in Europe that lends its clever computer for free, no ticket needed.
-  english: A European cloud company whose AI service answers BlankStare's questions when you have no key. Free, slower when busy.
-  dev: OVHcloud AI Endpoints, anonymous OpenAI-compatible lane, about 2 requests per minute per model per IP.
+  eli5: A company in Europe that lends its clever computer for free, with no ticket needed.
+  english: A European cloud company whose AI answers BlankStare's questions when you have no key. Free, slower when busy.
+  dev: OVHcloud AI Endpoints at oai.endpoints.kepler.ai.cloud.ovh.net, an anonymous OpenAI-compatible lane with no Authorization header.
 
 Groq:
   eli5: A company with very fast clever computers. You need a free ticket from them.
-  english: An AI company known for very fast answers. A free key from console.groq.com makes it available in BlankStare.
-  dev: OpenAI-compatible API at api.groq.com; also hosts the Orpheus TTS model.
+  english: An AI company known for fast answers. A free key from console.groq.com makes it available in BlankStare.
+  dev: OpenAI-compatible API at api.groq.com; also hosts the Orpheus text-to-speech model.
 
 Gemini:
   eli5: Google's clever computer. With a free ticket it can also talk.
-  english: Google's AI. A free key from Google AI Studio gives BlankStare its best answers, read aloud in Gemini's own voice.
-  dev: Gemini API (generativelanguage.googleapis.com), streamGenerateContent plus the Live BidiGenerateContent WebSocket.
+  english: Google's AI. A free key from Google AI Studio gives BlankStare its best answers, which can be read aloud in Gemini's own voice.
+  dev: Gemini API at generativelanguage.googleapis.com: streamGenerateContent over SSE, plus the Live BidiGenerateContent WebSocket.
+
+Gemini Live:
+  eli5: A Google helper that answers by talking, and BlankStare writes down what it said.
+  english: A Google model that only answers in voice. BlankStare uses the written transcript as the answer and keeps the voice for read-aloud.
+  dev: WebSocket transport. The setup asks for AUDIO plus outputAudioTranscription; the transcript is the answer and the 24 kHz PCM becomes a WAV.
+
+Orpheus:
+  eli5: A talking voice, in English only.
+  english: An English-only read-aloud voice from Groq. It needs a Groq key.
+  dev: canopylabs/orpheus-v1-english via api.groq.com/openai/v1/audio/speech, mp3, input cut to 1500 characters.
+
+free tier:
+  explainer: true
+  eli5: The free amount a company lets you use before it asks for money.
+  english: The no-cost allowance a service offers. Google's free tier says it may use what you send to improve its AI.
+  dev: Rate-limited no-billing quota. A Google key from a project with billing is refused with "free tier is not available".
+
+Developer mode:
+  eli5: A switch in Chrome that lets you add helpers that did not come from the store.
+  english: A switch on chrome://extensions that lets you load an extension from a folder on your computer.
+  dev: Required for Load unpacked. Not needed for a Web Store install.
+
+manifest:
+  eli5: The extension's ID card: its name, what it may do and which files it has.
+  english: The file (manifest.json) that tells Chrome what an extension is called and what it is allowed to do.
+  dev: manifest.json, manifest_version 3: permissions, host_permissions, commands, content_scripts, service worker.
+
+service worker:
+  eli5: A helper that sleeps in the background and wakes up when something happens.
+  english: A background script that Chrome starts when needed. BlankStare's handles the right-click menu and shortcuts.
+  dev: background.js. It builds the context menu, handles clicks and shortcuts, opens the panel and queues text in storage.session.
+
+content script:
+  eli5: A little piece of BlankStare that sits inside each web page and notices what you select.
+  english: A script Chrome adds to web pages. BlankStare's draws the lightning button and reads your selection.
+  dev: content.js, run at document_idle on all URLs in the top frame, which causes Chrome's "read and change all your data" warning.
+
+shadow root:
+  eli5: A little sealed box, so the web page cannot mess with BlankStare's button.
+  english: A private compartment inside a page that keeps the button's look separate from the site's own styles.
+  dev: A closed ShadowRoot attached to the floating button's host element; the host's layout is pinned inline at !important.
+
+SSE:
+  eli5: A way for words to arrive one piece at a time, instead of all at once.
+  english: A way of streaming an answer piece by piece so you see it appear as it is written.
+  dev: Server-Sent Events. createSSEParser() buffers the incomplete tail of each network read so no data frame is dropped.
+
+storage.sync:
+  eli5: A little cupboard in Chrome where BlankStare keeps your settings.
+  english: Chrome's synced extension storage. Your settings and keys live there, and Chrome can copy them to your other devices if sync is on.
+  dev: chrome.storage.sync holds the settings and keys. Roster and rests are in storage.local; history and pending text in storage.session.
+
+GitHub:
+  eli5: A website where programmers keep their projects.
+  english: The website that hosts BlankStare's code and its releases.
+  dev: github.com/Stravelakis/BlankStare-Dev-English-to-English. CI runs on GitHub Actions and the docs deploy to GitHub Pages.
+
+ZIP:
+  eli5: A folded-up box of files that you have to open first.
+  english: A single compressed file that holds a folder. Unzip it before use.
+  dev: The Code, Download ZIP archive of the repository.
+
+Vibecoder:
+  eli5: Someone who builds things by talking to AI helpers.
+  english: The reading level for people who build software with AI tools and already know what an API or a prompt is.
+  dev: One of four levels (eli5, newbie, standard, vibecoder). It adds bridge concepts to the system prompt instead of over-explaining them.

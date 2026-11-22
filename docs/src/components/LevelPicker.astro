@@ -1,0 +1,24 @@
+---
+// Three cards under the hero: pick how you want it explained. Clicking one
+// switches the reading level (same as the sidebar switch) and jumps to the docs.
+import { siteConfig } from '../../site.config.ts';
+const cards = siteConfig.levelCards;
+---
+<section class="levels" aria-label="Pick a reading level">
+  {cards.map((c) => (
+    <button type="button" class="level-card" data-vern={c.id}>
+      <span class="level-tag">{c.tag}</span>
+      <strong>{c.title}</strong>
+      <span class="level-text">{c.text}</span>
+    </button>
+  ))}
+</section>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.level-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('docs:level', { detail: card.dataset.vern }));
+      document.getElementById('docs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
