@@ -11,6 +11,23 @@ rebuilt daily from The Nein and each provider's own catalogue. Works with no
 key (OVHcloud), better with a free Gemini or Groq key. Released on GitHub;
 not on the Chrome Web Store yet. Plan and sources: PLAN-v0.8.md.
 
+## Docs site v2, three reading levels (22 Nov 2026)
+
+- **What changed (docs only):** `docs/` moved to the v2 theme (layout, components, scripts, styles, `sync-docs.mjs`, new font packages). Dev, English and ELI5 pages and `docs/glossary.yml` rewritten from the v0.8.1 code; front page rebuilt (hero buttons, level cards, real screenshots, the real `utils/pure.js` playground kept). Review stamps set to `v0.8.1`, 21 Nov 2026. `GUIDE.md` heading "Features" renamed "Feature details" so it no longer clashes with the front page's own `features` anchor.
+- **Lost in the theme swap:** the repo's own `DotField.astro` (dots start on first move; Lighthouse performance 75 to 89-99). The shared theme does not have it. `lighthouserc.json` demands 0.85 performance after deploy: check it, and copy the fix into the shared theme.
+- **Unreleased / undocumented:** nothing. `main` equals tag v0.8.1.
+- **Product problems found (not fixed):**
+  1. Settings says "Without a key, the panel still offers a YouTube search link", but the panel shows "No YouTube API key. Add in Settings" (`sidepanel.js` handleYouTubeSearch).
+  2. "Stay quiet on these sites" only hides the floating button. Right-click and Alt+Shift+E ignore it, yet GUIDE says BlankStare "stays completely silent". Settings also says it "takes effect on the next page load", but `content.js` applies it live.
+  3. `LICENSE` says the footer "Built by Lambros Stravelakis, skilitsa.com" must stay in the UI; the panel footer now says stravelakis.com and Report.
+  4. `HANDOFF` said 61 tests; there are 62.
+  5. `keyHint` regexes in `utils/pure.js` are never used (Settings uses its own `KEY_PREFIX`).
+  6. Known from before: a blocked OVHcloud address shows endless "busy" instead of "add a free key".
+  7. The Gemini Live key goes in the WebSocket URL query string; YouTube's key in the query string.
+  8. The docs front-page sidebar links (#features etc.) do not exist on the Privacy page.
+- **Not confirmed:** Settings' "Orpheus about 100 a day free" and "YouTube about 100 searches a day" are provider quotas not checkable in code (not repeated in the docs). Right-click and Alt+Shift+E opening the panel were not driven by any test.
+- **Fact-check:** see the pull request for the helper's result.
+
 ## v0.8.1 and the Chrome Web Store (21 Nov 2026)
 
 - **Web Store:** everything to paste is in `store/LISTING.md` (description,

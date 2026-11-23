@@ -1,5 +1,3 @@
-import type { DotFieldOptions } from './src/scripts/dot-field';
-
 // Per-repo config. Most projects only touch this file and src/docs/*.md.
 
 interface SocialLink {
@@ -26,23 +24,38 @@ export const siteConfig = {
   socialImageAlt: 'BlankStare: a brass-on-black side panel turning a TypeError into plain English, with the tagline "Developer docs, in plain English."',
   locale: 'en_GB',
 
-  // Sidebar menu. Each id must match an element id on the page.
+  // Left menu, top group. The "On this page" group below it is built from the
+  // headings of the reading level on screen.
   nav: [
     { id: 'top', label: 'Overview' },
-    { id: 'features', label: 'Features' },
-    { id: 'showcase', label: 'Showcase' },
-    { id: 'docs', label: 'Docs' },
-    { id: 'walkthrough', label: 'Walkthrough' },
+    { id: 'features', label: 'What it does' },
+    { id: 'showcase', label: 'Screenshots' },
   ],
 
-  // Reading-level switch at the top of the sidebar. The ids are fixed (they
-  // match src/docs/dev.md, plain.md, eli5.md); change labels only.
-  // First-visit level (STANDARDS §7: English). A saved choice still wins.
+  // Buttons and chips in the hero (primary = the filled button).
+  heroLinks: [
+    { label: 'Install it', href: '#install', primary: true },
+    { label: 'Source on GitHub', href: 'https://github.com/Stravelakis/BlankStare-Dev-English-to-English' },
+    { label: 'What changed', href: 'https://github.com/Stravelakis/BlankStare-Dev-English-to-English/blob/HEAD/CHANGELOG.md' },
+    { label: 'Privacy', href: '/BlankStare-Dev-English-to-English/privacy/' },
+  ],
+  heroPills: ['Works with no key', 'No account', 'Free', 'English and Greek'],
+
+  // The three cards under the hero. They switch the reading level.
+  levelCards: [
+    { id: 'dev', tag: 'Dev', title: 'How it is built', text: 'Manifest and permissions, the model router, what leaves the browser, storage, test and release.' },
+    { id: 'plain', tag: 'English', title: 'How to use it', text: 'For people comfortable with tech who do not write code. Install, daily use, privacy, fixes.' },
+    { id: 'eli5', tag: 'ELI5', title: 'Start from zero', text: 'Slow and complete. Every word explained, every click spelled out, with what you should see.' },
+  ],
+
+  // First visit lands on English; a reader's saved choice still wins.
   defaultVernacular: 'plain',
 
   // Tally form link (STANDARDS §8). Empty = no "Send feedback" link.
   feedbackUrl: '',
 
+  // Reading-level switch at the top of the sidebar. The ids are fixed (they
+  // match src/docs/dev.md, plain.md, eli5.md); change labels only.
   vernaculars: [
     { id: 'dev', label: 'Dev' },
     { id: 'plain', label: 'English' },
@@ -51,6 +64,7 @@ export const siteConfig = {
 
   playground: {
     // true only for JS/web projects, where running the code in the browser is real.
+    // Here it runs the extension's own utils/pure.js, unchanged (see index.astro).
     enabled: true,
     starterCode: `// try it\nconsole.log("hello from the playground")`,
   },
@@ -62,31 +76,4 @@ export const siteConfig = {
       { kind: 'linkedin', label: 'LinkedIn', href: 'https://www.linkedin.com/in/stravelakiscom/' },
     ] as SocialLink[],
   },
-
-  // React Bits "Dot Field" settings, same names as on reactbits.dev.
-  backgrounds: {
-    page: {
-      cursorRadius: 200,
-      bulgeStrength: 6,
-      cursorForce: 0,
-      dotRadius: 2,
-      dotSpacing: 5,
-      glowRadius: 50,
-      sparkle: true,
-      gradientFrom: '#0001c6',
-      gradientTo: '#00cade',
-      glowColor: '#040410',
-    },
-    sidebar: {
-      cursorRadius: 100,
-      bulgeStrength: 0,
-      cursorForce: 0,
-      bulgeOnly: false,
-      dotSpacing: 5,
-      glowRadius: 50,
-      gradientFrom: '#0001c6',
-      gradientTo: '#00cade',
-      glowColor: '#040410',
-    },
-  } satisfies Record<string, DotFieldOptions>,
 };

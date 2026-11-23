@@ -30,10 +30,19 @@ import glossary from '../data/glossary.json';
     const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = new RegExp(`\\b(${sorted.map((t) => esc(t.term)).join('|')})\\b`, 'gi');
     const byKey = new Map(sorted.map((t) => [t.term.toLowerCase(), t]));
-    const explained = new Set<string>();
     let n = 0;
 
-    document.querySelectorAll<HTMLElement>('[data-glossary]').forEach((root) => {
+    // Each reading level is its own root, so each level gets its own
+    // "What's this?" boxes (a level you are not reading must not use them up).
+    const roots = Array.from(document.querySelectorAll<HTMLElement>('[data-glossary]')).flatMap((r) => {
+      const panels = Array.from(r.querySelectorAll<HTMLElement>(':scope > .tab-panel'));
+      return panels.length ? panels : [r];
+    });
+
+    roots.forEach((root) => {
+      const explained = new Set<string>();
+      // Underline a word the first time it appears in a level, not every time.
+      const seen = new Set<string>();
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
         acceptNode: (node) =>
           node.parentElement?.closest(SKIP) || !node.nodeValue?.trim()
@@ -53,6 +62,8 @@ import glossary from '../data/glossary.json';
         for (const m of text.matchAll(re)) {
           const t = byKey.get(m[0].toLowerCase());
           if (!t) continue;
+          if (seen.has(t.term.toLowerCase())) continue;
+          seen.add(t.term.toLowerCase());
           frag.append(text.slice(last, m.index));
           const id = `term-tip-${n++}`;
           const term = document.createElement('span');

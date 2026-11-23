@@ -13,22 +13,9 @@ const { options = {}, class: className } = Astro.props;
 <script>
   import { mountDotField } from '../scripts/dot-field';
 
-  // The dots start on the reader's first move (pointer, scroll, key, touch),
-  // or after 4s, then fade in. Building them at load blocked the first read
-  // for ~0.8s on a mid-range phone (Lighthouse on BlankStare, 20 Nov 2026).
-  let started = false;
-  const EVENTS = ['pointermove', 'scroll', 'keydown', 'touchstart'] as const;
-  const mountAll = () => {
-    if (started) return;
-    started = true;
-    EVENTS.forEach((ev) => removeEventListener(ev, mountAll));
-    document.querySelectorAll<HTMLElement>('[data-dot-field]').forEach((el) => {
-      if (el.dataset.mounted) return;
-      el.dataset.mounted = 'true';
-      el.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 900, easing: 'ease-out' });
-      mountDotField(el, JSON.parse(el.dataset.dotField || '{}'));
-    });
-  };
-  EVENTS.forEach((ev) => addEventListener(ev, mountAll, { once: true, passive: true }));
-  setTimeout(mountAll, 4000);
+  document.querySelectorAll<HTMLElement>('[data-dot-field]').forEach((el) => {
+    if (el.dataset.mounted) return;
+    el.dataset.mounted = 'true';
+    mountDotField(el, JSON.parse(el.dataset.dotField || '{}'));
+  });
 </script>

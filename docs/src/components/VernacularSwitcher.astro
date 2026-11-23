@@ -58,6 +58,8 @@ const def = siteConfig.defaultVernacular;
     };
 
     tabs.forEach((tab) => tab.addEventListener('click', () => select(tab.dataset.vern ?? '')));
+    // The level cards under the hero ask for a level the same way.
+    document.addEventListener('docs:level', (e) => select(String((e as CustomEvent).detail ?? '')));
 
     root.addEventListener('keydown', (e) => {
       const current = ids.indexOf(document.documentElement.dataset.vern ?? ids[0]);

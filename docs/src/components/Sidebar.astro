@@ -1,37 +1,48 @@
 ---
 import VernacularSwitcher from './VernacularSwitcher.astro';
-import DotField from './DotField.astro';
 import SocialIcon from './SocialIcon.astro';
 import { siteConfig } from '../../site.config.ts';
 
 const sources = import.meta.glob('../docs/source/*.md');
 const hasSource = (slug: string) => `../docs/source/${slug}.md` in sources;
-const nav = [
-  ...siteConfig.nav,
-  ...(hasSource('install') ? [{ id: 'install', label: 'Install' }] : []),
-  ...(hasSource('guide') ? [{ id: 'guide', label: 'Guide' }] : []),
+const overview = siteConfig.nav;
+const reference = [
+  ...(hasSource('install') ? [{ id: 'install', label: 'Install (full)' }] : []),
+  ...(hasSource('guide') ? [{ id: 'guide', label: 'Guide (full)' }] : []),
   ...(siteConfig.playground.enabled ? [{ id: 'playground', label: 'Playground' }] : []),
 ];
 ---
 <aside class="sidebar">
-  <DotField options={siteConfig.backgrounds.sidebar} />
-
   <div class="sidebar-inner">
-    <a href="#top" class="brand">{siteConfig.projectName}</a>
+    <div class="side-head">
+      <a href="#top" class="brand"><span class="brand-dot" aria-hidden="true"></span>{siteConfig.projectName}</a>
+      <VernacularSwitcher />
+    </div>
 
-    <VernacularSwitcher />
-
-    <nav class="side-nav" aria-label="Sections">
-      {nav.map((item, i) => (
-        <a href={`#${item.id}`} class="nav-link" data-section={item.id} style={`--i:${i}`}>
-          {item.label}
-        </a>
+    <p class="side-label">Overview</p>
+    <nav class="side-nav" aria-label="Overview" data-group="overview">
+      <span class="nav-marker" aria-hidden="true"></span>
+      {overview.map((item, i) => (
+        <a href={`#${item.id}`} class="nav-link enter" data-section={item.id} style={`--i:${i}`}>{item.label}</a>
       ))}
-      <a href={siteConfig.repoUrl} class="nav-link" style={`--i:${nav.length}`}>
+    </nav>
+
+    <p class="side-label" id="level-label">On this page</p>
+    <nav class="side-nav" aria-labelledby="level-label" data-group="level" id="level-nav">
+      <span class="nav-marker" aria-hidden="true"></span>
+    </nav>
+
+    <p class="side-label">More</p>
+    <nav class="side-nav" aria-label="More" data-group="more">
+      <span class="nav-marker" aria-hidden="true"></span>
+      {reference.map((item, i) => (
+        <a href={`#${item.id}`} class="nav-link enter" data-section={item.id} style={`--i:${i}`}>{item.label}</a>
+      ))}
+      <a href={siteConfig.repoUrl} class="nav-link enter" style={`--i:${reference.length}`}>
         Source <span class="arrow" aria-hidden="true">↗</span>
       </a>
       {siteConfig.feedbackUrl && (
-        <a href={siteConfig.feedbackUrl} class="nav-link" style={`--i:${nav.length + 1}`}>
+        <a href={siteConfig.feedbackUrl} class="nav-link enter" style={`--i:${reference.length + 1}`}>
           Send feedback <span class="arrow" aria-hidden="true">↗</span>
         </a>
       )}
@@ -52,60 +63,106 @@ const nav = [
 </aside>
 
 <script>
-  // Highlight the menu item for the section currently in the reading band.
-  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('.nav-link[data-section]'));
-  const sections = links
-    .map((link) => document.getElementById(link.dataset.section ?? ''))
-    .filter((el): el is HTMLElement => el !== null);
+  import { prepareDocs } from '../scripts/docs-runtime';
 
-  if (sections.length) {
-    const intersecting = new Set<string>();
-    const setCurrent = (id: string) => {
-      links.forEach((link) => {
-        if (link.dataset.section === id) link.setAttribute('aria-current', 'location');
-        else link.removeAttribute('aria-current');
+  // The "On this page" list is built from the headings of whichever reading
+  // level is showing, so it always matches what the reader sees.
+  prepareDocs();
+  const levelNav = document.getElementById('level-nav') as HTMLElement;
+  const pane = document.querySelector<HTMLElement>('.content');
+  const root = document.documentElement;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  type Entry = { link: HTMLAnchorElement; el: HTMLElement; group: HTMLElement };
+  let entries: Entry[] = [];
+
+  const buildLevelList = () => {
+    levelNav.querySelectorAll('a').forEach((a) => a.remove());
+    const panel = document.querySelector<HTMLElement>(`.tab-panel[data-panel="${root.dataset.vern}"]`);
+    const heads = panel ? Array.from(panel.querySelectorAll<HTMLElement>(':scope > h2')) : [];
+    heads.forEach((h, i) => {
+      const a = document.createElement('a');
+      a.href = `#${h.id}`;
+      a.className = 'nav-link enter';
+      a.style.setProperty('--i', String(i));
+      a.textContent = (h.textContent ?? '').replace(/^\s*\d+[.)]\s*/, '');
+      levelNav.append(a);
+    });
+    collect();
+  };
+
+  const collect = () => {
+    entries = [];
+    document.querySelectorAll<HTMLElement>('.side-nav').forEach((group) => {
+      group.querySelectorAll<HTMLAnchorElement>('a.nav-link').forEach((link) => {
+        const id = decodeURIComponent((link.getAttribute('href') ?? '').slice(1));
+        const el = id ? document.getElementById(id) : null;
+        if (el && link.dataset.section !== 'false') entries.push({ link, el, group });
       });
-    };
+    });
+    update();
+  };
 
-    // Desktop scrolls inside .content; small screens scroll the whole page.
-    const pane = document.querySelector<HTMLElement>('.content');
-    const atBottom = () => {
-      const scroller = pane && pane.scrollHeight > pane.clientHeight ? pane : document.scrollingElement;
-      return !!scroller && scroller.scrollTop > 0 && scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 4;
-    };
+  const moveMarker = (group: HTMLElement, link: HTMLElement | null) => {
+    const marker = group.querySelector<HTMLElement>('.nav-marker');
+    if (!marker) return;
+    if (!link) {
+      marker.style.opacity = '0';
+      return;
+    }
+    marker.style.opacity = '1';
+    marker.style.height = `${link.offsetHeight}px`;
+    marker.style.transform = `translateY(${link.offsetTop}px)`;
+  };
 
-    // The last section can be too short to reach the reading band, so the
-    // bottom of the page always selects it.
-    const update = () => {
-      if (atBottom()) return setCurrent(sections[sections.length - 1].id);
-      const first = sections.find((section) => intersecting.has(section.id));
-      if (first) setCurrent(first.id);
-    };
+  // The current section is the last one whose top has passed the reading line.
+  const update = () => {
+    if (!entries.length) return;
+    const line = 150;
+    const scroller = pane && pane.scrollHeight > pane.clientHeight ? pane : document.scrollingElement;
+    const atBottom = !!scroller && scroller.scrollTop > 0 && scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 4;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) intersecting.add(entry.target.id);
-          else intersecting.delete(entry.target.id);
-        });
-        update();
-      },
-      { rootMargin: '-30% 0px -60% 0px' }
-    );
+    // One current link per group: the overview group follows the page top, the
+    // level list and the "More" group follow the docs.
+    const byGroup = new Map<HTMLElement, Entry[]>();
+    entries.forEach((e) => byGroup.set(e.group, [...(byGroup.get(e.group) ?? []), e]));
 
-    let queued = false;
-    const onScroll = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(() => {
-        queued = false;
-        update();
-      });
-    };
+    // Which single section is "on screen" overall?
+    let current: Entry | undefined;
+    for (const e of entries) if (e.el.getBoundingClientRect().top <= line) current = e;
+    if (atBottom) current = entries[entries.length - 1];
+    if (!current) current = entries[0];
 
-    sections.forEach((section) => observer.observe(section));
-    pane?.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
-    setCurrent(sections[0].id);
-  }
+    entries.forEach((e) => (e === current ? e.link.setAttribute('aria-current', 'location') : e.link.removeAttribute('aria-current')));
+    document.querySelectorAll<HTMLElement>('.side-nav').forEach((group) => {
+      moveMarker(group, group.querySelector<HTMLElement>('a[aria-current]'));
+    });
+    // Keep the current link visible in the sidebar's own scroll.
+    if (current && !reduced) {
+      const box = current.link.closest<HTMLElement>('.sidebar-inner');
+      if (box) {
+        const r = current.link.getBoundingClientRect();
+        const b = box.getBoundingClientRect();
+        const headH = box.querySelector<HTMLElement>('.side-head')?.offsetHeight ?? 0;
+        if (r.top < b.top + headH + 24 || r.bottom > b.bottom - 90) current.link.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+  };
+
+  let queued = false;
+  const onScroll = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      update();
+    });
+  };
+  pane?.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  new MutationObserver(buildLevelList).observe(root, { attributes: true, attributeFilter: ['data-vern'] });
+  buildLevelList();
+  document.fonts?.ready.then(update);
+  addEventListener('resize', update);
 </script>
